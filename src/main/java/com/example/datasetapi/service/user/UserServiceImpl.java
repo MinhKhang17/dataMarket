@@ -3,6 +3,7 @@ package com.example.datasetapi.service.user;
 import com.example.datasetapi.dto.request.LoginRequest;
 import com.example.datasetapi.dto.request.RegisterRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
+import com.example.datasetapi.dto.response.LoginResponse;
 import com.example.datasetapi.dto.response.UserLoginData;
 import com.example.datasetapi.model.Role;
 import com.example.datasetapi.model.User;
@@ -33,6 +34,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
 
     private final TokenServiceImpl tokenService;
+
     private final RoleRepository roleRepository;
 
 
@@ -50,23 +52,25 @@ public class UserServiceImpl implements UserService {
     public ResponseEntity<ApiResponse> login(LoginRequest loginRequest, HttpServletResponse response) {
 
         //lấy user từ repository theo username
-        Optional<UserLoginData> userOptional = userRepository.findBasicInformationByName(loginRequest.getUsername());
+        Optional<User> userOptional = userRepository.findByUsername(loginRequest.getUsername());
 
 
 
 
         if (userOptional.isPresent()) {
-            UserLoginData user = userOptional.get();
+            User user = userOptional.get();
 
             boolean isValidPassword = PasswordUtil.matches(loginRequest.getPassword(), user.getPassword());
             if (isValidPassword) {
 
                 //tao token
                 String accessTokenCreated = tokenHandler(user,response);
+                LoginResponse loginResponse = new LoginResponse();
+                loginResponse.setAccessToken(accessTokenCreated);
+                loginResponse.setUserName(user.getUsername());
 
 
-
-                return ResponseEntity.ok().body(new ApiResponse(true, "login Success", accessTokenCreated));
+                return ResponseEntity.ok().body(new ApiResponse(true, "login Success", loginResponse));
 
 
             }
@@ -81,10 +85,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Transactional
-    public String tokenHandler(UserLoginData user, HttpServletResponse response) {
+    public String tokenHandler(User user, HttpServletResponse response) {
         //tao accesstoken
-        List<Role> roles = new ArrayList<>(roleRepository.findRolesByUserId(user.getId()));
-        user.setRoles(roles);
         String accessTokenCreated = tokenService.generateAccessToken(user);
         //tao refreshToken
         String refreshTokenCreated = tokenService.generateRefreshToken(String.valueOf(user.getId()));
