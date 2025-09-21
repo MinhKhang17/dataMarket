@@ -36,4 +36,9 @@ public class User {
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "token", referencedColumnName = "id")
     private Token token;
+
+    @Column(nullable = true)
+    private String Provider;
+    @Column(nullable = true)
+    private String Provider_id;
 }
