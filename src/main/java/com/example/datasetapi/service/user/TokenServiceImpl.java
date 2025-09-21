@@ -1,20 +1,56 @@
 package com.example.datasetapi.service.user;
 
+import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.dto.response.UserLoginData;
 import com.example.datasetapi.model.Token;
 import com.example.datasetapi.model.User;
 import com.example.datasetapi.repository.TokenRepository;
 import com.example.datasetapi.util.JwtUtil;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 @Service
 public class TokenServiceImpl implements TokenService{
 
+
     private TokenRepository tokenRepository;
 
     private JwtUtil jwtUtil;
+
+    @Override
+    public ResponseEntity<ApiResponse> refrestAccessToken(HttpServletRequest request, HttpServletResponse response) {
+    Cookie[] cookies = request.getCookies();
+    String refreshTokenRequest="";
+    if(cookies!=null){
+        for (Cookie cookie : cookies) {
+            if(cookie.getName().equals("refresh_token")){
+                refreshTokenRequest = cookie.getValue();
+                break;
+            }
+        }
+
+        Token token = tokenRepository.findByToken(refreshTokenRequest);
+
+        if(token!=null){
+
+            String accessToken = generateAccessToken(token.getUser());
+
+                return ResponseEntity.ok().body(new ApiResponse(true, "Token refreshed successfully", accessToken));
+        }else{
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "Token not found", null));
+        }
+
+    }
+    return ResponseEntity.badRequest().body(new ApiResponse(false, "Token not found", null));
+
+    }
+
+
 
     @Autowired
     public TokenServiceImpl(TokenRepository tokenRepository, JwtUtil jwtUtil) {
@@ -29,8 +65,8 @@ public class TokenServiceImpl implements TokenService{
     }
 
     @Override
-    public String generateAccessToken(UserLoginData token) {
-        return jwtUtil.generateAccessToken(token);
+    public String generateAccessToken(User user) {
+        return jwtUtil.generateAccessToken(user);
     }
 
     @Override
@@ -47,9 +83,7 @@ public class TokenServiceImpl implements TokenService{
         userReference.setId(userId);
         token.setUser(userReference);
 
-        // Or use JPA reference if your Token entity supports it
-        // User userReference = userRepository.getReferenceById(userId);
-        // token.setUser(userReference);
+
 
         tokenRepository.save(token);
     }

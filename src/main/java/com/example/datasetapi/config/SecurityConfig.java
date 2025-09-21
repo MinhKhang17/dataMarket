@@ -12,12 +12,14 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
     @Autowired
     private CustomUserDetailsService userDetailsService;
 
@@ -26,6 +28,9 @@ public class SecurityConfig {
 
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @Autowired
+    private AuthenticationEntryPoint jwtAuthenticationEntryPoint; // custom entry point
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -50,23 +55,31 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // Cho phép truy cập các API public và OAuth2 callback
-                        .requestMatchers("/api/auth/**", "/api/public/**", "/api/test/**", "/oauth2/**").permitAll()
+                        .requestMatchers(
+                                "/api/auth/**",
+                                "/api/public/**",
+                                "/api/test/**",
+                                "/oauth2/**"
+                        ).permitAll()
                         .anyRequest().authenticated()
+                )
+                // Custom xử lý khi chưa xác thực hoặc bị 401
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                 )
                 // OAuth2 login
                 .oauth2Login(oauth2 -> oauth2
-                        .loginPage("/oauth2/authorization/google") // Spring sẽ tự generate link login
-                        .successHandler(oAuth2LoginSuccessHandler) // custom success handler để generate JWT
+                        .loginPage("/oauth2/authorization/google")
+                        .successHandler(oAuth2LoginSuccessHandler)
                         .failureUrl("/login?error=true")
                 )
-                // Quản lý session: với JWT thì stateless, nhưng OAuth2 login thì cần session cho bước xác thực
+                // Session policy:
+                // - Với API thì dùng JWT stateless
+                // - Nhưng OAuth2 login vẫn cần session tạm thời
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-                // JWT filter
+                // Add JWT filter
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
-
-
 }
