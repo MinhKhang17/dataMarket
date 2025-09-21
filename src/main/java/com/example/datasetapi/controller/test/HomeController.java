@@ -1,4 +1,4 @@
-package com.example.datasetapi.controller;
+package com.example.datasetapi.controller.test;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
