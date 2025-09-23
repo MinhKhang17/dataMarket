@@ -6,8 +6,9 @@ import lombok.Data;
 
 import java.util.List;
 
-@Entity
+
 @Data
+@Entity
 @Table
 public class Transaction {
 @Id

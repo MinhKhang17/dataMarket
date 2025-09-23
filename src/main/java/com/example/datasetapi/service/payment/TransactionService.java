@@ -7,5 +7,5 @@ import org.springframework.stereotype.Service;
 
 @Service
 public interface TransactionService {
-    public boolean createTransaction(TransferType transferType, long amount, long user_id, Wallet wallet);
+    public Transaction createTransaction(TransferType transferType, long amount, long user_id, Wallet wallet);
 }
