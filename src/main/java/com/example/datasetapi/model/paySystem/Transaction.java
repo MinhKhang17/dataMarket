@@ -16,6 +16,7 @@ public class Transaction {
     private long id;
 
     @Column
+    @Enumerated(EnumType.STRING)
     private TransferType type;
 
     @Column
