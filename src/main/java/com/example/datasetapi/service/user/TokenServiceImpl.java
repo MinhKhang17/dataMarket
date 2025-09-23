@@ -87,4 +87,12 @@ public class TokenServiceImpl implements TokenService{
 
         tokenRepository.save(token);
     }
+
+    public String resolveToken(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7); // bỏ "Bearer "
+        }
+        return null;
+    }
 }

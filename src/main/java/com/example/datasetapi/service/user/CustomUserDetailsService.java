@@ -28,17 +28,14 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
-        // Map roles -> GrantedAuthority
-        Set<GrantedAuthority> authorities = user.getRoles()
-                .stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
-                .collect(Collectors.toSet()); // Java 8 compatible
+        // Với quan hệ N-1, User chỉ có 1 Role
+        GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + user.getRole().getName());
 
-        // Trả về UserDetails chuẩn Spring Security
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getUsername())
                 .password(user.getPassword()) // password đã được encode (BCrypt)
-                .authorities(authorities)
+                .authorities(authority)
                 .build();
     }
+
 }

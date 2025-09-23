@@ -49,11 +49,14 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public ResponseEntity<ApiResponse> login(LoginRequest loginRequest, HttpServletResponse response) {
-
+        Optional<User> userOptional;
+        if(Validator.isValidEmail(loginRequest.getUsername())){
+             userOptional = userRepository.findByEmail((loginRequest.getUsername()));
+        }
         //lấy user từ repository theo username
-        Optional<User> userOptional = userRepository.findByUsername(loginRequest.getUsername());
-
-
+        else {
+            userOptional = userRepository.findByUsername(loginRequest.getUsername());
+        }
 
 
         if (userOptional.isPresent()) {
@@ -131,6 +134,9 @@ public class UserServiceImpl implements UserService {
         if(!Validator.isValidEmail(registerRequest.getEmail())) {
             return ResponseEntity.badRequest().body(new ApiResponse(false, "Invalid email", registerRequest.getEmail()));
         }
+        if( userRepository.existsByEmail(registerRequest.getEmail())){
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "Email is exited", registerRequest.getEmail()));
+        }
 
         // tạo user
         User user = new User();
@@ -138,15 +144,14 @@ public class UserServiceImpl implements UserService {
         user.setPassword(PasswordUtil.encode(registerRequest.getPassword()));
         user.setEmail(registerRequest.getEmail());
 
+
         // gán role
         Optional<Role> roleOptional = roleRepository.findByName("USER");
         if (!roleOptional.isPresent()) {
             return ResponseEntity.badRequest().body(new ApiResponse(false, "Invalid role", registerRequest.getUsername()));
         }
-        if (user.getRoles() == null) {
-            user.setRoles(new HashSet<>());
-        }
-        user.getRoles().add(roleOptional.get());
+
+        user.setRole(roleOptional.get());
         // lưu user
         try {
             userRepository.save(user);
@@ -160,15 +165,16 @@ public class UserServiceImpl implements UserService {
     @Override
     public User createUserForLoginByGoogleFlow(OAuth2User oAuth2User) {
         String email = oAuth2User.getAttribute("email");
-        User user = userRepository.findByEmail(email);
+        Optional<User> user = userRepository.findByEmail(email);
 
         //User chua tao tai khoan truoc do
-        if(user == null) {
+        if(!user.isPresent() ) {
             User newUser = new User();
             newUser.setUsername(oAuth2User.getAttribute("name"));
             newUser.setPassword(randowPassword());
             newUser.setEmail(email);
-            newUser.setRoles(roleRepository.findRoleById(1l));
+            Role role = roleRepository.findByName("USER").get();
+            newUser.setRole(role);
             newUser.setProvider_id(oAuth2User.getAttribute("sub"));
             newUser.setProvider(GOOGLEPROVIDER);
             userRepository.save(newUser);
@@ -176,7 +182,24 @@ public class UserServiceImpl implements UserService {
         }
 
 
-        return user;
+        return user.get();
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse> logout(HttpServletResponse response) {
+
+//        tokenService.deleteByToken(response.);
+
+        Cookie cookie = new  Cookie("refresh_token", null);
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
+
+        return ResponseEntity.ok().body(new ApiResponse(true, "refresh Success", cookie));
+    }
+
+    @Override
+    public Optional<User> findUserById(long userId) {
+        return userRepository.findById(userId);
     }
 
     private String randowPassword() {

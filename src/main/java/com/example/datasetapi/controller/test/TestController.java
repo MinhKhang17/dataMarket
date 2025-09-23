@@ -1,5 +1,7 @@
 package com.example.datasetapi.controller.test;
 
+import com.example.datasetapi.enums.TransferType;
+import com.example.datasetapi.service.payment.PaymentService;
 import com.example.datasetapi.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -7,15 +9,20 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping
+@RequestMapping("test/security")
 public class TestController {
+    private PaymentService paymentService;
+
     @Autowired
    private JwtUtil jwtUtil ;
-
+@Autowired
+public TestController(PaymentService paymentService) {
+    this.paymentService = paymentService;
+}
     @PreAuthorize("hasRole(USER)")
-    @GetMapping("/test/auth")
+    @GetMapping()
     public ResponseEntity<String> testToken() {
-        System.out.println("testToken");
-        return ResponseEntity.ok().body("vao thanh cong voi quyen User");
+        paymentService.updateWallet(TransferType.TOUP,100,1);
+    return  ResponseEntity.ok().body("success");
     }
 }

@@ -9,9 +9,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.Optional;
+
 public interface UserService {
-    public Object login(LoginRequest loginRequest, HttpServletResponse response);
+    ResponseEntity<ApiResponse> login(LoginRequest loginRequest, HttpServletResponse response);
     public ResponseEntity<ApiResponse> register(RegisterRequest registerRequest);
 
     User createUserForLoginByGoogleFlow(OAuth2User oAuth2User);
+
+    ResponseEntity<ApiResponse> logout(HttpServletResponse response);
+
+    Optional<User> findUserById(long userId);
 }
