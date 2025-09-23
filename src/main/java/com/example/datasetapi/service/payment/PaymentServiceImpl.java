@@ -24,12 +24,14 @@ public class PaymentServiceImpl implements PaymentService{
     private UserServiceImpl userService;
     private WalletRepository walletRepository;
     private TransactionService transactionService;
+
     @Autowired
     public PaymentServiceImpl(UserServiceImpl userService, WalletRepository walletRepository, JwtUtil jwtUtil, TokenServiceImpl tokenServiceImpl,TransactionService transactionService) {
         this.userService = userService;
         this.walletRepository = walletRepository;
         this.jwtUtil = jwtUtil;
         this.tokenServiceImpl = tokenServiceImpl;
+        this.transactionService = transactionService;
     }
 
     @Override
@@ -67,22 +69,49 @@ boolean isUpdateSuccess = false;
     }
 
     private boolean updateWithdraw(long amount, long userId, TransferType type) {
-
         Optional<Wallet> wallet = walletRepository.findById(userId);
+
+
         if(!wallet.isPresent()){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Wallet not found");
+            System.out.println("wallet not found");
+            return false;
         }
+
+        if(amount<=0){
+            System.out.println("amount need greater than 0");
+            return false;
+        }
+
         //cap nhat wallet
+        if(wallet.get().getAmount()<=0){
+            System.out.println("amount not enough");
+            return false;
+        }
+
         wallet.get().setAmount(wallet.get().getAmount()-amount);
         //luu vao transaction
-        boolean success =  transactionService.createTransaction(type,amount,userId,wallet.get());
+         transactionService.createTransaction(type,amount,userId,wallet.get());
         //save vao repo
-success =    walletRepository.save(wallet.get())!=null;
-        return success;
+        walletRepository.save(wallet.get());
+
+
+
+        return true;
     }
 
     private boolean updateToUp(long amount, long userId, TransferType type) {
-
-        return false;
+        Optional<Wallet> wallet = walletRepository.findById(userId);
+        if(!wallet.isPresent()){
+            System.out.println("wallet not found");
+            return false;
+        }
+        if(amount<=0){
+            System.out.println("amount need greater than 0");
+            return false;
+        }
+        wallet.get().setAmount(wallet.get().getAmount()+amount);
+        transactionService.createTransaction(type,amount,userId,wallet.get());
+        walletRepository.save(wallet.get());
+        return true;
     }
 }

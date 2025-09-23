@@ -18,15 +18,12 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    public boolean createTransaction(TransferType transferType, long amount, long user_id, Wallet wallet) {
+    public Transaction createTransaction(TransferType transferType, long amount, long user_id, Wallet wallet) {
 
         Transaction transaction = new Transaction();
         transaction.setAmount(amount);
         transaction.setWallet(wallet);
         transaction.setType(transferType);
-
-
-
-        return transactionRepository.save(transaction)!=null;
+        return transactionRepository.save(transaction);
     }
 }
