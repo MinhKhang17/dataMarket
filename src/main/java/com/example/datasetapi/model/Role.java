@@ -1,8 +1,10 @@
 package com.example.datasetapi.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 import java.util.Set;
 
@@ -10,23 +12,19 @@ import java.util.Set;
 @Table(name = "Role")
 @Data
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-
+@NoArgsConstructor
+@AllArgsConstructor
 public class Role {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
     @Column(unique = true)
+    @EqualsAndHashCode.Include
     private String name;
 
-    @ManyToMany(mappedBy = "roles")
-    private Set<User> users;
-
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "role_permission",
-            joinColumns = @JoinColumn(name="role_id"),
-            inverseJoinColumns = @JoinColumn(name = "permission_id")
-    )
-    Set<Permission> permissions;
+    public Role(String name) {
+        this.name = name;
+    }
 }

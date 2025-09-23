@@ -2,6 +2,7 @@ package com.example.datasetapi.controller.authentication;
 
 import com.example.datasetapi.dto.request.RegisterRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
+import com.example.datasetapi.service.user.UserService;
 import com.example.datasetapi.service.user.UserServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -14,9 +15,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("api/auth/register")
 public class registerController {
 
-    private final UserServiceImpl userService;
+    private final UserService userService;
     @Autowired
-    public registerController(UserServiceImpl userService) {
+    public registerController(UserService userService) {
         this.userService = userService;
     }
 

@@ -11,8 +11,7 @@ import java.util.Set;
 
 public interface RoleRepository extends JpaRepository<Role, Integer> {
     Optional<Role> findByName(String roleName);
-    @Query("SELECT r FROM User u JOIN u.roles r WHERE u.id = :userId")
-    Set<Role> findRolesByUserId(@Param("userId") Long userId);
+
 
     Set<Role> findRoleById(Long id);
 }

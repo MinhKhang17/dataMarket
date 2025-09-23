@@ -15,10 +15,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("api/auth/refresh")
 public class TokenController {
-    private TokenServiceImpl tokenService;
+    private TokenService tokenService;
 
     @Autowired
-    public TokenController(TokenServiceImpl tokenService) {
+    public TokenController(TokenService tokenService) {
         this.tokenService = tokenService;
     }
 

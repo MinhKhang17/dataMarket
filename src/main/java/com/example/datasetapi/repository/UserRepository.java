@@ -13,9 +13,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByUsername(String username);
     boolean existsByEmail(String email);
 
-    @Query("select new com.example.datasetapi.dto.response.UserLoginData(u.id, u.email, u.password, u.username) " +
-            "from User u where u.username like :name")
-    Optional<UserLoginData> findBasicInformationByName(@Param("name") String name);
 
-    User findByEmail(String email);
+
+
+    Optional<User> findByEmail(String email);
 }
