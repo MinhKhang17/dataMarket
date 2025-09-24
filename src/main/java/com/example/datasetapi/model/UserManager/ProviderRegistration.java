@@ -2,11 +2,13 @@ package com.example.datasetapi.model.UserManager;
 
 import com.example.datasetapi.enums.VerificationStatus.RegistrationStatus;
 import jakarta.persistence.*;
+import lombok.Data;
 
 import java.time.Instant;
 import java.util.List;
 
 @Entity
+@Data
 @Table(name = "provider_registration")
 public class ProviderRegistration {
     @Id

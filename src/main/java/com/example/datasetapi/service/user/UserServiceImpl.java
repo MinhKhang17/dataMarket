@@ -7,12 +7,15 @@ import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.dto.response.LoginResponse;
 import com.example.datasetapi.dto.service.IdentityDocumentDTO;
 import com.example.datasetapi.dto.service.ProvierIdentityDocumentDTO;
+import com.example.datasetapi.enums.VerificationStatus.RegistrationStatus;
 import com.example.datasetapi.enums.VerificationStatus.VerificationStatus;
 import com.example.datasetapi.model.UserManager.ProviderIdentityDocument;
 import com.example.datasetapi.model.UserManager.ProviderRegistration;
 import com.example.datasetapi.model.UserManager.Role;
 import com.example.datasetapi.model.UserManager.User;
+import com.example.datasetapi.repository.ProviderIndentityDocumentRepository;
 import com.example.datasetapi.repository.RoleRepository;
+import com.example.datasetapi.repository.ProviderRegistrationRepository;
 import com.example.datasetapi.service.feature.ImageServiceImpl;
 import com.example.datasetapi.util.PasswordUtil;
 import com.example.datasetapi.util.Validator;
@@ -23,6 +26,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
@@ -34,7 +38,7 @@ import java.util.*;
 @Service
 public class UserServiceImpl implements UserService {
 
-    private final String GOOGLEPROVIDER= "GOOGLE";
+    private final String GOOGLEPROVIDER = "GOOGLE";
 
     private final JwtUtil jwtUtil;
 
@@ -46,13 +50,18 @@ public class UserServiceImpl implements UserService {
 
     private final ImageServiceImpl imageService;
 
+    private final ProviderIndentityDocumentRepository providerIdentityDocumentRepository;
+
+    private final ProviderRegistrationRepository providerRegistrationRepository;
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, JwtUtil jwtUtil, TokenServiceImpl tokenService, RoleRepository roleRepository, ImageServiceImpl imageService) {
+    public UserServiceImpl(UserRepository userRepository, JwtUtil jwtUtil, TokenServiceImpl tokenService, RoleRepository roleRepository, ImageServiceImpl imageService, ProviderIndentityDocumentRepository providerIdentityDocumentRepository,ProviderRegistrationRepository providerRegistrationRepository) {
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
         this.tokenService = tokenService;
         this.roleRepository = roleRepository;
         this.imageService = imageService;
+        this.providerIdentityDocumentRepository = providerIdentityDocumentRepository;
+        this.providerRegistrationRepository = providerRegistrationRepository;
     }
 
 
@@ -60,8 +69,8 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public ResponseEntity<ApiResponse> login(LoginRequest loginRequest, HttpServletResponse response) {
         Optional<User> userOptional;
-        if(Validator.isValidEmail(loginRequest.getUsername())){
-             userOptional = userRepository.findByEmail((loginRequest.getUsername()));
+        if (Validator.isValidEmail(loginRequest.getUsername())) {
+            userOptional = userRepository.findByEmail((loginRequest.getUsername()));
         }
         //lấy user từ repository theo username
         else {
@@ -76,7 +85,7 @@ public class UserServiceImpl implements UserService {
             if (isValidPassword) {
 
                 //tao token
-                String accessTokenCreated = tokenHandler(user,response);
+                String accessTokenCreated = tokenHandler(user, response);
                 LoginResponse loginResponse = new LoginResponse();
                 loginResponse.setAccessToken(accessTokenCreated);
                 loginResponse.setUserName(user.getUsername());
@@ -85,8 +94,7 @@ public class UserServiceImpl implements UserService {
                 return ResponseEntity.ok().body(new ApiResponse(true, "login Success", loginResponse));
 
 
-            }
-            else {
+            } else {
                 return ResponseEntity.badRequest().body(new ApiResponse(false, "Invalid password", null));
             }
         } else {
@@ -107,7 +115,7 @@ public class UserServiceImpl implements UserService {
         User userReference = userRepository.getReferenceById(user.getId());
         tokenService.saveToken(refreshTokenCreated, userReference);
         //add vao cookies
-        addRefreshTokenToCookie(refreshTokenCreated,response);
+        addRefreshTokenToCookie(refreshTokenCreated, response);
 
         //tra ve access Token
         return accessTokenCreated;
@@ -118,7 +126,7 @@ public class UserServiceImpl implements UserService {
         Cookie refreshTokenCookie = new Cookie("refresh_token", refreshTokenCreated);
         refreshTokenCookie.setPath("/");
         refreshTokenCookie.setMaxAge(3600);
-      response.addCookie(refreshTokenCookie);
+        response.addCookie(refreshTokenCookie);
 
     }
 
@@ -128,23 +136,23 @@ public class UserServiceImpl implements UserService {
 
     public ResponseEntity<ApiResponse> register(RegisterRequest registerRequest) {
         // check username
-        if(userRepository.findByUsername(registerRequest.getUsername()).isPresent()) {
+        if (userRepository.findByUsername(registerRequest.getUsername()).isPresent()) {
             return ResponseEntity.badRequest().body(new ApiResponse(false, "Username already exists", registerRequest.getUsername()));
         }
 
         // check password
-        if(registerRequest.getPassword().length() < 8) {
+        if (registerRequest.getPassword().length() < 8) {
             return ResponseEntity.badRequest().body(new ApiResponse(false, "Password too short", registerRequest.getUsername()));
         }
-        if(!Validator.isValidPassword(registerRequest.getPassword())) {
+        if (!Validator.isValidPassword(registerRequest.getPassword())) {
             return ResponseEntity.badRequest().body(new ApiResponse(false, "Invalid password", registerRequest.getUsername()));
         }
 
         // check email
-        if(!Validator.isValidEmail(registerRequest.getEmail())) {
+        if (!Validator.isValidEmail(registerRequest.getEmail())) {
             return ResponseEntity.badRequest().body(new ApiResponse(false, "Invalid email", registerRequest.getEmail()));
         }
-        if( userRepository.existsByEmail(registerRequest.getEmail())){
+        if (userRepository.existsByEmail(registerRequest.getEmail())) {
             return ResponseEntity.badRequest().body(new ApiResponse(false, "Email is exited", registerRequest.getEmail()));
         }
 
@@ -178,7 +186,7 @@ public class UserServiceImpl implements UserService {
         Optional<User> user = userRepository.findByEmail(email);
 
         //User chua tao tai khoan truoc do
-        if(!user.isPresent() ) {
+        if (!user.isPresent()) {
             User newUser = new User();
             newUser.setUsername(oAuth2User.getAttribute("name"));
             newUser.setPassword(randowPassword());
@@ -200,7 +208,7 @@ public class UserServiceImpl implements UserService {
 
 //        tokenService.deleteByToken(response.);
 
-        Cookie cookie = new  Cookie("refresh_token", null);
+        Cookie cookie = new Cookie("refresh_token", null);
         cookie.setMaxAge(0);
         response.addCookie(cookie);
 
@@ -219,42 +227,152 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ResponseEntity<ApiResponse> ProviderRegistratiopnProcess(ProviderRegistrationRequestDTO providerRegistrationDTO) {
-        try{
-            List<ProviderIdentityDocument> listProviderIdentityDocuments = handleProviderDocumet(providerRegistrationDTO);
+    public ResponseEntity<ApiResponse> providerRegistrationProcess(ProviderRegistrationRequestDTO providerRegistrationDTO) {
+        try {
+            // Validate input
+            if (providerRegistrationDTO == null) {
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse(false, "Registration data is required", null));
+            }
 
+            // Validate basic fields
+            if (providerRegistrationDTO.getFullName() == null || providerRegistrationDTO.getFullName().trim().isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse(false, "Full name is required", null));
+            }
 
+            if (providerRegistrationDTO.getEmail() == null || providerRegistrationDTO.getEmail().trim().isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse(false, "Email is required", null));
+            }
 
-        }catch (Exception e){
+            if (providerRegistrationDTO.getPhoneNumber() == null || providerRegistrationDTO.getPhoneNumber().trim().isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse(false, "Phone number is required", null));
+            }
 
+            // Check if email already exists
+            if (providerRegistrationRepository.existsByEmail(providerRegistrationDTO.getEmail())) {
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse(false, "Email already exists in the system", null));
+            }
+
+            // Process registration using the existing registerProvider method
+            ProviderRegistration savedRegistration = registerProvider(providerRegistrationDTO);
+
+            // Create response data
+            ProviderRegistrationResponseDTO responseDTO = new ProviderRegistrationResponseDTO();
+            responseDTO.setId(savedRegistration.getId());
+            responseDTO.setFullName(savedRegistration.getFullName());
+            responseDTO.setEmail(savedRegistration.getEmail());
+            responseDTO.setPhoneNumber(savedRegistration.getPhoneNumber());
+            responseDTO.setRegistrationStatus(savedRegistration.getRegistrationStatus().toString());
+            responseDTO.setCreatedAt(savedRegistration.getCreatedAt());
+
+            return ResponseEntity.ok(new ApiResponse(true,
+                    "Provider registration submitted successfully. Your application is under review.",
+                    responseDTO));
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse(false, e.getMessage(), null));
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(false, "Error uploading documents: " + e.getMessage(), null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(false, "An unexpected error occurred during registration", null));
         }
-
-        return null;
     }
 
-    private List<ProviderIdentityDocument> handleProviderDocumet(ProviderRegistrationRequestDTO providerRegistrationDTO, ProviderRegistration providerRegistration) throws IOException {
+    @Transactional
+    private ProviderRegistration registerProvider(ProviderRegistrationRequestDTO providerRegistrationDTO) throws IOException {
+        // Tạo ProviderRegistration từ DTO
+        ProviderRegistration providerRegistration = createProviderRegistrationFromDTO(providerRegistrationDTO);
+
+        // Lưu ProviderRegistration trước để có ID
+        providerRegistration = providerRegistrationRepository.save(providerRegistration);
+
+        // Xử lý documents
+        List<ProviderIdentityDocument> identityDocuments = handleProviderDocument(providerRegistrationDTO, providerRegistration);
+
+        // Set danh sách documents cho provider registration
+        providerRegistration.setIdentityDocuments(identityDocuments);
+
+        // Lưu lại để update relationship
+        return providerRegistrationRepository.save(providerRegistration);
+    }
+
+    private ProviderRegistration createProviderRegistrationFromDTO(ProviderRegistrationRequestDTO providerRegistrationDTO) {
+        ProviderRegistration providerRegistration = new ProviderRegistration();
+
+        // Set thông tin cơ bản
+        providerRegistration.setFullName(providerRegistrationDTO.getFullName());
+        providerRegistration.setEmail(providerRegistrationDTO.getEmail());
+        providerRegistration.setPhoneNumber(providerRegistrationDTO.getPhoneNumber());
+
+        // Set thông tin địa chỉ (nếu có trong DTO - cần thêm vào DTO)
+        // providerRegistration.setAddressLine(providerRegistrationDTO.getAddressLine());
+        // providerRegistration.setCity(providerRegistrationDTO.getCity());
+        // providerRegistration.setDistrict(providerRegistrationDTO.getDistrict());
+        // providerRegistration.setWard(providerRegistrationDTO.getWard());
+
+        // Set trạng thái và thời gian
+        providerRegistration.setRegistrationStatus(RegistrationStatus.PENDING);
+        providerRegistration.setCreatedAt(Instant.now());
+        providerRegistration.setUpdatedAt(Instant.now());
+
+        return providerRegistration;
+    }
+
+    private List<ProviderIdentityDocument> handleProviderDocument(
+            ProviderRegistrationRequestDTO providerRegistrationDTO,
+            ProviderRegistration providerRegistration) throws IOException {
+
         List<ProviderIdentityDocument> providerIdentityDocuments = new ArrayList<>();
-        List<ProvierIdentityDocumentDTO> providerRegistrationRequestDTOS = providerRegistrationDTO.getIdentityDocuments();
-        if (providerRegistrationRequestDTOS == null
-                || providerRegistrationRequestDTOS.isEmpty()) {
+        List<ProvierIdentityDocumentDTO> providerDocumentDTOs = providerRegistrationDTO.getIdentityDocuments();
+
+        // Kiểm tra danh sách document có tồn tại không
+        if (providerDocumentDTOs == null || providerDocumentDTOs.isEmpty()) {
             throw new IllegalArgumentException("The provider must submit all required identification documents");
         }
-        // duyệt qua danh sách document để thêm ảnh
-        for (ProvierIdentityDocumentDTO dto : providerRegistrationRequestDTOS) {
+
+        // Xử lý từng document
+        for (ProvierIdentityDocumentDTO dto : providerDocumentDTOs) {
+            // Kiểm tra file có tồn tại không
             if (dto.getFile() == null || dto.getFile().isEmpty()) {
                 throw new IllegalArgumentException("Each identification document must include a valid image file");
             }
 
-        //duyet qua danh sach document de them document
-        for(ProvierIdentityDocumentDTO dto : providerRegistrationRequestDTOS   ){
-                ProviderIdentityDocument providerIdentityDocument = new ProviderIdentityDocument();
-                providerIdentityDocument.setProvider(providerRegistration);
-                providerIdentityDocument.setUploadedAt(Instant.now());
-                providerIdentityDocument.setIdCardVerificationStatus(VerificationStatus.PENDING);
-                providerIdentityDocument.setImage_url(imageService.uploadImage(dto.getFile()));
-                providerIdentityDocuments.add(providerIdentityDocument);
-//                providerIdentityDocumentRe
-        }
-    }
+            // Validate file type (optional)
+            String contentType = dto.getFile().getContentType();
+            if (contentType == null || (!contentType.startsWith("image/"))) {
+                throw new IllegalArgumentException("Only image files are allowed for identification documents");
+            }
 
+            // Validate file size (optional - 5MB limit)
+            if (dto.getFile().getSize() > 5 * 1024 * 1024) {
+                throw new IllegalArgumentException("File size must not exceed 5MB");
+            }
+
+            // Tạo ProviderIdentityDocument từ DTO
+            ProviderIdentityDocument providerIdentityDocument = new ProviderIdentityDocument();
+            providerIdentityDocument.setProvider(providerRegistration);
+            providerIdentityDocument.setUploadedAt(Instant.now());
+            providerIdentityDocument.setIdCardVerificationStatus(VerificationStatus.PENDING);
+
+            // Upload image và set URL
+            String imageUrl = imageService.uploadImage(dto.getFile());
+            providerIdentityDocument.setImage_url(imageUrl);
+
+            // Set document type if available in DTO
+            // providerIdentityDocument.setDocumentType(dto.getDocumentType());
+
+            // Thêm vào danh sách và lưu vào database
+            providerIdentityDocuments.add(providerIdentityDocument);
+            providerIdentityDocumentRepository.save(providerIdentityDocument);
+        }
+
+        return providerIdentityDocuments;
+    }
 }

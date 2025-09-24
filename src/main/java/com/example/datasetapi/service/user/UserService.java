@@ -23,4 +23,5 @@ public interface UserService {
 
     ResponseEntity<ApiResponse> ProviderRegistratiopnProcess(ProviderRegistrationRequestDTO providerRegistrationDTO);
 
+    ResponseEntity<ApiResponse> providerRegistrationProcess(ProviderRegistrationRequestDTO providerRegistrationDTO);
 }
