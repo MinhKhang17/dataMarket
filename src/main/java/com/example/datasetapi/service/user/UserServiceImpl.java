@@ -2,6 +2,7 @@ package com.example.datasetapi.service.user;
 
 import com.example.datasetapi.dto.request.LoginRequest;
 import com.example.datasetapi.dto.request.RegisterRequest;
+import com.example.datasetapi.dto.request.UpdatePasswordRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.dto.response.LoginResponse;
 import com.example.datasetapi.dto.response.UserLoginData;
@@ -18,6 +19,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -156,6 +158,48 @@ public class UserServiceImpl implements UserService {
         }
 
         return ResponseEntity.ok().body(new ApiResponse(true, "User registered successfully", user.getUsername()));
+    }
+
+    @Override
+    @Transactional
+    public ResponseEntity<ApiResponse> updatePassword(UpdatePasswordRequest request) {
+        try {
+            // check input
+            if(request == null || request.getNewPassword() == null ||
+                    request.getOldPassword() == null || request.getConfirmPassword() == null) {
+                return ResponseEntity.badRequest().body(new ApiResponse(false, "Missing input", null));
+            }
+            if(!request.getNewPassword().equals(request.getConfirmPassword())) {
+                return ResponseEntity.badRequest().body(new ApiResponse(false, "New password and confirm password do not match", null));
+            }
+            if(request.getNewPassword().length() < 8) {
+                return ResponseEntity.badRequest().body(new ApiResponse(false, "New password too short", null));
+            }
+            if(!Validator.isValidPassword(request.getNewPassword())) {
+                return ResponseEntity.badRequest().body(new ApiResponse(false, "Invalid new password", null));
+            }
+
+            // check user
+            String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+            Optional<User> userOptional = userRepository.findByUsername(currentUsername);
+            if(!userOptional.isPresent()) {
+                return ResponseEntity.badRequest().body(new ApiResponse(false, "User not found", currentUsername));
+            }
+
+            // check old password
+            if(!PasswordUtil.matches(request.getOldPassword(), userOptional.get().getPassword())) {
+                return ResponseEntity.badRequest().body(new ApiResponse(false, "Old password is incorrect", null));
+            }
+
+            //update password
+            User user = userOptional.get();
+            user.setPassword(PasswordUtil.encode(request.getNewPassword()));
+            userRepository.save(user);
+
+            return ResponseEntity.ok().body(new ApiResponse(true, "Password update successfully", user.getUsername()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "Error", e.getMessage()));
+        }
     }
 
 }
