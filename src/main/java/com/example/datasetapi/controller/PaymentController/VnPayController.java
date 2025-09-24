@@ -71,11 +71,11 @@ public class VnPayController {
         Map<String, String> result = new HashMap<>();
 
         // 1) Verify chữ ký
-//        if (!vnPayService.verifySignature(params)) {
-//            result.put("RspCode", "97");
-//            result.put("Message", "Invalid signature");
-//            return ResponseEntity.ok(result);
-//        }
+        if (!vnPayService.verifySignature(params)) {
+            result.put("RspCode", "97");
+            result.put("Message", "Invalid signature");
+            return ResponseEntity.ok(result);
+        }
 
         // 2) Xử lý giao dịch
         final String responseCode = params.get("vnp_ResponseCode");
