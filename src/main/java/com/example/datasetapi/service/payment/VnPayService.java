@@ -49,7 +49,9 @@ public class VnPayService {
 
         // 4. Params
         Map<String, String> params = new TreeMap<>();
-        params.put("vnp_OrderInfo", "UID:" + reqBody.getUserId());
+        // Use orderInfo from request, but append userId for identification
+        String finalOrderInfo = orderInfo.isEmpty() ? "Payment for user " + reqBody.getUserId() : orderInfo;
+        params.put("vnp_OrderInfo", "UID:" + reqBody.getUserId() + "|" + finalOrderInfo);
         params.put("vnp_Version", "2.1.0");
         params.put("vnp_Command", "pay");
         params.put("vnp_TmnCode", props.getTmnCode());
@@ -60,7 +62,6 @@ public class VnPayService {
             params.put("vnp_BankCode", bankCode);
         }
         params.put("vnp_TxnRef", txnRef);
-        params.put("vnp_OrderInfo", orderInfo);
         params.put("vnp_OrderType", orderType);
         params.put("vnp_Locale", locale);
         params.put("vnp_ReturnUrl", props.getReturnUrl());
