@@ -2,6 +2,11 @@ package com.example.datasetapi.service.payment;
 
 import com.example.datasetapi.config.VnpayProperties;
 import com.example.datasetapi.dto.request.CreateVnpayPaymentRequest;
+import com.example.datasetapi.enums.TransferType;
+import com.example.datasetapi.model.User;
+import com.example.datasetapi.model.paySystem.Wallet;
+import com.example.datasetapi.repository.WalletRepository;
+import com.example.datasetapi.service.user.UserService;
 import org.springframework.stereotype.Service;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,9 +24,15 @@ import java.util.*;
 public class VnPayService {
 
     private final VnpayProperties props;
+    private final PaymentService paymentService;
+    private final WalletRepository walletRepository;
+    private final UserService userService;
 
-    public VnPayService(VnpayProperties props) {
+    public VnPayService(VnpayProperties props, PaymentService paymentService, WalletRepository walletRepository, UserService userService) {
         this.props = props;
+        this.paymentService = paymentService;
+        this.walletRepository = walletRepository;
+        this.userService = userService;
     }
 
     public String createPaymentUrl(HttpServletRequest servletRequest, CreateVnpayPaymentRequest reqBody) {
@@ -152,5 +163,55 @@ public class VnPayService {
 
         // So sánh, nếu giống nhau thì hợp lệ
         return expectedHash.equalsIgnoreCase(actualHash);
+    }
+
+    private Long extractUserId(String orderInfo) {
+        if (orderInfo != null && orderInfo.startsWith("UID:")) {
+            try {
+                String uidPart = orderInfo.split("\\|")[0];
+                return Long.parseLong(uidPart.split(":")[1]);
+            } catch (Exception ex) {
+                System.err.println("Cannot parse userId from vnp_OrderInfo=" + orderInfo + " err=" + ex.getMessage());
+            }
+        }
+        return null;
+    }
+
+
+    public Map<String, String> handleIpn(Map<String, String> params) {
+        Map<String, String> result = new HashMap<>();
+
+        // Verify chữ ký
+        if (!verifySignature(params)) {
+            result.put("RspCode", "97");
+            result.put("Message", "Invalid signature");
+            return result;
+        }
+
+        if ("00".equals(params.get("vnp_ResponseCode"))) {
+            long amountVnd = 0L;
+            try {
+                amountVnd = Long.parseLong(params.getOrDefault("vnp_Amount", "0")) / 100;
+            } catch (NumberFormatException ignore) {}
+            long points = amountVnd / 1000;
+
+            Long uid = extractUserId(params.get("vnp_OrderInfo"));
+            if (uid != null) {
+                walletRepository.findByUserId(uid).orElseGet(() -> {
+                    Wallet w = new Wallet();
+                    User u = userService.findUserById(uid)
+                            .orElseThrow(() -> new RuntimeException("User not found"));
+                    w.setUser(u);
+                    w.setAmount(0L);
+                    return walletRepository.save(w);
+                });
+
+                paymentService.updateWallet(TransferType.TOUP, points, uid);
+            }
+        }
+
+        result.put("RspCode", "00");
+        result.put("Message", "Confirm Success");
+        return result;
     }
 }
