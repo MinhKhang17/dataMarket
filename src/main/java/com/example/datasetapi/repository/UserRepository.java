@@ -18,4 +18,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "from User u where u.username like :name")
     Optional<UserLoginData> findBasicInformationByName(@Param("name") String name);
 
+    User findByEmail(String email);
 }

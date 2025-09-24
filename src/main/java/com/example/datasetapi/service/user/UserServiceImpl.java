@@ -19,17 +19,19 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+<<<<<<< HEAD
 import org.springframework.security.core.context.SecurityContextHolder;
+=======
+import org.springframework.security.oauth2.core.user.OAuth2User;
+>>>>>>> main
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class UserServiceImpl implements UserService {
 
+    private final String GOOGLEPROVIDER= "GOOGLE";
 
     private final JwtUtil jwtUtil;
 
@@ -103,12 +105,12 @@ public class UserServiceImpl implements UserService {
         return accessTokenCreated;
     }
 
-    private void addRefreshTokenToCookie(String refreshTokenCreated, HttpServletResponse response) {
+    public void addRefreshTokenToCookie(String refreshTokenCreated, HttpServletResponse response) {
 
         Cookie refreshTokenCookie = new Cookie("refresh_token", refreshTokenCreated);
         refreshTokenCookie.setPath("/");
         refreshTokenCookie.setMaxAge(3600);
-        response.addCookie(refreshTokenCookie);
+      response.addCookie(refreshTokenCookie);
 
     }
 
@@ -161,6 +163,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+
     @Transactional
     public ResponseEntity<ApiResponse> updatePassword(UpdatePasswordRequest request) {
         try {
@@ -202,4 +205,31 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+
+    public User createUserForLoginByGoogleFlow(OAuth2User oAuth2User) {
+        String email = oAuth2User.getAttribute("email");
+        User user = userRepository.findByEmail(email);
+
+        //User chua tao tai khoan truoc do
+        if(user == null) {
+            User newUser = new User();
+            newUser.setUsername(oAuth2User.getAttribute("name"));
+            newUser.setPassword(randowPassword());
+            newUser.setEmail(email);
+            newUser.setRoles(roleRepository.findRoleById(1l));
+            newUser.setProvider_id(oAuth2User.getAttribute("sub"));
+            newUser.setProvider(GOOGLEPROVIDER);
+            userRepository.save(newUser);
+            return newUser;
+        }
+
+
+        return user;
+    }
+
+    private String randowPassword() {
+        String randowPassword = UUID.randomUUID().toString();
+        String encodedPassword = PasswordUtil.encode(randowPassword);
+        return encodedPassword;
+    }
 }

@@ -1,5 +1,11 @@
 package com.example.datasetapi.config;
 
+import com.example.datasetapi.model.Token;
+import com.example.datasetapi.model.User;
+import com.example.datasetapi.repository.UserRepository;
+import com.example.datasetapi.service.user.TokenServiceImpl;
+import com.example.datasetapi.service.user.UserService;
+import com.example.datasetapi.service.user.UserServiceImpl;
 import com.example.datasetapi.util.JwtUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,12 +17,23 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.UUID;
 
 @Component
 public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    private UserServiceImpl userService;
+
+    private TokenServiceImpl tokenService;
+
+    @Autowired
+    public void setUserService(UserServiceImpl userService, TokenServiceImpl tokenService) {
+        this.userService = userService;
+        this.tokenService = tokenService;
+    }
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
@@ -27,11 +44,21 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         // Lấy email từ Google
         String email = oAuth2User.getAttribute("email");
 
+
+        User user = userService.createUserForLoginByGoogleFlow(oAuth2User);
+
         // Generate JWT access token
-//        String token = jwtUtil.generateAccessToken(email);
+        String token = tokenService.generateAccessToken(user);
+        String refreshToken = tokenService.generateRefreshToken(user.getUsername());
+
+        //them refresh token vao cookies
+        userService.addRefreshTokenToCookie(refreshToken, response);
+        //luu vao db
+        tokenService.saveToken(refreshToken,user);
 
         // Trả về JSON cho client
         response.setContentType("application/json");
-//        response.getWriter().write("{\"accessToken\": \"" + token + "\"}");
+        response.getWriter().write("{\"accessToken\": \"" + token + "\"}");
     }
+
 }
