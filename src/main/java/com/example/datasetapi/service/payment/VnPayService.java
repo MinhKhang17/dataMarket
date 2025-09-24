@@ -49,6 +49,7 @@ public class VnPayService {
 
         // 4. Params
         Map<String, String> params = new TreeMap<>();
+        params.put("vnp_OrderInfo", "UID:" + reqBody.getUserId());
         params.put("vnp_Version", "2.1.0");
         params.put("vnp_Command", "pay");
         params.put("vnp_TmnCode", props.getTmnCode());
@@ -124,5 +125,31 @@ public class VnPayService {
         } catch (Exception ex) {
             throw new RuntimeException("Error while calculating HMAC SHA512", ex);
         }
+    }
+
+    public boolean verifySignature(Map<String, String> allParams) {
+        // Lấy tất cả params trừ vnp_SecureHash và vnp_SecureHashType
+        Map<String, String> sorted = new TreeMap<>();
+        for (Map.Entry<String, String> e : allParams.entrySet()) {
+            String key = e.getKey();
+            if ("vnp_SecureHash".equalsIgnoreCase(key) || "vnp_SecureHashType".equalsIgnoreCase(key)) {
+                continue;
+            }
+            if (e.getValue() != null && !e.getValue().isEmpty()) {
+                sorted.put(key, e.getValue());
+            }
+        }
+
+        // Build lại query string để hash
+        String data = buildDataToHash(sorted);
+
+        // Tính HMAC SHA512 từ data
+        String expectedHash = hmacSHA512(props.getHashSecret(), data);
+
+        // Lấy chữ ký do VNPAY gửi
+        String actualHash = allParams.get("vnp_SecureHash");
+
+        // So sánh, nếu giống nhau thì hợp lệ
+        return expectedHash.equalsIgnoreCase(actualHash);
     }
 }

@@ -9,6 +9,7 @@ public class CreateVnpayPaymentRequest {
     private String orderInfo;
     private String bankCode;
     private String language;
+    private Long userId;
 
     // getters/setters
 
