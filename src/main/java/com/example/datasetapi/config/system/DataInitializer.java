@@ -1,11 +1,9 @@
 package com.example.datasetapi.config.system;
 
-import com.example.datasetapi.model.Role;
+import com.example.datasetapi.model.UserManager.Role;
 import com.example.datasetapi.repository.RoleRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
-
-import java.util.*;
 
 @Component
 public class DataInitializer implements CommandLineRunner {

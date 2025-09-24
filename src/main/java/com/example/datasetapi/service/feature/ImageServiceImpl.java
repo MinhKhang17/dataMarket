@@ -1,0 +1,20 @@
+package com.example.datasetapi.service.feature;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.util.Map;
+public class ImageServiceImpl implements ImageService{
+    private final Cloudinary cloudinary;
+
+    public ImageServiceImpl(Cloudinary cloudinary) {
+        this.cloudinary = cloudinary;
+    }
+
+    public String uploadImage(MultipartFile file) throws IOException {
+        Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
+                ObjectUtils.asMap("resource_type", "auto"));
+        return uploadResult.get("secure_url").toString(); // link ảnh trả về
+    }
+}

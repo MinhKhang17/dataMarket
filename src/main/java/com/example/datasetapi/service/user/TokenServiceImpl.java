@@ -1,9 +1,8 @@
 package com.example.datasetapi.service.user;
 
 import com.example.datasetapi.dto.response.ApiResponse;
-import com.example.datasetapi.dto.response.UserLoginData;
-import com.example.datasetapi.model.Token;
-import com.example.datasetapi.model.User;
+import com.example.datasetapi.model.UserManager.Token;
+import com.example.datasetapi.model.UserManager.User;
 import com.example.datasetapi.repository.TokenRepository;
 import com.example.datasetapi.util.JwtUtil;
 import jakarta.servlet.http.Cookie;

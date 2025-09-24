@@ -1,17 +1,13 @@
     package com.example.datasetapi.util;
 
-    import com.example.datasetapi.dto.response.UserLoginData;
-    import com.example.datasetapi.model.Role;
-    import com.example.datasetapi.model.User;
+    import com.example.datasetapi.model.UserManager.User;
     import io.jsonwebtoken.*;
     import io.jsonwebtoken.security.Keys;
-    import jakarta.servlet.http.HttpServletRequest;
     import org.springframework.beans.factory.annotation.Value;
     import org.springframework.stereotype.Component;
 
     import java.security.Key;
     import java.util.Date;
-    import java.util.stream.Collectors;
 
     @Component
     public class JwtUtil {

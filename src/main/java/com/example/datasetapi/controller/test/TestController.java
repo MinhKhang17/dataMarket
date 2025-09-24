@@ -22,7 +22,7 @@ public TestController(PaymentService paymentService) {
     @PreAuthorize("hasRole(USER)")
     @GetMapping()
     public ResponseEntity<String> testToken() {
-        paymentService.updateWallet(TransferType.TOUP,100,1);
+        paymentService.updateWalletAmount(TransferType.TOUP,100,1);
     return  ResponseEntity.ok().body("success");
     }
 }

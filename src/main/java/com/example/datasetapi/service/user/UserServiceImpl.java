@@ -1,13 +1,19 @@
 package com.example.datasetapi.service.user;
 
 import com.example.datasetapi.dto.request.LoginRequest;
+import com.example.datasetapi.dto.request.ProviderRegistrationRequestDTO;
 import com.example.datasetapi.dto.request.RegisterRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.dto.response.LoginResponse;
-import com.example.datasetapi.dto.response.UserLoginData;
-import com.example.datasetapi.model.Role;
-import com.example.datasetapi.model.User;
+import com.example.datasetapi.dto.service.IdentityDocumentDTO;
+import com.example.datasetapi.dto.service.ProvierIdentityDocumentDTO;
+import com.example.datasetapi.enums.VerificationStatus.VerificationStatus;
+import com.example.datasetapi.model.UserManager.ProviderIdentityDocument;
+import com.example.datasetapi.model.UserManager.ProviderRegistration;
+import com.example.datasetapi.model.UserManager.Role;
+import com.example.datasetapi.model.UserManager.User;
 import com.example.datasetapi.repository.RoleRepository;
+import com.example.datasetapi.service.feature.ImageServiceImpl;
 import com.example.datasetapi.util.PasswordUtil;
 import com.example.datasetapi.util.Validator;
 import com.example.datasetapi.repository.UserRepository;
@@ -21,6 +27,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.time.Instant;
 import java.util.*;
 
 @Service
@@ -36,13 +44,15 @@ public class UserServiceImpl implements UserService {
 
     private final RoleRepository roleRepository;
 
+    private final ImageServiceImpl imageService;
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, JwtUtil jwtUtil, TokenServiceImpl tokenService, RoleRepository roleRepository) {
+    public UserServiceImpl(UserRepository userRepository, JwtUtil jwtUtil, TokenServiceImpl tokenService, RoleRepository roleRepository, ImageServiceImpl imageService) {
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
         this.tokenService = tokenService;
         this.roleRepository = roleRepository;
+        this.imageService = imageService;
     }
 
 
@@ -207,4 +217,44 @@ public class UserServiceImpl implements UserService {
         String encodedPassword = PasswordUtil.encode(randowPassword);
         return encodedPassword;
     }
+
+    @Override
+    public ResponseEntity<ApiResponse> ProviderRegistratiopnProcess(ProviderRegistrationRequestDTO providerRegistrationDTO) {
+        try{
+            List<ProviderIdentityDocument> listProviderIdentityDocuments = handleProviderDocumet(providerRegistrationDTO);
+
+
+
+        }catch (Exception e){
+
+        }
+
+        return null;
+    }
+
+    private List<ProviderIdentityDocument> handleProviderDocumet(ProviderRegistrationRequestDTO providerRegistrationDTO, ProviderRegistration providerRegistration) throws IOException {
+        List<ProviderIdentityDocument> providerIdentityDocuments = new ArrayList<>();
+        List<ProvierIdentityDocumentDTO> providerRegistrationRequestDTOS = providerRegistrationDTO.getIdentityDocuments();
+        if (providerRegistrationRequestDTOS == null
+                || providerRegistrationRequestDTOS.isEmpty()) {
+            throw new IllegalArgumentException("The provider must submit all required identification documents");
+        }
+        // duyệt qua danh sách document để thêm ảnh
+        for (ProvierIdentityDocumentDTO dto : providerRegistrationRequestDTOS) {
+            if (dto.getFile() == null || dto.getFile().isEmpty()) {
+                throw new IllegalArgumentException("Each identification document must include a valid image file");
+            }
+
+        //duyet qua danh sach document de them document
+        for(ProvierIdentityDocumentDTO dto : providerRegistrationRequestDTOS   ){
+                ProviderIdentityDocument providerIdentityDocument = new ProviderIdentityDocument();
+                providerIdentityDocument.setProvider(providerRegistration);
+                providerIdentityDocument.setUploadedAt(Instant.now());
+                providerIdentityDocument.setIdCardVerificationStatus(VerificationStatus.PENDING);
+                providerIdentityDocument.setImage_url(imageService.uploadImage(dto.getFile()));
+                providerIdentityDocuments.add(providerIdentityDocument);
+//                providerIdentityDocumentRe
+        }
+    }
+
 }

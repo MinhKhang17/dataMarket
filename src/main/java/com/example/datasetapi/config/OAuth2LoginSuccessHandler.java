@@ -1,10 +1,7 @@
 package com.example.datasetapi.config;
 
-import com.example.datasetapi.model.Token;
-import com.example.datasetapi.model.User;
-import com.example.datasetapi.repository.UserRepository;
+import com.example.datasetapi.model.UserManager.User;
 import com.example.datasetapi.service.user.TokenServiceImpl;
-import com.example.datasetapi.service.user.UserService;
 import com.example.datasetapi.service.user.UserServiceImpl;
 import com.example.datasetapi.util.JwtUtil;
 import jakarta.servlet.ServletException;
@@ -17,7 +14,6 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.UUID;
 
 @Component
 public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {

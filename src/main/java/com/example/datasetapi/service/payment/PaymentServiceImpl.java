@@ -2,7 +2,7 @@ package com.example.datasetapi.service.payment;
 
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.enums.TransferType;
-import com.example.datasetapi.model.User;
+import com.example.datasetapi.model.UserManager.User;
 import com.example.datasetapi.model.paySystem.Wallet;
 import com.example.datasetapi.repository.WalletRepository;
 import com.example.datasetapi.service.user.TokenServiceImpl;
@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
 
@@ -53,7 +52,7 @@ return ResponseEntity.ok().body(new ApiResponse(true,"created wallet for" + user
     }
 
     @Override
-    public boolean updateWallet(TransferType type, long amount, long user_id) {
+    public boolean updateWalletAmount(TransferType type, long amount, long user_id) {
 //thay doi khi viet xong vertify
         boolean isCheckedUser = true;
 boolean isUpdateSuccess = false;
@@ -61,14 +60,14 @@ boolean isUpdateSuccess = false;
             case TOUP:
                 isUpdateSuccess = updateToUp(amount,user_id,type);
                 break;
-                case WITHDRAW:
-                 isUpdateSuccess = updateWithdraw(amount,user_id,type);
+            case TODOWN:
+                 isUpdateSuccess = updateTodown(amount,user_id,type);
                 break;
         }
         return isUpdateSuccess;
     }
 
-    private boolean updateWithdraw(long amount, long userId, TransferType type) {
+    private boolean updateTodown(long amount, long userId, TransferType type) {
         Optional<Wallet> wallet = walletRepository.findById(userId);
 
 
