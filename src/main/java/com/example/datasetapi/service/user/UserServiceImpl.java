@@ -19,11 +19,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-<<<<<<< HEAD
 import org.springframework.security.core.context.SecurityContextHolder;
-=======
 import org.springframework.security.oauth2.core.user.OAuth2User;
->>>>>>> main
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -222,7 +219,6 @@ public class UserServiceImpl implements UserService {
             userRepository.save(newUser);
             return newUser;
         }
-
 
         return user;
     }
