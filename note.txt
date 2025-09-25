@@ -1,0 +1,6 @@
+admin account:
+admin
+password
+consumer account
+consumer
+password
