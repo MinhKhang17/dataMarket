@@ -5,7 +5,8 @@ import com.example.datasetapi.dto.request.ProviderRegistrationRequestDTO;
 import com.example.datasetapi.dto.request.RegisterRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.dto.response.LoginResponse;
-import com.example.datasetapi.dto.service.IdentityDocumentDTO;
+import com.example.datasetapi.dto.response.ProviderRegistrationResponseDTO;
+//import com.example.datasetapi.dto.service.IdentityDocumentDTO;
 import com.example.datasetapi.dto.service.ProvierIdentityDocumentDTO;
 import com.example.datasetapi.enums.VerificationStatus.RegistrationStatus;
 import com.example.datasetapi.enums.VerificationStatus.VerificationStatus;
@@ -33,6 +34,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -227,7 +229,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ResponseEntity<ApiResponse> providerRegistrationProcess(ProviderRegistrationRequestDTO providerRegistrationDTO) {
+    public ResponseEntity<ApiResponse> ProviderRegistrationProcess(ProviderRegistrationRequestDTO providerRegistrationDTO) {
         try {
             // Validate input
             if (providerRegistrationDTO == null) {
@@ -267,7 +269,7 @@ public class UserServiceImpl implements UserService {
             responseDTO.setEmail(savedRegistration.getEmail());
             responseDTO.setPhoneNumber(savedRegistration.getPhoneNumber());
             responseDTO.setRegistrationStatus(savedRegistration.getRegistrationStatus().toString());
-            responseDTO.setCreatedAt(savedRegistration.getCreatedAt());
+            responseDTO.setCreatedAt(LocalDateTime.from(savedRegistration.getCreatedAt()));
 
             return ResponseEntity.ok(new ApiResponse(true,
                     "Provider registration submitted successfully. Your application is under review.",
@@ -286,7 +288,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Transactional
-    private ProviderRegistration registerProvider(ProviderRegistrationRequestDTO providerRegistrationDTO) throws IOException {
+    protected ProviderRegistration registerProvider(ProviderRegistrationRequestDTO providerRegistrationDTO) throws IOException {
         // Tạo ProviderRegistration từ DTO
         ProviderRegistration providerRegistration = createProviderRegistrationFromDTO(providerRegistrationDTO);
 

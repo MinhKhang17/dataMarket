@@ -13,6 +13,7 @@ import java.util.Optional;
 
 public interface UserService {
     ResponseEntity<ApiResponse> login(LoginRequest loginRequest, HttpServletResponse response);
+
     public ResponseEntity<ApiResponse> register(RegisterRequest registerRequest);
 
     User createUserForLoginByGoogleFlow(OAuth2User oAuth2User);
@@ -21,7 +22,6 @@ public interface UserService {
 
     Optional<User> findUserById(long userId);
 
-    ResponseEntity<ApiResponse> ProviderRegistratiopnProcess(ProviderRegistrationRequestDTO providerRegistrationDTO);
 
-    ResponseEntity<ApiResponse> providerRegistrationProcess(ProviderRegistrationRequestDTO providerRegistrationDTO);
+    ResponseEntity<ApiResponse> ProviderRegistrationProcess(ProviderRegistrationRequestDTO providerRegistrationDTO);
 }
