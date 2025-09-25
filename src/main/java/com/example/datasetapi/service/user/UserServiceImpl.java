@@ -277,6 +277,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public ResponseEntity<ApiResponse> ProviderRegistrationProcess(ProviderRegistrationRequestDTO providerRegistrationDTO) {
         try {
+            System.out.println(providerRegistrationDTO.getFullName());
             // Validate input
             if (providerRegistrationDTO == null) {
                 return ResponseEntity.badRequest()
@@ -409,8 +410,8 @@ public class UserServiceImpl implements UserService {
             providerIdentityDocument.setIdCardVerificationStatus(VerificationStatus.PENDING);
 
             // Upload image và set URL
-            String imageUrl = imageService.uploadImage(dto.getFile());
-            providerIdentityDocument.setImage_url(imageUrl);
+//            String imageUrl = imageService.uploadImage(dto.getFile());
+//            providerIdentityDocument.setImage_url(imageUrl);
 
             // Set document type if available in DTO
             // providerIdentityDocument.setDocumentType(dto.getDocumentType());

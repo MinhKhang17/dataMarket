@@ -7,4 +7,5 @@ import org.springframework.web.multipart.MultipartFile;
 public class ProvierIdentityDocumentDTO {
     private String type;             // CCCD_FRONT, CCCD_BACK, BUSINESS_LICENSE
     private MultipartFile file;      // Ảnh upload trực tiếp
+
 }

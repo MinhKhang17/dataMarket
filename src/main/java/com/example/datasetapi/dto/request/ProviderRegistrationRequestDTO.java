@@ -1,6 +1,5 @@
 package com.example.datasetapi.dto.request;
 
-import com.example.datasetapi.dto.service.IdentityDocumentDTO;
 import com.example.datasetapi.dto.service.ProvierIdentityDocumentDTO;
 import lombok.Data;
 import org.springframework.web.multipart.MultipartFile;

@@ -6,10 +6,7 @@ import com.example.datasetapi.service.user.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("api/auth")
@@ -22,8 +19,9 @@ public class AuthController {
     }
 
     @PostMapping("provider/sendFormRegister")
-    public ResponseEntity<ApiResponse> sendFormRegister(ProviderRegistrationRequestDTO providerRegistrationDTO) {
-        return userService.ProviderRegistratiopnProcess(providerRegistrationDTO);
+    public ResponseEntity<ApiResponse> sendFormRegister(@RequestBody ProviderRegistrationRequestDTO providerRegistrationDTO) {
+        System.out.println(providerRegistrationDTO.getFullName());
+        return userService.ProviderRegistrationProcess(providerRegistrationDTO);
     }
     @GetMapping("/me")
     public ResponseEntity<ApiResponse> GetUserInformationFromRequest(HttpServletRequest request) {

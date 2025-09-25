@@ -1,7 +1,7 @@
 package com.example.datasetapi.config.system;
 
-import com.example.datasetapi.model.Role;
-import com.example.datasetapi.model.User;
+import com.example.datasetapi.model.UserManager.Role;
+import com.example.datasetapi.model.UserManager.User;
 import com.example.datasetapi.repository.RoleRepository;
 import com.example.datasetapi.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
