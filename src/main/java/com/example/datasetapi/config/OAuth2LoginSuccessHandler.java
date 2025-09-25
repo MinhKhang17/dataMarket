@@ -58,7 +58,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
         // Trả về JSON cho client
         response.setContentType("application/json");
-        response.getWriter().write("{\"accessToken\": \"" + token + "\"}");
+        response.sendRedirect("http://localhost:5173/oauth2/callback?token="+token);
     }
 
 }

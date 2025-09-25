@@ -13,16 +13,20 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("api/auth/login")
+@RequestMapping("api/auth")
 public class loginController {
-    private UserServiceImpl userService;
+    private UserService userService;
     @Autowired
-    public void LoginController(UserServiceImpl userService) {
+    public void LoginController(UserService userService) {
         this.userService = userService;
     }
 
-    @PostMapping()
+    @PostMapping("/login")
     public ResponseEntity<ApiResponse> login(@RequestBody LoginRequest loginRequest, HttpServletResponse response) {
         return  userService.login(loginRequest,response);
+    }
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse> logout(HttpServletResponse response) {
+        return userService.logout(response);
     }
 }
