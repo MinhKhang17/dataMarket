@@ -1,10 +1,12 @@
 package com.example.datasetapi.service.user;
 
+import com.example.datasetapi.Mapper.UserMapper;
 import com.example.datasetapi.dto.request.LoginRequest;
 import com.example.datasetapi.dto.request.RegisterRequest;
 import com.example.datasetapi.dto.request.UpdatePasswordRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.dto.response.LoginResponse;
+import com.example.datasetapi.dto.response.UserInformationResponseForAuthMe;
 import com.example.datasetapi.dto.response.UserLoginData;
 import com.example.datasetapi.model.Role;
 import com.example.datasetapi.model.User;
@@ -15,6 +17,7 @@ import com.example.datasetapi.repository.UserRepository;
 import com.example.datasetapi.util.JwtUtil;
 
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +30,7 @@ import java.util.*;
 
 @Service
 public class UserServiceImpl implements UserService {
+
 
     private final String GOOGLEPROVIDER= "GOOGLE";
 
@@ -219,7 +223,7 @@ public class UserServiceImpl implements UserService {
             newUser.setUsername(oAuth2User.getAttribute("name"));
             newUser.setPassword(randowPassword());
             newUser.setEmail(email);
-            Role role = roleRepository.findByName("USER").get();
+            Role role = roleRepository.findByName("CONSUMER").get();
             newUser.setRole(role);
             newUser.setProvider_id(oAuth2User.getAttribute("sub"));
             newUser.setProvider(GOOGLEPROVIDER);
@@ -252,5 +256,25 @@ public class UserServiceImpl implements UserService {
         String randowPassword = UUID.randomUUID().toString();
         String encodedPassword = PasswordUtil.encode(randowPassword);
         return encodedPassword;
+    }
+    @Override
+    public ResponseEntity<ApiResponse> getUserInformationFromRequest(HttpServletRequest request) {
+        try {
+            long userIdFromRequest = jwtUtil.getUserIdFromToken(tokenService.resolveToken(request));
+
+
+            Optional<User> userOptional = userRepository.findById(userIdFromRequest);
+            if(!userOptional.isPresent()) {
+                throw new Exception("User not found");
+            }
+            User user = userOptional.get();
+
+            UserInformationResponseForAuthMe userResponse =  UserMapper.toUserInformationResponseForAuthMeDTO(user);
+
+            return ResponseEntity.ok().body(new ApiResponse(true, "User Information", userResponse));
+
+        }catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "Error", e.getMessage()));
+        }
     }
 }

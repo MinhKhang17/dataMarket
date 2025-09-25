@@ -25,7 +25,7 @@ public class loginController {
     public ResponseEntity<ApiResponse> login(@RequestBody LoginRequest loginRequest, HttpServletResponse response) {
         return  userService.login(loginRequest,response);
     }
-    @PostMapping("logout")
+    @PostMapping("/logout")
     public ResponseEntity<ApiResponse> logout(HttpServletResponse response) {
         return userService.logout(response);
     }
