@@ -6,8 +6,11 @@ import com.example.datasetapi.enums.TransferType;
 import com.example.datasetapi.model.User;
 import com.example.datasetapi.model.paySystem.Wallet;
 import com.example.datasetapi.repository.WalletRepository;
+import com.example.datasetapi.service.user.TokenServiceImpl;
 import com.example.datasetapi.service.user.UserService;
+import com.example.datasetapi.util.JwtUtil;
 import org.springframework.stereotype.Service;
+
 
 import jakarta.servlet.http.HttpServletRequest;
 import javax.crypto.Mac;
@@ -27,15 +30,22 @@ public class VnPayService {
     private final PaymentService paymentService;
     private final WalletRepository walletRepository;
     private final UserService userService;
+    private final JwtUtil jwtUtil;
+    private final TokenServiceImpl  tokenServiceImpl;
 
-    public VnPayService(VnpayProperties props, PaymentService paymentService, WalletRepository walletRepository, UserService userService) {
+    public VnPayService(VnpayProperties props, PaymentService paymentService, WalletRepository walletRepository, UserService userService, JwtUtil jwtUtil, TokenServiceImpl tokenServiceImpl) {
         this.props = props;
         this.paymentService = paymentService;
         this.walletRepository = walletRepository;
         this.userService = userService;
+        this.jwtUtil = jwtUtil;
+        this.tokenServiceImpl = tokenServiceImpl;
     }
 
     public String createPaymentUrl(HttpServletRequest servletRequest, CreateVnpayPaymentRequest reqBody) {
+
+        Long userId = jwtUtil.getUserIdFromToken(tokenServiceImpl.resolveToken(servletRequest));
+
         // 1. Validate input
         String orderInfo = safe(reqBody.getOrderInfo());
         String orderType = safe(reqBody.getOrderType());
@@ -62,7 +72,7 @@ public class VnPayService {
         Map<String, String> params = new TreeMap<>();
         // Use orderInfo from request, but append userId for identification
         String finalOrderInfo = orderInfo.isEmpty() ? "Payment for user " + reqBody.getUserId() : orderInfo;
-        params.put("vnp_OrderInfo", "UID:" + reqBody.getUserId() + "|" + finalOrderInfo);
+        params.put("vnp_OrderInfo", "UID:" + userId + "|" + finalOrderInfo);
         params.put("vnp_Version", "2.1.0");
         params.put("vnp_Command", "pay");
         params.put("vnp_TmnCode", props.getTmnCode());
