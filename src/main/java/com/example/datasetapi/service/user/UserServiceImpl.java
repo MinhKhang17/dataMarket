@@ -4,16 +4,18 @@ import com.example.datasetapi.dto.request.LoginRequest;
 import com.example.datasetapi.dto.request.RegisterRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.dto.response.LoginResponse;
-import com.example.datasetapi.dto.response.UserLoginData;
 import com.example.datasetapi.model.Role;
 import com.example.datasetapi.model.User;
+import com.example.datasetapi.model.paySystem.Wallet;
 import com.example.datasetapi.repository.RoleRepository;
+import com.example.datasetapi.repository.WalletRepository;
 import com.example.datasetapi.util.PasswordUtil;
 import com.example.datasetapi.util.Validator;
 import com.example.datasetapi.repository.UserRepository;
 import com.example.datasetapi.util.JwtUtil;
 
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,13 +38,17 @@ public class UserServiceImpl implements UserService {
 
     private final RoleRepository roleRepository;
 
+    private final WalletRepository walletRepository;
+
+
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, JwtUtil jwtUtil, TokenServiceImpl tokenService, RoleRepository roleRepository) {
+    public UserServiceImpl(UserRepository userRepository, JwtUtil jwtUtil, TokenServiceImpl tokenService, RoleRepository roleRepository, WalletRepository walletRepository, WalletRepository walletRepository1) {
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
         this.tokenService = tokenService;
         this.roleRepository = roleRepository;
+        this.walletRepository = walletRepository;
     }
 
 
@@ -201,6 +207,26 @@ public class UserServiceImpl implements UserService {
     public Optional<User> findUserById(long userId) {
         return userRepository.findById(userId);
     }
+
+    @Override
+    public ResponseEntity<?> getWalletAmountFromToken(HttpServletRequest request) {
+        try {
+            Long userId = jwtUtil.getUserIdFromToken(tokenService.resolveToken(request));
+
+            Wallet wallet = walletRepository.findByUserId(userId)
+                    .orElseThrow(() -> new RuntimeException("Wallet not found for userId: " + userId));
+
+            return ResponseEntity.ok(
+                    new ApiResponse(true, "Wallet Amount Available", wallet.getAmount())
+            );
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                    new ApiResponse(false, "Invalid token or user not found", null)
+            );
+        }
+    }
+
 
     private String randowPassword() {
         String randowPassword = UUID.randomUUID().toString();
