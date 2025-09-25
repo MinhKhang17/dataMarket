@@ -16,6 +16,7 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.UUID;
 
 @Component
 public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
@@ -58,7 +59,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
 
         // Trả về JSON cho client
         response.setContentType("application/json");
-        response.sendRedirect(FRONTEND_URL+"/oauth2/callback?token="+token);
+        response.sendRedirect("http://localhost:5173/oauth2/callback?token="+token);
     }
 
 }
