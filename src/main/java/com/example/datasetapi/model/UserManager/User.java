@@ -27,8 +27,7 @@ public class User {
     private Role role;
 
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "token", referencedColumnName = "id")
+    @OneToOne(mappedBy = "user")
     private Token token;
 
     @Column(nullable = true)

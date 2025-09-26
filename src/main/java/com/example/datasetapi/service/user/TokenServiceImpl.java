@@ -94,4 +94,8 @@ public class TokenServiceImpl implements TokenService{
         }
         return null;
     }
+    @Override
+    public void deleteByUserId(long userId) {
+            tokenRepository.deleteByUser_Id(userId);
+    }
 }

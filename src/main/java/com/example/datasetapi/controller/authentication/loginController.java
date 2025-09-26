@@ -4,6 +4,7 @@ import com.example.datasetapi.dto.request.LoginRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.service.user.UserService;
 import com.example.datasetapi.service.user.UserServiceImpl;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -26,7 +27,7 @@ public class loginController {
         return  userService.login(loginRequest,response);
     }
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse> logout(HttpServletResponse response) {
-        return userService.logout(response);
+    public ResponseEntity<ApiResponse> logout(HttpServletRequest request, HttpServletResponse response) {
+        return userService.logout(response,request);
     }
 }

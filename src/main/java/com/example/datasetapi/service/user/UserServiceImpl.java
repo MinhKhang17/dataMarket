@@ -48,7 +48,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
 
-    private final TokenServiceImpl tokenService;
+    private final TokenService tokenService;
 
     private final RoleRepository roleRepository;
 
@@ -58,7 +58,7 @@ public class UserServiceImpl implements UserService {
 
     private final ProviderRegistrationRepository providerRegistrationRepository;
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, JwtUtil jwtUtil, TokenServiceImpl tokenService, RoleRepository roleRepository, ImageServiceImpl imageService, ProviderIndentityDocumentRepository providerIdentityDocumentRepository,ProviderRegistrationRepository providerRegistrationRepository) {
+    public UserServiceImpl(UserRepository userRepository, JwtUtil jwtUtil, TokenService tokenService, RoleRepository roleRepository, ImageServiceImpl imageService, ProviderIndentityDocumentRepository providerIdentityDocumentRepository,ProviderRegistrationRepository providerRegistrationRepository) {
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
         this.tokenService = tokenService;
@@ -168,7 +168,7 @@ public class UserServiceImpl implements UserService {
 
 
         // gán role
-        Optional<Role> roleOptional = roleRepository.findByName("USER");
+        Optional<Role> roleOptional = roleRepository.findByName("CONSUMER");
         if (!roleOptional.isPresent()) {
             return ResponseEntity.badRequest().body(new ApiResponse(false, "Invalid role", registerRequest.getUsername()));
         }
@@ -252,15 +252,22 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ResponseEntity<ApiResponse> logout(HttpServletResponse response) {
+    public ResponseEntity<ApiResponse> logout(HttpServletResponse response, HttpServletRequest request) {
 
-//        tokenService.deleteByToken(response.);
+        String token = tokenService.resolveToken(request);
+
+        long userId = jwtUtil.getUserIdFromToken(token);
+
+        tokenService.deleteByUserId(userId);
+
 
         Cookie cookie = new Cookie("refresh_token", null);
         cookie.setMaxAge(0);
         response.addCookie(cookie);
 
-        return ResponseEntity.ok().body(new ApiResponse(true, "refresh Success", cookie));
+
+
+        return ResponseEntity.ok().body(new ApiResponse(true, "refresh Success",null));
     }
 
     @Override
