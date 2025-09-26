@@ -1,12 +1,10 @@
-package com.example.datasetapi.model;
+package com.example.datasetapi.model.UserManager;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-
-import java.util.Set;
 
 @Entity
 @Table(name = "Role")

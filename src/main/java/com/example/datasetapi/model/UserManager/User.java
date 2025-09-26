@@ -1,11 +1,8 @@
-package com.example.datasetapi.model;
+package com.example.datasetapi.model.UserManager;
 
-import com.nimbusds.oauth2.sdk.token.Tokens;
+import com.example.datasetapi.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.Data;
-
-import java.util.HashSet;
-import java.util.Set;
 
 @Entity
 @Table(name = "User_Information")
@@ -38,4 +35,7 @@ public class User {
     private String Provider;
     @Column(nullable = true)
     private String Provider_id;
+
+    @Column(nullable = true)
+    private UserStatus userStatus;
 }

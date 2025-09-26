@@ -11,5 +11,4 @@ public interface PaymentService
 {
     public ResponseEntity<ApiResponse> createWallet(HttpServletRequest request);
     public boolean updateWallet(TransferType type,long amount,long user_id);
-
 }

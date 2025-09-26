@@ -1,4 +1,4 @@
-package com.example.datasetapi.model;
+package com.example.datasetapi.model.UserManager;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

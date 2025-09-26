@@ -1,8 +1,6 @@
 package com.example.datasetapi.config;
 
-import com.example.datasetapi.model.Token;
-import com.example.datasetapi.model.User;
-import com.example.datasetapi.repository.UserRepository;
+import com.example.datasetapi.model.UserManager.User;
 import com.example.datasetapi.service.user.TokenServiceImpl;
 import com.example.datasetapi.service.user.UserService;
 import com.example.datasetapi.service.user.UserServiceImpl;
@@ -11,6 +9,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -28,6 +28,8 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     private UserServiceImpl userService;
 
     private TokenServiceImpl tokenService;
+   @Value("${frontEndUrl}")
+    private  String FRONTEND_URL;
 
     @Autowired
     public void setUserService(UserServiceImpl userService, TokenServiceImpl tokenService) {
