@@ -21,6 +21,7 @@ public interface UserService {
 
     public ResponseEntity<ApiResponse> register(RegisterRequest registerRequest);
     public  ResponseEntity<ApiResponse> updatePassword(UpdatePasswordRequest updatePasswordRequest);
+
     User createUserForLoginByGoogleFlow(OAuth2User oAuth2User);
 
     ResponseEntity<ApiResponse> logout(HttpServletResponse response);
@@ -31,4 +32,5 @@ public interface UserService {
     ResponseEntity<ApiResponse> ProviderRegistrationProcess(ProviderRegistrationRequestDTO providerRegistrationDTO);
 
     ResponseEntity<ApiResponse> getUserInformationFromRequest(HttpServletRequest request);
+    ResponseEntity<?> getWalletAmountFromToken(HttpServletRequest token);
 }
