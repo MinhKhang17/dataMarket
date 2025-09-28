@@ -27,14 +27,20 @@ public class User {
     private Role role;
 
 
-    @OneToOne(mappedBy = "user")
+    @OneToOne(mappedBy = "user",orphanRemoval = true, cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = true)
     private Token token;
 
     @Column(nullable = true)
-    private String Provider;
+    private String provider;
     @Column(nullable = true)
-    private String Provider_id;
+    private String provider_id;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = true)
     private UserStatus userStatus;
+
+    public void setToken(Token token) {
+        this.token = token;
+        if (token != null) token.setUser(this);
+    }
 }

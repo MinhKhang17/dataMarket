@@ -52,27 +52,24 @@ return ResponseEntity.ok().body(new ApiResponse(true,"created wallet for" + user
     }
 
     @Override
-    public boolean updateWalletAmount(TransferType type, long amount, long user_id) {
-//thay doi khi viet xong vertify
-        boolean isCheckedUser = true;
-boolean isUpdateSuccess = false;
+    public boolean updateWallet(TransferType type, long amount, long user_id) {
+        boolean isUpdateSuccess = false;
         switch (type){
             case TOUP:
                 isUpdateSuccess = updateToUp(amount,user_id,type);
                 break;
-            case TODOWN:
-                 isUpdateSuccess = updateTodown(amount,user_id,type);
+                case WITHDRAW:
+                 isUpdateSuccess = updateWithdraw(amount,user_id,type);
                 break;
         }
         return isUpdateSuccess;
     }
 
-    private boolean updateTodown(long amount, long userId, TransferType type) {
-        Optional<Wallet> wallet = walletRepository.findById(userId);
-
+    private boolean updateWithdraw(long amount, long userId, TransferType type) {
+        Optional<Wallet> wallet = walletRepository.findByUserId(userId);
 
         if(!wallet.isPresent()){
-            System.out.println("wallet not found");
+            System.out.println("wallet not found for user: " + userId);
             return false;
         }
 
@@ -82,8 +79,8 @@ boolean isUpdateSuccess = false;
         }
 
         //cap nhat wallet
-        if(wallet.get().getAmount()<=0){
-            System.out.println("amount not enough");
+        if(wallet.get().getAmount() < amount){
+            System.out.println("amount not enough. Current balance: " + wallet.get().getAmount() + ", requested: " + amount);
             return false;
         }
 
@@ -93,24 +90,27 @@ boolean isUpdateSuccess = false;
         //save vao repo
         walletRepository.save(wallet.get());
 
-
-
+        System.out.println("Successfully withdrawn " + amount + " from user " + userId + ". New balance: " + wallet.get().getAmount());
         return true;
     }
 
     private boolean updateToUp(long amount, long userId, TransferType type) {
-        Optional<Wallet> wallet = walletRepository.findById(userId);
+        Optional<Wallet> wallet = walletRepository.findByUserId(userId);
         if(!wallet.isPresent()){
-            System.out.println("wallet not found");
+            System.out.println("wallet not found for user: " + userId);
             return false;
         }
         if(amount<=0){
             System.out.println("amount need greater than 0");
             return false;
         }
+
+        long oldAmount = wallet.get().getAmount();
         wallet.get().setAmount(wallet.get().getAmount()+amount);
         transactionService.createTransaction(type,amount,userId,wallet.get());
         walletRepository.save(wallet.get());
+
+        System.out.println("Successfully added " + amount + " to user " + userId + ". Old balance: " + oldAmount + ", New balance: " + wallet.get().getAmount());
         return true;
     }
 }

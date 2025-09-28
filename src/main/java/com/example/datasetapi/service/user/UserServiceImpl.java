@@ -14,9 +14,14 @@ import com.example.datasetapi.model.UserManager.ProviderRegistration;
 import com.example.datasetapi.model.UserManager.Role;
 import com.example.datasetapi.model.UserManager.User;
 import com.example.datasetapi.repository.ProviderIndentityDocumentRepository;
+import com.example.datasetapi.dto.response.ApiResponse;
+import com.example.datasetapi.dto.response.LoginResponse;
+
+import com.example.datasetapi.model.paySystem.Wallet;
 import com.example.datasetapi.repository.RoleRepository;
 import com.example.datasetapi.repository.ProviderRegistrationRepository;
 import com.example.datasetapi.service.feature.ImageServiceImpl;
+import com.example.datasetapi.repository.WalletRepository;
 import com.example.datasetapi.util.PasswordUtil;
 import com.example.datasetapi.util.Validator;
 import com.example.datasetapi.repository.UserRepository;
@@ -42,7 +47,7 @@ import java.util.*;
 public class UserServiceImpl implements UserService {
 
 
-    private final String GOOGLEPROVIDER= "GOOGLE";
+    private final String GOOGLEPROVIDER = "GOOGLE";
 
     private final JwtUtil jwtUtil;
 
@@ -53,12 +58,16 @@ public class UserServiceImpl implements UserService {
     private final RoleRepository roleRepository;
 
     private final ImageServiceImpl imageService;
+    private final WalletRepository walletRepository;
+
 
     private final ProviderIndentityDocumentRepository providerIdentityDocumentRepository;
 
     private final ProviderRegistrationRepository providerRegistrationRepository;
+
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, JwtUtil jwtUtil, TokenService tokenService, RoleRepository roleRepository, ImageServiceImpl imageService, ProviderIndentityDocumentRepository providerIdentityDocumentRepository,ProviderRegistrationRepository providerRegistrationRepository) {
+
+    public UserServiceImpl(UserRepository userRepository, JwtUtil jwtUtil, TokenServiceImpl tokenService, RoleRepository roleRepository, ImageServiceImpl imageService, ProviderIndentityDocumentRepository providerIdentityDocumentRepository, ProviderRegistrationRepository providerRegistrationRepository, WalletRepository walletRepository) {
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
         this.tokenService = tokenService;
@@ -66,6 +75,7 @@ public class UserServiceImpl implements UserService {
         this.imageService = imageService;
         this.providerIdentityDocumentRepository = providerIdentityDocumentRepository;
         this.providerRegistrationRepository = providerRegistrationRepository;
+        this.walletRepository = walletRepository;
     }
 
 
@@ -96,16 +106,13 @@ public class UserServiceImpl implements UserService {
 
 
                 return ResponseEntity.ok().body(new ApiResponse(true, "login Success", loginResponse));
-
-
-            } else {
-                return ResponseEntity.badRequest().body(new ApiResponse(false, "Invalid password", null));
             }
         } else {
 
             return ResponseEntity.badRequest().body(new ApiResponse(false, "Invalid username or password", null));
         }
 
+        return null;
     }
 
     @Transactional
@@ -130,7 +137,7 @@ public class UserServiceImpl implements UserService {
         Cookie refreshTokenCookie = new Cookie("refresh_token", refreshTokenCreated);
         refreshTokenCookie.setPath("/");
         refreshTokenCookie.setMaxAge(3600);
-      response.addCookie(refreshTokenCookie);
+        response.addCookie(refreshTokenCookie);
 
     }
 
@@ -140,23 +147,23 @@ public class UserServiceImpl implements UserService {
 
     public ResponseEntity<ApiResponse> register(RegisterRequest registerRequest) {
         // check username
-        if(userRepository.findByUsername(registerRequest.getUsername()).isPresent()) {
+        if (userRepository.findByUsername(registerRequest.getUsername()).isPresent()) {
             return ResponseEntity.badRequest().body(new ApiResponse(false, "Username already exists", registerRequest.getUsername()));
         }
 
         // check password
-        if(registerRequest.getPassword().length() < 8) {
+        if (registerRequest.getPassword().length() < 8) {
             return ResponseEntity.badRequest().body(new ApiResponse(false, "Password too short", registerRequest.getUsername()));
         }
-        if(!Validator.isValidPassword(registerRequest.getPassword())) {
+        if (!Validator.isValidPassword(registerRequest.getPassword())) {
             return ResponseEntity.badRequest().body(new ApiResponse(false, "Invalid password", registerRequest.getUsername()));
         }
 
         // check email
-        if(!Validator.isValidEmail(registerRequest.getEmail())) {
+        if (!Validator.isValidEmail(registerRequest.getEmail())) {
             return ResponseEntity.badRequest().body(new ApiResponse(false, "Invalid email", registerRequest.getEmail()));
         }
-        if( userRepository.existsByEmail(registerRequest.getEmail())){
+        if (userRepository.existsByEmail(registerRequest.getEmail())) {
             return ResponseEntity.badRequest().body(new ApiResponse(false, "Email is exited", registerRequest.getEmail()));
         }
 
@@ -185,35 +192,34 @@ public class UserServiceImpl implements UserService {
     }
 
 
-
     @Transactional
     @Override
     public ResponseEntity<ApiResponse> updatePassword(UpdatePasswordRequest request) {
         try {
             // check input
-            if(request == null || request.getNewPassword() == null ||
+            if (request == null || request.getNewPassword() == null ||
                     request.getOldPassword() == null || request.getConfirmPassword() == null) {
                 return ResponseEntity.badRequest().body(new ApiResponse(false, "Missing input", null));
             }
-            if(!request.getNewPassword().equals(request.getConfirmPassword())) {
+            if (!request.getNewPassword().equals(request.getConfirmPassword())) {
                 return ResponseEntity.badRequest().body(new ApiResponse(false, "New password and confirm password do not match", null));
             }
-            if(request.getNewPassword().length() < 8) {
+            if (request.getNewPassword().length() < 8) {
                 return ResponseEntity.badRequest().body(new ApiResponse(false, "New password too short", null));
             }
-            if(!Validator.isValidPassword(request.getNewPassword())) {
+            if (!Validator.isValidPassword(request.getNewPassword())) {
                 return ResponseEntity.badRequest().body(new ApiResponse(false, "Invalid new password", null));
             }
 
             // check user
             String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
             Optional<User> userOptional = userRepository.findByUsername(currentUsername);
-            if(!userOptional.isPresent()) {
+            if (!userOptional.isPresent()) {
                 return ResponseEntity.badRequest().body(new ApiResponse(false, "User not found", currentUsername));
             }
 
             // check old password
-            if(!PasswordUtil.matches(request.getOldPassword(), userOptional.get().getPassword())) {
+            if (!PasswordUtil.matches(request.getOldPassword(), userOptional.get().getPassword())) {
                 return ResponseEntity.badRequest().body(new ApiResponse(false, "Old password is incorrect", null));
             }
 
@@ -274,6 +280,26 @@ public class UserServiceImpl implements UserService {
     public Optional<User> findUserById(long userId) {
         return userRepository.findById(userId);
     }
+
+    @Override
+    public ResponseEntity<?> getWalletAmountFromToken(HttpServletRequest request) {
+        try {
+            Long userId = jwtUtil.getUserIdFromToken(tokenService.resolveToken(request));
+
+            Wallet wallet = walletRepository.findByUserId(userId)
+                    .orElseThrow(() -> new RuntimeException("Wallet not found for userId: " + userId));
+
+            return ResponseEntity.ok(
+                    new ApiResponse(true, "Wallet Amount Available", wallet.getAmount())
+            );
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                    new ApiResponse(false, "Invalid token or user not found", null)
+            );
+        }
+    }
+
 
     private String randowPassword() {
         String randowPassword = UUID.randomUUID().toString();
@@ -400,6 +426,7 @@ public class UserServiceImpl implements UserService {
                 throw new IllegalArgumentException("Each identification document must include a valid image file");
             }
 
+
             // Validate file type (optional)
             String contentType = dto.getFile().getContentType();
             if (contentType == null || (!contentType.startsWith("image/"))) {
@@ -425,30 +452,32 @@ public class UserServiceImpl implements UserService {
 
             // Thêm vào danh sách và lưu vào database
             providerIdentityDocuments.add(providerIdentityDocument);
+
             providerIdentityDocumentRepository.save(providerIdentityDocument);
         }
-
         return providerIdentityDocuments;
     }
-            @Override
-            public ResponseEntity<ApiResponse> getUserInformationFromRequest (HttpServletRequest request){
-                try {
-                    long userIdFromRequest = jwtUtil.getUserIdFromToken(tokenService.resolveToken(request));
 
 
-                    Optional<User> userOptional = userRepository.findById(userIdFromRequest);
-                    if (!userOptional.isPresent()) {
-                        throw new Exception("User not found");
-                    }
-                    User user = userOptional.get();
+    @Override
+    public ResponseEntity<ApiResponse> getUserInformationFromRequest(HttpServletRequest request) {
+        try {
+            long userIdFromRequest = jwtUtil.getUserIdFromToken(tokenService.resolveToken(request));
 
-                    UserInformationResponseForAuthMe userResponse = UserMapper.toUserInformationResponseForAuthMeDTO(user);
 
-                    return ResponseEntity.ok().body(new ApiResponse(true, "User Information", userResponse));
-
-                } catch (Exception e) {
-                    return ResponseEntity.badRequest().body(new ApiResponse(false, "Error", e.getMessage()));
-                }
+            Optional<User> userOptional = userRepository.findById(userIdFromRequest);
+            if (!userOptional.isPresent()) {
+                throw new Exception("User not found");
             }
+            User user = userOptional.get();
+
+            UserInformationResponseForAuthMe userResponse = UserMapper.toUserInformationResponseForAuthMeDTO(user);
+
+            return ResponseEntity.ok().body(new ApiResponse(true, "User Information", userResponse));
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "Error", e.getMessage()));
         }
+    }
+}
 
