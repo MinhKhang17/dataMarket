@@ -1,5 +1,6 @@
 package com.example.datasetapi.model.UserManager;
 
+import com.example.datasetapi.enums.DocumentType;
 import com.example.datasetapi.enums.VerificationStatus.VerificationStatus;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -14,7 +15,7 @@ public class ProviderIdentityDocument {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "provider_id")
     private ProviderRegistration provider;
 
@@ -30,4 +31,7 @@ public class ProviderIdentityDocument {
 
     private long manager_id;   // ai verify
     private Instant idCardRetentionExpiry; // ngày hết hạn lưu trữ
+
+    @Enumerated(EnumType.STRING)
+    private DocumentType documentType;
 }

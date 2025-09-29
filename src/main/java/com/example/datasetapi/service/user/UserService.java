@@ -8,6 +8,7 @@ import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.model.UserManager.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.transaction.Transactional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,7 @@ public interface UserService {
     Optional<User> findUserById(long userId);
 
 
+    @Transactional
     ResponseEntity<ApiResponse> ProviderRegistrationProcess(ProviderRegistrationRequestDTO providerRegistrationDTO);
 
     ResponseEntity<ApiResponse> getUserInformationFromRequest(HttpServletRequest request);

@@ -3,6 +3,7 @@ package com.example.datasetapi.controller.authentication;
 import com.example.datasetapi.dto.request.ProviderRegistrationRequestDTO;
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.service.user.UserService;
+import jakarta.annotation.security.PermitAll;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +20,9 @@ public class AuthController {
     }
 
     @PostMapping("provider/sendFormRegister")
-    public ResponseEntity<ApiResponse> sendFormRegister(@RequestBody ProviderRegistrationRequestDTO providerRegistrationDTO) {
+    @PermitAll // hoặc @PreAuthorize("permitAll()")
+
+    public ResponseEntity<ApiResponse> sendFormRegister(@ModelAttribute ProviderRegistrationRequestDTO providerRegistrationDTO) {
         System.out.println(providerRegistrationDTO.getFullName());
         return userService.ProviderRegistrationProcess(providerRegistrationDTO);
     }

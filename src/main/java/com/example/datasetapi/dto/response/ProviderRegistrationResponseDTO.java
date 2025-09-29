@@ -1,5 +1,6 @@
 package com.example.datasetapi.dto.response;
 
+import com.example.datasetapi.enums.DocumentType;
 import lombok.Data;
 
 import java.time.LocalDateTime;

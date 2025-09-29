@@ -7,6 +7,7 @@ import com.example.datasetapi.dto.request.RegisterRequest;
 import com.example.datasetapi.dto.request.UpdatePasswordRequest;
 import com.example.datasetapi.dto.response.*;
 import com.example.datasetapi.dto.service.ProvierIdentityDocumentDTO;
+import com.example.datasetapi.enums.DocumentType;
 import com.example.datasetapi.enums.VerificationStatus.RegistrationStatus;
 import com.example.datasetapi.enums.VerificationStatus.VerificationStatus;
 import com.example.datasetapi.model.UserManager.ProviderIdentityDocument;
@@ -341,7 +342,7 @@ public class UserServiceImpl implements UserService {
             responseDTO.setEmail(savedRegistration.getEmail());
             responseDTO.setPhoneNumber(savedRegistration.getPhoneNumber());
             responseDTO.setRegistrationStatus(savedRegistration.getRegistrationStatus().toString());
-            responseDTO.setCreatedAt(LocalDateTime.from(savedRegistration.getCreatedAt()));
+            responseDTO.setCreatedAt(LocalDateTime.now());
 
             return ResponseEntity.ok(new ApiResponse(true,
                     "Provider registration submitted successfully. Your application is under review.",
@@ -353,9 +354,6 @@ public class UserServiceImpl implements UserService {
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse(false, "Error uploading documents: " + e.getMessage(), null));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse(false, "An unexpected error occurred during registration", null));
         }
     }
 
@@ -440,7 +438,7 @@ public class UserServiceImpl implements UserService {
 //            providerIdentityDocument.setImage_url(imageUrl);
 
             // Set document type if available in DTO
-            // providerIdentityDocument.setDocumentType(dto.getDocumentType());
+             providerIdentityDocument.setDocumentType(DocumentType.valueOf(dto.getType()));
 
             // Thêm vào danh sách và lưu vào database
             providerIdentityDocuments.add(providerIdentityDocument);
