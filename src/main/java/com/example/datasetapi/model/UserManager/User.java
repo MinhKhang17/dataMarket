@@ -26,9 +26,8 @@ public class User {
     @JoinColumn(name = "role_id")
     private Role role;
 
-
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "token", referencedColumnName = "id")
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "token_id")
     private Token token;
 
     @Column(nullable = true)

@@ -48,7 +48,7 @@ import java.util.*;
 public class UserServiceImpl implements UserService {
 
 
-    private final String GOOGLEPROVIDER = "GOOGLE";
+    private final String GOOGLEPROVIDER= "GOOGLE";
 
     private final JwtUtil jwtUtil;
 
@@ -106,13 +106,16 @@ public class UserServiceImpl implements UserService {
 
 
                 return ResponseEntity.ok().body(new ApiResponse(true, "login Success", loginResponse));
+
+
+            } else {
+                return ResponseEntity.badRequest().body(new ApiResponse(false, "Invalid password", null));
             }
         } else {
 
             return ResponseEntity.badRequest().body(new ApiResponse(false, "Invalid username or password", null));
         }
 
-        return null;
     }
 
     @Transactional
@@ -192,6 +195,7 @@ public class UserServiceImpl implements UserService {
     }
 
 
+
     @Transactional
     @Override
     public ResponseEntity<ApiResponse> updatePassword(UpdatePasswordRequest request) {
@@ -258,15 +262,22 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ResponseEntity<ApiResponse> logout(HttpServletResponse response) {
+    public ResponseEntity<ApiResponse> logout(HttpServletResponse response, HttpServletRequest request) {
 
-//        tokenService.deleteByToken(response.);
+        String token = tokenService.resolveToken(request);
+
+        long userId = jwtUtil.getUserIdFromToken(token);
+
+        tokenService.deleteByUserId(userId);
+
 
         Cookie cookie = new Cookie("refresh_token", null);
         cookie.setMaxAge(0);
         response.addCookie(cookie);
 
-        return ResponseEntity.ok().body(new ApiResponse(true, "refresh Success", cookie));
+
+
+        return ResponseEntity.ok().body(new ApiResponse(true, "refresh Success",null));
     }
 
     @Override
@@ -445,6 +456,7 @@ public class UserServiceImpl implements UserService {
 
             providerIdentityDocumentRepository.save(providerIdentityDocument);
         }
+
         return providerIdentityDocuments;
     }
 

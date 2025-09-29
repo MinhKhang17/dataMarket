@@ -5,6 +5,7 @@ import com.example.datasetapi.model.UserManager.Token;
 import com.example.datasetapi.model.UserManager.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.transaction.Transactional;
 import org.springframework.http.ResponseEntity;
 
 public interface TokenService {
@@ -14,4 +15,8 @@ public interface TokenService {
 
     ResponseEntity<ApiResponse> refrestAccessToken(HttpServletRequest request, HttpServletResponse response);
 
+    String resolveToken(HttpServletRequest request);
+
+    @Transactional
+    public void deleteByUserId(long userId);
 }

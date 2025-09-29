@@ -12,7 +12,6 @@ import jakarta.transaction.Transactional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.Optional;
 
@@ -25,7 +24,7 @@ public interface UserService {
 
     User createUserForLoginByGoogleFlow(OAuth2User oAuth2User);
 
-    ResponseEntity<ApiResponse> logout(HttpServletResponse response);
+    ResponseEntity<ApiResponse> logout(HttpServletResponse response, HttpServletRequest request);
 
     Optional<User> findUserById(long userId);
 

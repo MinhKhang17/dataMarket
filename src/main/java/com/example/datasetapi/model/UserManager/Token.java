@@ -23,6 +23,7 @@ public class Token {
     private User user;
 
 
+
     public Token(String token, User user) {
         this.token = token;
         this.user = user;
