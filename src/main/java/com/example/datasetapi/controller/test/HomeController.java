@@ -18,4 +18,5 @@ public class HomeController {
     public Map<String, Object> user(@AuthenticationPrincipal OAuth2User principal) {
         return principal.getAttributes();
     }
+
 }
