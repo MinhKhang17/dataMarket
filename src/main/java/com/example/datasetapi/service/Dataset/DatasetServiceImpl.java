@@ -10,6 +10,7 @@ import com.example.datasetapi.repository.DowloadTokenRepository;
 import com.example.datasetapi.service.user.TokenService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -34,23 +35,22 @@ public class DatasetServiceImpl implements DatasetService {
     @Autowired
     private S3Client s3Client;
     @Autowired
-    private S3Config s3Config;
-    @Autowired
     private DatasetRepository datasetRepository;
     @Autowired
     private DowloadTokenRepository dowloadTokenRepository;
     DatasetServiceImpl(S3Client s3Client, S3Config s3Config, DatasetRepository datasetRepository,DowloadTokenRepository dowloadTokenRepository) {
     this.dowloadTokenRepository = dowloadTokenRepository;
         this.s3Client = s3Client;
-        this.s3Config = s3Config;
         this.datasetRepository = datasetRepository;
     }
 
-    private final String BUCKET_NAME = "datasetmarket-bucket";
+    @Value("${aws.bucket.name}")
+    private String BUCKET_NAME;
 
     @Override
     public Dataset uploadFile(MultipartFile file) {
         try {
+
             String fileName = file.getOriginalFilename();
             String fileKey = UUID.randomUUID()+file.getOriginalFilename();
 
