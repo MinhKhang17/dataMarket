@@ -1,7 +1,7 @@
 package com.example.datasetapi.controller.DatasetController;
 
 import com.example.datasetapi.model.Dataset.DatasetInfor;
-import com.example.datasetapi.service.dataset.DatasetSchemaService;
+import com.example.datasetapi.service.Dataset.DatasetValidateService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,7 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class DatasetController {
 
-    private final DatasetSchemaService schemaService;
+    private DatasetValidateService datasetValidateService;
 
     @PostMapping("/readHeader")
     public ResponseEntity<?> uploadLocal(
@@ -21,8 +21,8 @@ public class DatasetController {
             @RequestParam(required = false) String description,
             @RequestParam("file") MultipartFile file
     ) {
-        DatasetInfor ds = schemaService.uploadAndSchemaCheck(datasetTypeId, file, name, description);
-        return ResponseEntity.ok(ds);
+       return  datasetValidateService.uploadAndHeaderCheck(datasetTypeId, file, name, description);
+
     }
 
     @PostMapping("/readByUrl")
@@ -32,7 +32,7 @@ public class DatasetController {
             @RequestParam(required = false) String description,
             @RequestParam String fileUrl
     ) {
-        DatasetInfor ds = schemaService.uploadAndSchemaCheckByUrl(datasetTypeId, fileUrl, name, description);
+        DatasetInfor ds = datasetValidateService.uploadAndSchemaCheckByUrl(datasetTypeId, fileUrl, name, description);
         return ResponseEntity.ok(ds);
     }
 }
