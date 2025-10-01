@@ -23,4 +23,11 @@ public class DatasetType {
             joinColumns = @JoinColumn(name = "dataset_type_id"), // FK trỏ về DatasetType
             inverseJoinColumns = @JoinColumn(name = "dataset_type_column_id") // FK trỏ về DatasetTypeColumn
     )
-    private List<DatasetTypeColumn> datasetTypeColumnList;}
+
+    private List<DatasetTypeColumn> datasetTypeColumnList;
+
+    @Column
+    private String keyFile;
+
+
+}

@@ -4,6 +4,7 @@ import com.example.datasetapi.enums.DocumentType;
 import com.example.datasetapi.enums.VerificationStatus.RegistrationStatus;
 import com.example.datasetapi.enums.VerificationStatus.VerificationStatus;
 import com.example.datasetapi.model.Dataset.Category;
+import com.example.datasetapi.model.Dataset.Dataset;
 import com.example.datasetapi.model.Dataset.DatasetType;
 import com.example.datasetapi.model.Dataset.DatasetTypeColumn;
 import com.example.datasetapi.model.UserManager.ProviderIdentityDocument;
@@ -30,8 +31,10 @@ private final ProviderIndentityDocumentRepository providerIndentityDocumentRepos
 private final CategoryRepository categoryRepository;
 private final DatasetTypeRepository datasetTypeRepository;
 private final Dataset_Type_Column_Repository datasetTypeColumnRepository;
+private final DatasetRepository datasetRepository;
     @Autowired
-    public DataInitializer(Dataset_Type_Column_Repository datasetTypeColumnRepository,DatasetTypeRepository datasetTypeRepository,CategoryRepository categoryRepository, ProviderIndentityDocumentRepository providerIndentityDocumentRepository,ProviderRegistrationRepository providerRegistrationRepository,UserRepository userRepository,RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
+    public DataInitializer(DatasetRepository datasetRepository,Dataset_Type_Column_Repository datasetTypeColumnRepository,DatasetTypeRepository datasetTypeRepository,CategoryRepository categoryRepository, ProviderIndentityDocumentRepository providerIndentityDocumentRepository,ProviderRegistrationRepository providerRegistrationRepository,UserRepository userRepository,RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
+        this.datasetRepository = datasetRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.userRepository = userRepository;
@@ -67,6 +70,20 @@ private final Dataset_Type_Column_Repository datasetTypeColumnRepository;
 
         assignColumnAndCategoryToDatasetType();
 
+        createDatasetDemo();
+    }
+
+    private void createDatasetDemo() {
+        Dataset dataset = new Dataset();
+        dataset.setDatasetType(datasetTypeRepository.findById(1L).get());
+        dataset.setFileKey("testUpload.txt");
+    List<Category> categories = new ArrayList<>();
+    categories.add(categoryRepository.findById(1).get());
+
+        dataset.setCategories(categories);
+        dataset.setName("testDataset");
+        dataset.setDescription("This is a description");
+    datasetRepository.save(dataset);
     }
 
     private void assignColumnAndCategoryToDatasetType() {

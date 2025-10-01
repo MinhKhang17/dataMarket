@@ -32,9 +32,5 @@ public TestController(PaymentService paymentService) {
         paymentService.updateWallet(TransferType.TOUP,100,1);
     return  ResponseEntity.ok().body("success");
     }
-    @PostMapping("/upload")
-    public ResponseEntity<String> upload(@RequestParam("file") MultipartFile file) throws IOException, IOException {
-        s3Service.uploadFile(file);
-        return ResponseEntity.ok("File uploaded successfully!");
-    }
+
 }

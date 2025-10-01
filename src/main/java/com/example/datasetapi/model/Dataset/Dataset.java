@@ -32,5 +32,5 @@ private List<Category> categories;
 private DatasetType datasetType;
 
 @Column
-private String file_url;
+private String fileKey;
 }

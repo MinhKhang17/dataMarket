@@ -1,14 +1,20 @@
     package com.example.datasetapi.util;
 
+    import com.example.datasetapi.model.Dataset.DownloadToken;
     import com.example.datasetapi.model.UserManager.User;
+    import com.example.datasetapi.repository.DowloadTokenRepository;
     import io.jsonwebtoken.*;
     import io.jsonwebtoken.security.Keys;
     import jakarta.servlet.http.HttpServletRequest;
+    import org.springframework.beans.factory.annotation.Autowired;
     import org.springframework.beans.factory.annotation.Value;
     import org.springframework.stereotype.Component;
 
     import java.security.Key;
+    import java.time.Duration;
+    import java.time.Instant;
     import java.util.Date;
+    import java.util.UUID;
     import java.util.stream.Collectors;
 
     @Component
@@ -16,6 +22,8 @@
         private final Key key;  // Dùng để ký và verify token
         private final long expirationTime;
 
+        @Autowired
+        private DowloadTokenRepository  dowloadTokenRepository;
         // Spring sẽ inject từ application.properties
         public JwtUtil(@Value("${jwt.secret}") String secret,
                        @Value("${jwt.expiration}") long expirationTime) {
@@ -42,6 +50,16 @@
                     .setExpiration(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 7)) // 7 ngày
                     .signWith(key, SignatureAlgorithm.HS256)
                     .compact();
+        }
+
+        public DownloadToken generateDowloadToken(long userId, long datasetId, Duration ttl) {
+            DownloadToken token = new DownloadToken();
+            token.setId(UUID.randomUUID());
+            token.setUserId(userId);
+            token.setDatasetId(datasetId);
+            token.setExpiresAt(Instant.now().plus(ttl));
+            token.setUsed(false);
+            return dowloadTokenRepository.save(token);
         }
 
 

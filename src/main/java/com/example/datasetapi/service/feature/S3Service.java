@@ -23,20 +23,5 @@ public class S3Service {
     @Value("${aws.bucket.name}")
     private String bucketName;
 
-//    public void uploadFile(MultipartFile file) throws IOException {
-//        s3Client.putObject(PutObjectRequest.builder()
-//                        .bucket(bucketName)
-//                        .key(file.getOriginalFilename())
-//                        .build(),
-//                RequestBody.fromBytes(file.getBytes()));
-//    }
 
-    public byte[] downloadFile(String key) {
-        ResponseBytes<GetObjectResponse> objectAsBytes =
-                s3Client.getObjectAsBytes(GetObjectRequest.builder()
-                        .bucket(bucketName)
-                        .key(key)
-                        .build());
-        return objectAsBytes.asByteArray();
-    }
 }
