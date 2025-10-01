@@ -1,5 +1,6 @@
 package com.example.datasetapi.model.Dataset;
 
+import com.example.datasetapi.dto.response.ValidationErrorDto;
 import com.example.datasetapi.enums.Datasets.DatasetStatus;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -10,7 +11,7 @@ import java.util.List;
 @Data
 @Entity
 @Table
-public class Dataset {
+public class DatasetInfor {
 @Id
 @GeneratedValue(strategy= GenerationType.IDENTITY)
 private Long id;
@@ -29,13 +30,9 @@ private String description;
 )
 private List<Category> categories;
 
-    @ManyToMany
-    @JoinTable(
-            name = "dataset_dataset_type",
-            joinColumns = @JoinColumn(name = "dataset_id"),
-            inverseJoinColumns = @JoinColumn(name = "dataset_type_id")
-    )
-    private List<DatasetType> datasetTypeList = new ArrayList<>();
+@ManyToOne
+@JoinColumn(name = "dataset_type_id", nullable = false)
+private DatasetType datasetType;
 
 @Enumerated(EnumType.STRING)
 @Column(nullable = false)
@@ -46,4 +43,7 @@ private Long rowCount;
 
 @Column
 private String file_url;
+
+@Transient
+private List<ValidationErrorDto> validationErrors;
 }
