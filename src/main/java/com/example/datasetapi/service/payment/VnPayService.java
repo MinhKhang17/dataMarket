@@ -3,7 +3,7 @@ package com.example.datasetapi.service.payment;
 import com.example.datasetapi.config.VnpayProperties;
 import com.example.datasetapi.dto.request.CreateVnpayPaymentRequest;
 import com.example.datasetapi.enums.TransferType;
-import com.example.datasetapi.model.UserManager.User;
+import com.example.datasetapi.model.userManager.User;
 import com.example.datasetapi.model.paySystem.Wallet;
 import com.example.datasetapi.repository.WalletRepository;
 import com.example.datasetapi.service.user.TokenServiceImpl;

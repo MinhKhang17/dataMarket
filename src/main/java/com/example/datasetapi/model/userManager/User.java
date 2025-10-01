@@ -1,12 +1,16 @@
-package com.example.datasetapi.model.UserManager;
+package com.example.datasetapi.model.userManager;
 
 import com.example.datasetapi.enums.UserStatus;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "User_Information")
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,6 +25,8 @@ public class User {
     @Column(nullable = false,unique = true)
     private String email;
 
+    @OneToOne(mappedBy = "user", orphanRemoval = true, cascade = CascadeType.ALL, fetch =  FetchType.LAZY, optional = true)
+    private Consumer consumer;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id")

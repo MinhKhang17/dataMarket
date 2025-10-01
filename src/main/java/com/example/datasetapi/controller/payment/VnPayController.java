@@ -1,4 +1,4 @@
-package com.example.datasetapi.controller.PaymentController;
+package com.example.datasetapi.controller.payment;
 
 import com.example.datasetapi.dto.request.CreateVnpayPaymentRequest;
 import com.example.datasetapi.service.user.UserService;

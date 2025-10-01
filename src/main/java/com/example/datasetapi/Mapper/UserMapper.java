@@ -1,8 +1,7 @@
 package com.example.datasetapi.Mapper;
 
 import com.example.datasetapi.dto.response.UserInformationResponseForAuthMe;
-import com.example.datasetapi.model.UserManager.Role;
-import com.example.datasetapi.model.UserManager.User;
+import com.example.datasetapi.model.userManager.User;
 
 public class UserMapper {
     public static UserInformationResponseForAuthMe toUserInformationResponseForAuthMeDTO(User user) {

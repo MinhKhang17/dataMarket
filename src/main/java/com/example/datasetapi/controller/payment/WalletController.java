@@ -1,7 +1,5 @@
-package com.example.datasetapi.controller.PaymentController;
+package com.example.datasetapi.controller.payment;
 
-import com.example.datasetapi.model.paySystem.Wallet;
-import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.service.payment.PaymentService;
 import com.example.datasetapi.service.user.UserService;
 import com.example.datasetapi.service.user.UserServiceImpl;
@@ -10,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.*;
@@ -37,9 +34,6 @@ public class WalletController {
 
     @GetMapping("/me")
     public ResponseEntity<?> getMyWallet(HttpServletRequest request) {
-
-
-
         return  userService.getWalletAmountFromToken(request);
     }
 }

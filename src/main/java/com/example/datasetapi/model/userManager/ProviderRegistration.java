@@ -1,4 +1,4 @@
-package com.example.datasetapi.model.UserManager;
+package com.example.datasetapi.model.userManager;
 
 import com.example.datasetapi.enums.VerificationStatus.RegistrationStatus;
 import jakarta.persistence.*;

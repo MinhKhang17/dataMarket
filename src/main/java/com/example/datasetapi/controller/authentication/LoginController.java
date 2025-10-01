@@ -3,7 +3,6 @@ package com.example.datasetapi.controller.authentication;
 import com.example.datasetapi.dto.request.LoginRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.service.user.UserService;
-import com.example.datasetapi.service.user.UserServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("api/auth")
-public class loginController {
+public class LoginController {
     private UserService userService;
     @Autowired
     public void LoginController(UserService userService) {

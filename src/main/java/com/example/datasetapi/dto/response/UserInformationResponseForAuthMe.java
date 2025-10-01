@@ -1,6 +1,5 @@
 package com.example.datasetapi.dto.response;
 
-import com.example.datasetapi.model.UserManager.Role;
 import lombok.Data;
 
 @Data

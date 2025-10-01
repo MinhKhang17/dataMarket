@@ -1,8 +1,7 @@
 package com.example.datasetapi.config;
 
-import com.example.datasetapi.model.UserManager.User;
+import com.example.datasetapi.model.userManager.User;
 import com.example.datasetapi.service.user.TokenServiceImpl;
-import com.example.datasetapi.service.user.UserService;
 import com.example.datasetapi.service.user.UserServiceImpl;
 import com.example.datasetapi.util.JwtUtil;
 import jakarta.servlet.ServletException;
@@ -10,14 +9,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.UUID;
 
 @Component
 public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
