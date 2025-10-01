@@ -8,6 +8,7 @@ import com.example.datasetapi.model.Dataset.DownloadToken;
 import com.example.datasetapi.repository.DatasetRepository;
 import com.example.datasetapi.repository.DowloadTokenRepository;
 import com.example.datasetapi.service.user.TokenService;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
@@ -71,12 +72,14 @@ public class DatasetServiceImpl implements DatasetService {
 
 
 
+    @Transactional
     @Override
     public ResponseEntity<?> dowloadDataset(String dowloadToken) {
 
+        //lay dowload token tu request checck xem nguoi dung co permussion de su dung hay khong
         Optional<DownloadToken> downloadTokenOptional = dowloadTokenRepository.findById(UUID.fromString(dowloadToken));
 
-
+        //neu khong ton tai thi tra ve loi
         if(!downloadTokenOptional.isPresent()){
             return ResponseEntity.internalServerError().body(new ApiResponse(false,"token is not valid",null));
         }
@@ -89,9 +92,14 @@ public class DatasetServiceImpl implements DatasetService {
             return ResponseEntity.internalServerError().body(new ApiResponse(false,"can not find dataset with id + "+datasetId,null));
         }
 
+
         Dataset dataset = datasetGetFromToken.get();
 
         String fileKey = dataset.getFileKey();
+
+        DownloadToken downloadToken = downloadTokenOptional.get();
+        downloadToken.setUsed(true);
+        dowloadTokenRepository.save(downloadToken);
 
         GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                 .bucket(BUCKET_NAME)
