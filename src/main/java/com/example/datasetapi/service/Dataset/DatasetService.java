@@ -1,4 +1,4 @@
-package com.example.datasetapi.service.Dataset;
+package com.example.datasetapi.service.dataset;
 
 public class DatasetService {
 }

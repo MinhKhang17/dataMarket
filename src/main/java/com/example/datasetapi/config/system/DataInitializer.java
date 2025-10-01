@@ -24,12 +24,13 @@ public class DataInitializer implements CommandLineRunner {
 
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
-private final UserRepository userRepository;
-private final ProviderRegistrationRepository providerRegistrationRepository;
-private final ProviderIndentityDocumentRepository providerIndentityDocumentRepository;
-private final CategoryRepository categoryRepository;
-private final DatasetTypeRepository datasetTypeRepository;
-private final Dataset_Type_Column_Repository datasetTypeColumnRepository;
+    private final UserRepository userRepository;
+    private final ProviderRegistrationRepository providerRegistrationRepository;
+    private final ProviderIndentityDocumentRepository providerIndentityDocumentRepository;
+    private final CategoryRepository categoryRepository;
+    private final DatasetTypeRepository datasetTypeRepository;
+    private final Dataset_Type_Column_Repository datasetTypeColumnRepository;
+
     @Autowired
     public DataInitializer(Dataset_Type_Column_Repository datasetTypeColumnRepository,DatasetTypeRepository datasetTypeRepository,CategoryRepository categoryRepository, ProviderIndentityDocumentRepository providerIndentityDocumentRepository,ProviderRegistrationRepository providerRegistrationRepository,UserRepository userRepository,RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
         this.roleRepository = roleRepository;
@@ -203,7 +204,17 @@ private final Dataset_Type_Column_Repository datasetTypeColumnRepository;
             datasetTypeColumn.setColumnName(columnName);
             datasetTypeColumnRepository.save(datasetTypeColumn);
         }
+
+        for (String name : columnNames) {
+            if (!datasetTypeColumnRepository.existsByColumnName(name)) {
+                DatasetTypeColumn c = new DatasetTypeColumn();
+                c.setColumnName(name);
+                datasetTypeColumnRepository.save(c);
+            }
+        }
     }
+
+
 
 
     private void createDatasetType() {
