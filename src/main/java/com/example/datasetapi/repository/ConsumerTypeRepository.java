@@ -10,4 +10,5 @@ import java.util.Optional;
 @Repository
 public interface ConsumerTypeRepository extends JpaRepository<ConsumerType, Long> {
 
+    Optional<ConsumerType> findByNameIgnoreCase(String name);
 }

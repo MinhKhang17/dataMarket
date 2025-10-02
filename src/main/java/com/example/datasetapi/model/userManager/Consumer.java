@@ -29,4 +29,7 @@ public class Consumer {
             inverseJoinColumns = @JoinColumn(name = "consumer_type_id")
     )
     private List<ConsumerType> consumerTypes;
+
+    @Column(name = "is_do_survey", nullable = false)
+    private boolean doSurvey = false;
 }

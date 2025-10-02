@@ -12,4 +12,5 @@ import java.util.List;
 public class ConsumerResponse {
     private Long id;
     private List<ConsumerTypeResponse> types;
+    private boolean isDoSurvey;
 }
