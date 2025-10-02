@@ -64,8 +64,6 @@ public class SurveyServiceImpl implements SurveyService {
     public ResponseEntity<ApiResponse> submitSurveyResponses(ConsumerRequest consumerRequest) {
         try {
             String token = tokenService.resolveToken(request);
-            if (token == null) return ResponseEntity.status(401)
-                    .body(new ApiResponse(false, "Missing/invalid Authorization", null));
 
             Long userId = jwtUtil.getUserIdFromToken(token);
             if (userId == null) return ResponseEntity.status(401)
