@@ -12,7 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/dataset")
-public class DatasetController {
+public class DowloadController {
 
 
 
@@ -21,7 +21,7 @@ public class DatasetController {
     @Autowired
     private DatasetService datasetService;
 
-    DatasetController(DatasetService datasetService) {
+    DowloadController(DatasetService datasetService) {
         this.datasetService = datasetService;
     }
     @GetMapping("/getKey")
@@ -38,10 +38,7 @@ public class DatasetController {
         return datasetService.dowloadDataset(dowloadToken);
 
     }
-    @PostMapping("/upload")
-    public ResponseEntity<ApiResponse> uploadFile(@RequestParam MultipartFile file, long datasetTypeId){
-        return ResponseEntity.ok().body(new ApiResponse(true,"success",datasetTypeId));
-    }
+
 
 
 

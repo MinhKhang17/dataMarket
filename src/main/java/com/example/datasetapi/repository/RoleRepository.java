@@ -15,4 +15,6 @@ public interface RoleRepository extends JpaRepository<Role, Integer> {
 
 
     Set<Role> findRoleById(Long id);
+
+    Role getRolesByName(String name);
 }

@@ -5,6 +5,7 @@ import com.example.datasetapi.dto.request.ProviderRegistrationRequestDTO;
 import com.example.datasetapi.dto.request.RegisterRequest;
 import com.example.datasetapi.dto.request.UpdatePasswordRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
+import com.example.datasetapi.model.UserManager.Provider;
 import com.example.datasetapi.model.UserManager.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -34,4 +35,5 @@ public interface UserService {
 
     ResponseEntity<ApiResponse> getUserInformationFromRequest(HttpServletRequest request);
     ResponseEntity<?> getWalletAmountFromToken(HttpServletRequest token);
+    Provider findProviderById(long providerId);
 }

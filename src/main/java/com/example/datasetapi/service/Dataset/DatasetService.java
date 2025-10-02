@@ -10,5 +10,5 @@ public interface DatasetService {
 
     ResponseEntity<?> dowloadDataset(String dowloadToken);
 
-    Dataset uploadFile(MultipartFile file);
+    Dataset uploadCSVFileToPendingFolder(MultipartFile file,Dataset dataset);
 }

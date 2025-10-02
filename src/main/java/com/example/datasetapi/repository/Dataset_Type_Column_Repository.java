@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface Dataset_Type_Column_Repository extends JpaRepository<DatasetTypeColumn,Long> {
     List<DatasetTypeColumn> findByColumnNameIn(List<String> list);
+
+    boolean existsByColumnName(String name);
 }

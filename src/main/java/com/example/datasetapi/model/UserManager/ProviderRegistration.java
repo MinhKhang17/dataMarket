@@ -33,5 +33,6 @@ public class ProviderRegistration {
     // Liên kết sang giấy tờ định danh
     @OneToMany(mappedBy = "provider", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProviderIdentityDocument> identityDocuments;
-
+    @OneToOne
+    private Provider provider;
 }

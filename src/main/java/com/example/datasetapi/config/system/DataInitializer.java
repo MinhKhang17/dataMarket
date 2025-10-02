@@ -1,17 +1,16 @@
 package com.example.datasetapi.config.system;
 
 import com.example.datasetapi.enums.DocumentType;
+import com.example.datasetapi.enums.UserStatus;
 import com.example.datasetapi.enums.VerificationStatus.RegistrationStatus;
 import com.example.datasetapi.enums.VerificationStatus.VerificationStatus;
 import com.example.datasetapi.model.Dataset.Category;
 import com.example.datasetapi.model.Dataset.Dataset;
 import com.example.datasetapi.model.Dataset.DatasetType;
 import com.example.datasetapi.model.Dataset.DatasetTypeColumn;
-import com.example.datasetapi.model.UserManager.ProviderIdentityDocument;
-import com.example.datasetapi.model.UserManager.ProviderRegistration;
-import com.example.datasetapi.model.UserManager.Role;
-import com.example.datasetapi.model.UserManager.User;
+import com.example.datasetapi.model.UserManager.*;
 import com.example.datasetapi.repository.*;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -32,8 +31,10 @@ private final CategoryRepository categoryRepository;
 private final DatasetTypeRepository datasetTypeRepository;
 private final Dataset_Type_Column_Repository datasetTypeColumnRepository;
 private final DatasetRepository datasetRepository;
+    private final ProviderRepository providerRepository;
+
     @Autowired
-    public DataInitializer(DatasetRepository datasetRepository,Dataset_Type_Column_Repository datasetTypeColumnRepository,DatasetTypeRepository datasetTypeRepository,CategoryRepository categoryRepository, ProviderIndentityDocumentRepository providerIndentityDocumentRepository,ProviderRegistrationRepository providerRegistrationRepository,UserRepository userRepository,RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
+    public DataInitializer(DatasetRepository datasetRepository, Dataset_Type_Column_Repository datasetTypeColumnRepository, DatasetTypeRepository datasetTypeRepository, CategoryRepository categoryRepository, ProviderIndentityDocumentRepository providerIndentityDocumentRepository, ProviderRegistrationRepository providerRegistrationRepository, UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, ProviderRepository providerRepository) {
         this.datasetRepository = datasetRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
@@ -43,9 +44,10 @@ private final DatasetRepository datasetRepository;
     this.categoryRepository = categoryRepository;
     this.datasetTypeRepository = datasetTypeRepository;
     this.datasetTypeColumnRepository = datasetTypeColumnRepository;
+        this.providerRepository = providerRepository;
     }
 
-
+    @Transactional
     @Override
     public void run(String... args) throws Exception {
 
@@ -61,7 +63,10 @@ private final DatasetRepository datasetRepository;
         //tao va gan provider dang ky mau tranh trung lap thong tin khi create-drop db
         createProviderRegistration();
 
+
         createCategory();
+
+
 
 
         createDatasetType();
@@ -77,13 +82,18 @@ private final DatasetRepository datasetRepository;
         Dataset dataset = new Dataset();
         dataset.setDatasetType(datasetTypeRepository.findById(1L).get());
         dataset.setFileKey("testUpload.txt");
-    List<Category> categories = new ArrayList<>();
-    categories.add(categoryRepository.findById(1).get());
-
-        dataset.setCategories(categories);
         dataset.setName("testDataset");
-        dataset.setDescription("This is a description");
-    datasetRepository.save(dataset);
+
+        // Save first to get the ID
+        Dataset savedDataset = datasetRepository.save(dataset);
+
+        // Set categories on the SAVED entity
+        List<Category> categories = new ArrayList<>();
+        categories.add(categoryRepository.findById(1).get());
+        savedDataset.setCategories(categories);
+
+        // Save the SAVED entity again, not the original
+        datasetRepository.save(savedDataset);  // ✅ Correct reference
     }
 
     private void assignColumnAndCategoryToDatasetType() {
@@ -215,12 +225,17 @@ private final DatasetRepository datasetRepository;
         columnNames.add("Monthly_Sessions");
         columnNames.add("Monthly_Energy_kWh");
         columnNames.add("Peak_Hours");
-        for(String columnName : columnNames){
-            DatasetTypeColumn datasetTypeColumn = new DatasetTypeColumn();
-            datasetTypeColumn.setColumnName(columnName);
-            datasetTypeColumnRepository.save(datasetTypeColumn);
+
+        for (String name : columnNames) {
+            if (!datasetTypeColumnRepository.existsByColumnName(name)) {
+                DatasetTypeColumn c = new DatasetTypeColumn();
+                c.setColumnName(name);
+                datasetTypeColumnRepository.save(c);
+            }
         }
     }
+
+
 
 
     private void createDatasetType() {
@@ -259,43 +274,59 @@ private final DatasetRepository datasetRepository;
     }
 
     private void createProviderRegistration() {
-        ProviderRegistration provider = new ProviderRegistration();
-        provider.setFullName("Nguyen Van A");
-        provider.setEmail("nguyenvana@example.com");
-        provider.setPhoneNumber("0123456789");
-        provider.setAddressLine("123 Le Loi");
-        provider.setCity("Binh Duong");
-        provider.setDistrict("Thu Dau Mot");
-        provider.setWard("Ward 1");
-        provider.setRegistrationStatus(RegistrationStatus.PENDING);
-        provider.setCreatedAt(Instant.now());
-        provider.setUpdatedAt(Instant.now());
+        // 1️⃣ Tạo ProviderRegistration
+        ProviderRegistration registration = new ProviderRegistration();
+        registration.setFullName("Nguyen Van A");
+        registration.setEmail("nguyenvana@example.com");
+        registration.setPhoneNumber("0123456789");
+        registration.setAddressLine("123 Le Loi");
+        registration.setCity("Binh Duong");
+        registration.setDistrict("Thu Dau Mot");
+        registration.setWard("Ward 1");
+        registration.setRegistrationStatus(RegistrationStatus.PENDING);
+        registration.setCreatedAt(Instant.now());
+        registration.setUpdatedAt(Instant.now());
 
-        // Tạo document1
-        ProviderIdentityDocument document1 = new ProviderIdentityDocument();
-        document1.setProvider(provider);
-        document1.setImage_url("https://res.cloudinary.com/dofuoy88z/image/upload/v1758869860/seridykcpf1ospeni0zs.jpg");
-        document1.setUploadedAt(Instant.now());
-        document1.setIdCardVerificationStatus(VerificationStatus.PENDING);
-        document1.setManager_id(0L);
-        document1.setIdCardRetentionExpiry(Instant.now().plusSeconds(60*60*24*365));
-        document1.setDocumentType(DocumentType.CCCD_FRONT);
+        // 2️⃣ Tạo document1
+        ProviderIdentityDocument doc1 = new ProviderIdentityDocument();
+        doc1.setProvider(registration);
+        doc1.setImage_url("https://res.cloudinary.com/dofuoy88z/image/upload/v1758869860/seridykcpf1ospeni0zs.jpg");
+        doc1.setUploadedAt(Instant.now());
+        doc1.setIdCardVerificationStatus(VerificationStatus.PENDING);
+        doc1.setManager_id(0L);
+        doc1.setIdCardRetentionExpiry(Instant.now().plusSeconds(60*60*24*365));
+        doc1.setDocumentType(DocumentType.CCCD_FRONT);
 
-        // Tạo document2
-        ProviderIdentityDocument document2 = new ProviderIdentityDocument();
-        document2.setProvider(provider);
-        document2.setImage_url("https://res.cloudinary.com/dofuoy88z/image/upload/v1758869861/oegnzrkytqhvfexxfdrf.jpg");
-        document2.setUploadedAt(Instant.now());
-        document2.setIdCardVerificationStatus(VerificationStatus.PENDING);
-        document2.setManager_id(0L);
-        document2.setIdCardRetentionExpiry(Instant.now().plusSeconds(60*60*24*365));
-        document2.setDocumentType(DocumentType.CCCD_BACK);
+        // 3️⃣ Tạo document2
+        ProviderIdentityDocument doc2 = new ProviderIdentityDocument();
+        doc2.setProvider(registration);
+        doc2.setImage_url("https://res.cloudinary.com/dofuoy88z/image/upload/v1758869861/oegnzrkytqhvfexxfdrf.jpg");
+        doc2.setUploadedAt(Instant.now());
+        doc2.setIdCardVerificationStatus(VerificationStatus.PENDING);
+        doc2.setManager_id(0L);
+        doc2.setIdCardRetentionExpiry(Instant.now().plusSeconds(60*60*24*365));
+        doc2.setDocumentType(DocumentType.CCCD_BACK);
 
-        // Gán list document cho provider
-        provider.setIdentityDocuments(List.of(document1, document2));
+        registration.setIdentityDocuments(List.of(doc1, doc2));
 
-        // Lưu provider, Hibernate sẽ tự lưu cả document (nếu cascade ALL)
-        providerRegistrationRepository.save(provider);
+        // 4️⃣ Lưu ProviderRegistration (Hibernate cascade sẽ lưu cả document)
+        providerRegistrationRepository.save(registration);
+
+        // 5️⃣ Tạo User cho Provider
+        User user = new User();
+        user.setUserStatus(UserStatus.ACTIVE);
+        user.setRole(roleRepository.getRolesByName("PROVIDER"));
+        user.setEmail("provider@gmail.com");
+        user.setUsername("provider");
+        user.setPassword(passwordEncoder.encode("password"));
+        User createdUser = userRepository.save(user);
+
+        // 6️⃣ Tạo Provider, gán Registration và User
+        Provider provider = new Provider();
+        provider.setProviderRegistration(registration); // registration đã managed trong transaction
+        provider.setUser(createdUser);
+        provider.setBankAccount("123456789");
+        providerRepository.save(provider);
     }
 
 

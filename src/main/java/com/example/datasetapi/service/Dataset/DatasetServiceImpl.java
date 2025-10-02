@@ -2,6 +2,7 @@ package com.example.datasetapi.service.Dataset;
 
 import com.example.datasetapi.config.S3Config;
 import com.example.datasetapi.dto.response.ApiResponse;
+import com.example.datasetapi.enums.Datasets.DatasetStatus;
 import com.example.datasetapi.model.Dataset.Dataset;
 import com.example.datasetapi.model.Dataset.DatasetType;
 import com.example.datasetapi.model.Dataset.DownloadToken;
@@ -48,11 +49,11 @@ public class DatasetServiceImpl implements DatasetService {
     private String BUCKET_NAME;
 
     @Override
-    public Dataset uploadFile(MultipartFile file) {
+    public Dataset uploadCSVFileToPendingFolder(MultipartFile file,Dataset dataset) {
         try {
 
             String fileName = file.getOriginalFilename();
-            String fileKey = UUID.randomUUID()+file.getOriginalFilename();
+            String fileKey = "PENDING/"+UUID.randomUUID()+file.getOriginalFilename();
 
             s3Client.putObject(PutObjectRequest.builder()
                             .bucket(BUCKET_NAME)
@@ -61,9 +62,10 @@ public class DatasetServiceImpl implements DatasetService {
                     RequestBody.fromBytes(file.getBytes()));
 
 
-            Dataset dataset = new Dataset();
+
             dataset.setFileKey(fileKey);
             dataset.setName(fileName);
+            dataset.setDatasetStatus(DatasetStatus.PEDDING);
             return datasetRepository.save(dataset);
         } catch (IOException e) {
             throw new RuntimeException(e);

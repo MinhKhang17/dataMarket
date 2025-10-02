@@ -31,9 +31,9 @@ public class User {
     private Token token;
 
     @Column(nullable = true)
-    private String Provider;
+    private String Author;
     @Column(nullable = true)
-    private String Provider_id;
+    private String Auth_id;
 
     @Column(nullable = true)
     private UserStatus userStatus;

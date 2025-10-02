@@ -10,22 +10,15 @@ import com.example.datasetapi.dto.service.ProvierIdentityDocumentDTO;
 import com.example.datasetapi.enums.DocumentType;
 import com.example.datasetapi.enums.VerificationStatus.RegistrationStatus;
 import com.example.datasetapi.enums.VerificationStatus.VerificationStatus;
-import com.example.datasetapi.model.UserManager.ProviderIdentityDocument;
-import com.example.datasetapi.model.UserManager.ProviderRegistration;
-import com.example.datasetapi.model.UserManager.Role;
-import com.example.datasetapi.model.UserManager.User;
-import com.example.datasetapi.repository.ProviderIndentityDocumentRepository;
+import com.example.datasetapi.model.UserManager.*;
+import com.example.datasetapi.repository.*;
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.dto.response.LoginResponse;
 
 import com.example.datasetapi.model.paySystem.Wallet;
-import com.example.datasetapi.repository.RoleRepository;
-import com.example.datasetapi.repository.ProviderRegistrationRepository;
 import com.example.datasetapi.service.feature.ImageServiceImpl;
-import com.example.datasetapi.repository.WalletRepository;
 import com.example.datasetapi.util.PasswordUtil;
 import com.example.datasetapi.util.Validator;
-import com.example.datasetapi.repository.UserRepository;
 import com.example.datasetapi.util.JwtUtil;
 
 import jakarta.servlet.http.Cookie;
@@ -47,7 +40,6 @@ import java.util.*;
 @Service
 public class UserServiceImpl implements UserService {
 
-
     private final String GOOGLEPROVIDER= "GOOGLE";
 
     private final JwtUtil jwtUtil;
@@ -66,8 +58,9 @@ public class UserServiceImpl implements UserService {
 
     private final ProviderRegistrationRepository providerRegistrationRepository;
 
+    private final ProviderRepository providerRepository;
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, JwtUtil jwtUtil, TokenServiceImpl tokenService, RoleRepository roleRepository, ImageServiceImpl imageService, ProviderIndentityDocumentRepository providerIdentityDocumentRepository, ProviderRegistrationRepository providerRegistrationRepository, WalletRepository walletRepository) {
+    public UserServiceImpl(ProviderRepository providerRepository,UserRepository userRepository, JwtUtil jwtUtil, TokenServiceImpl tokenService, RoleRepository roleRepository, ImageServiceImpl imageService, ProviderIndentityDocumentRepository providerIdentityDocumentRepository, ProviderRegistrationRepository providerRegistrationRepository, WalletRepository walletRepository) {
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
         this.tokenService = tokenService;
@@ -76,7 +69,16 @@ public class UserServiceImpl implements UserService {
         this.providerIdentityDocumentRepository = providerIdentityDocumentRepository;
         this.providerRegistrationRepository = providerRegistrationRepository;
         this.walletRepository = walletRepository;
+        this.providerRepository = providerRepository;
     }
+
+
+    @Override
+    public Provider findProviderById(long providerId) {
+        return providerRepository.findById(providerId)
+                .orElseThrow(() -> new IllegalArgumentException("Provider not exits with id: " + providerId));
+    }
+
 
 
     @Override
@@ -251,8 +253,10 @@ public class UserServiceImpl implements UserService {
             newUser.setEmail(email);
             Role role = roleRepository.findByName("CONSUMER").get();
             newUser.setRole(role);
-            newUser.setProvider_id(oAuth2User.getAttribute("sub"));
-            newUser.setProvider(GOOGLEPROVIDER);
+
+            newUser.setAuth_id(oAuth2User.getAttribute("sub"));
+            newUser.setAuthor(GOOGLEPROVIDER);
+
             userRepository.save(newUser);
             return newUser;
         }

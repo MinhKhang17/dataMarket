@@ -5,13 +5,21 @@ import lombok.Data;
 
 @Data
 @Entity
-@Table
+@Table(name = "Provider")
 public class Provider {
-@Id
-@GeneratedValue(strategy= GenerationType.IDENTITY)
-private String id;
-@Column
-private String bankAccount;
-@OneToOne(cascade=CascadeType.ALL)
-private User user;
+
+    @Id
+    private Long id; // id dùng chung với User
+
+    @OneToOne
+    @MapsId // dùng cùng primary key với User
+    @JoinColumn(name = "id") // tên cột khóa ngoại trùng với PK
+    private User user;
+
+    @Column
+    private String bankAccount;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "provider_registration_id") // FK tới ProviderRegistration
+    private ProviderRegistration providerRegistration;
 }

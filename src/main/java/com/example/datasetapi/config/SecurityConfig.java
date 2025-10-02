@@ -4,6 +4,7 @@ import com.example.datasetapi.service.user.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -55,9 +56,55 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
+//    @Bean
+//    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+//        http
+//                .csrf(csrf -> csrf.disable())
+//                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+//                .authorizeHttpRequests(auth -> auth
+//                        .requestMatchers(
+//                                "/api/auth/**",
+//                                "/api/public/**",
+//                                "/api/test/**",
+//                                "/oauth2/**",
+//                                "/login/oauth2/**",
+//                                "/swagger-ui/**",
+//                                "/v3/api-docs/**",
+//                                "/api/auth/**"
+//                        ).permitAll()
+//                        .anyRequest().authenticated()
+//                )
+//                .oauth2Login(oauth2 -> oauth2
+//                        .loginPage("/oauth2/authorization/google")
+//                        .successHandler(oAuth2LoginSuccessHandler)
+//                        .failureUrl("/login?error=true")
+//                )
+//                // Session policy:
+//                // - Với API thì dùng JWT stateless
+//                // - Nhưng OAuth2 login vẫn cần session tạm thời
+//                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+//                // Add JWT filter
+//                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+//
+//        return http.build();
+//    }
+
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    @Order(1) // ưu tiên cao cho dataset
+    public SecurityFilterChain datasetChain(HttpSecurity http) throws Exception {
         http
+                .securityMatcher("/api/datasets/**")
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        return http.build();
+    }
+
+    @Bean
+    @Order(2) // chain này chỉ áp dụng cho các API /api/**
+    public SecurityFilterChain apiChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/api/**") // 👈 rất quan trọng
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
@@ -65,26 +112,12 @@ public class SecurityConfig {
                                 "/api/auth/**",
                                 "/api/public/**",
                                 "/api/test/**",
-                                "/oauth2/**",
-                                "/login/oauth2/**",
                                 "/swagger-ui/**",
-                                "/v3/api-docs/**",
-                                "/api/auth/**"
+                                "/v3/api-docs/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
-                .oauth2Login(oauth2 -> oauth2
-                        .loginPage("/oauth2/authorization/google")
-                        .successHandler(oAuth2LoginSuccessHandler)
-                        .failureUrl("/login?error=true")
-                )
-                // Session policy:
-                // - Với API thì dùng JWT stateless
-                // - Nhưng OAuth2 login vẫn cần session tạm thời
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-                // Add JWT filter
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED));
         return http.build();
     }
 

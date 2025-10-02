@@ -4,6 +4,6 @@ import com.example.datasetapi.dto.service.ProvierIdentityDocumentDTO;
 import com.example.datasetapi.model.UserManager.ProviderRegistration;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface ProviderRegistrationRepository extends JpaRepository<ProviderRegistration, Integer> {
+public interface ProviderRegistrationRepository extends JpaRepository<ProviderRegistration, Long> {
     boolean existsByEmail(String email);
 }
