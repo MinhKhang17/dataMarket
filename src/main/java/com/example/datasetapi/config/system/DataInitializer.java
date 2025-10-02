@@ -8,10 +8,14 @@ import com.example.datasetapi.model.Dataset.Category;
 import com.example.datasetapi.model.Dataset.Dataset;
 import com.example.datasetapi.model.Dataset.DatasetType;
 import com.example.datasetapi.model.Dataset.DatasetTypeColumn;
-import com.example.datasetapi.model.UserManager.*;
+import com.example.datasetapi.model.userManager.*;
 import com.example.datasetapi.repository.*;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import com.example.datasetapi.model.userManager.User;
+import com.example.datasetapi.repository.ConsumerTypeRepository;
+import com.example.datasetapi.repository.RoleRepository;
+import com.example.datasetapi.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -24,21 +28,34 @@ public class DataInitializer implements CommandLineRunner {
 
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
-private final UserRepository userRepository;
-private final ProviderRegistrationRepository providerRegistrationRepository;
-private final ProviderIndentityDocumentRepository providerIndentityDocumentRepository;
-private final CategoryRepository categoryRepository;
-private final DatasetTypeRepository datasetTypeRepository;
-private final Dataset_Type_Column_Repository datasetTypeColumnRepository;
-private final DatasetRepository datasetRepository;
+    private final UserRepository userRepository;
+    private final ConsumerTypeRepository consumerTypeRepository;
+
+    private final ProviderRegistrationRepository providerRegistrationRepository;
+    private final ProviderIndentityDocumentRepository providerIndentityDocumentRepository;
+    private final CategoryRepository categoryRepository;
+    private final DatasetTypeRepository datasetTypeRepository;
+    private final Dataset_Type_Column_Repository datasetTypeColumnRepository;
+    private final DatasetRepository datasetRepository;
     private final ProviderRepository providerRepository;
 
     @Autowired
-    public DataInitializer(DatasetRepository datasetRepository, Dataset_Type_Column_Repository datasetTypeColumnRepository, DatasetTypeRepository datasetTypeRepository, CategoryRepository categoryRepository, ProviderIndentityDocumentRepository providerIndentityDocumentRepository, ProviderRegistrationRepository providerRegistrationRepository, UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, ProviderRepository providerRepository) {
+    public DataInitializer(DatasetRepository datasetRepository,
+                           Dataset_Type_Column_Repository datasetTypeColumnRepository,
+                           DatasetTypeRepository datasetTypeRepository,
+                           CategoryRepository categoryRepository,
+                           ProviderIndentityDocumentRepository providerIndentityDocumentRepository,
+                           ProviderRegistrationRepository providerRegistrationRepository,
+                           UserRepository userRepository,
+                           RoleRepository roleRepository,
+                           PasswordEncoder passwordEncoder,
+                           ProviderRepository providerRepository,
+                           ConsumerTypeRepository consumerTypeRepository) {
         this.datasetRepository = datasetRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.userRepository = userRepository;
+        this.consumerTypeRepository = consumerTypeRepository;
         this.providerRegistrationRepository = providerRegistrationRepository;
         this.providerIndentityDocumentRepository = providerIndentityDocumentRepository;
     this.categoryRepository = categoryRepository;
@@ -47,7 +64,7 @@ private final DatasetRepository datasetRepository;
         this.providerRepository = providerRepository;
     }
 
-    @Transactional
+
     @Override
     public void run(String... args) throws Exception {
 
@@ -56,10 +73,13 @@ private final DatasetRepository datasetRepository;
         roleRepository.save(new Role("CONSUMER"));
 
         System.out.println("Roles & permissions initialized.");
-
         createConsumerRole();
 
         createAdminRole();
+
+        createConsumerTypes();
+
+        System.out.println("Seeded roles, users, and consumer types.");
         //tao va gan provider dang ky mau tranh trung lap thong tin khi create-drop db
         createProviderRegistration();
 
@@ -272,8 +292,8 @@ private final DatasetRepository datasetRepository;
             categoryRepository.save(newCategory);
         }
     }
-
-    private void createProviderRegistration() {
+@Transactional
+protected void createProviderRegistration() {
         // 1️⃣ Tạo ProviderRegistration
         ProviderRegistration registration = new ProviderRegistration();
         registration.setFullName("Nguyen Van A");
@@ -310,7 +330,6 @@ private final DatasetRepository datasetRepository;
         registration.setIdentityDocuments(List.of(doc1, doc2));
 
         // 4️⃣ Lưu ProviderRegistration (Hibernate cascade sẽ lưu cả document)
-        providerRegistrationRepository.save(registration);
 
         // 5️⃣ Tạo User cho Provider
         User user = new User();
@@ -319,12 +338,12 @@ private final DatasetRepository datasetRepository;
         user.setEmail("provider@gmail.com");
         user.setUsername("provider");
         user.setPassword(passwordEncoder.encode("password"));
-        User createdUser = userRepository.save(user);
+
 
         // 6️⃣ Tạo Provider, gán Registration và User
         Provider provider = new Provider();
         provider.setProviderRegistration(registration); // registration đã managed trong transaction
-        provider.setUser(createdUser);
+        provider.setUser(user);
         provider.setBankAccount("123456789");
         providerRepository.save(provider);
     }
@@ -347,5 +366,27 @@ private final DatasetRepository datasetRepository;
         user.setEmail("consumer@gmail.com");
         user.setRole(roleRepository.findByName("CONSUMER").get());
         userRepository.save(user);
+    }
+
+    private void createConsumerTypes() {
+        ConsumerType t1 = new ConsumerType();
+        t1.setName("Student");
+        consumerTypeRepository.save(t1);
+
+        ConsumerType t2 = new ConsumerType();
+        t2.setName("Researcher");
+        consumerTypeRepository.save(t2);
+
+        ConsumerType t3 = new ConsumerType();
+        t3.setName("Educator");
+        consumerTypeRepository.save(t3);
+
+        ConsumerType t4 = new ConsumerType();
+        t4.setName("Startup");
+        consumerTypeRepository.save(t4);
+
+        ConsumerType t5 = new ConsumerType();
+        t5.setName("Business");
+        consumerTypeRepository.save(t5);
     }
 }

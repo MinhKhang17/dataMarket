@@ -10,7 +10,7 @@ post http://localhost:8080/api/payment/create (gửi cả auth token)
 
 nó hiện ra cái link -> crtl + nhấn vô link (nếu test trong postman) -------- còn fe code ra 1 trang form gửi các trường như trên là ok
 
-Ngân hàng	NCB 
+Ngân hàng	NCB
 
 Số thẻ	9704198526191432198
 

@@ -6,7 +6,7 @@ import com.example.datasetapi.enums.Datasets.*;
 import com.example.datasetapi.model.Dataset.Dataset;
 import com.example.datasetapi.model.Dataset.DatasetInformation;
 import com.example.datasetapi.model.Dataset.DatasetType;
-import com.example.datasetapi.model.UserManager.Provider;
+import com.example.datasetapi.model.userManager.Provider;
 import com.example.datasetapi.repository.DatasetInforRepository;
 import com.example.datasetapi.repository.DatasetTypeRepository;
 import com.example.datasetapi.service.user.TokenService;

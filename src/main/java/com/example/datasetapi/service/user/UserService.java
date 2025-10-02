@@ -5,8 +5,8 @@ import com.example.datasetapi.dto.request.ProviderRegistrationRequestDTO;
 import com.example.datasetapi.dto.request.RegisterRequest;
 import com.example.datasetapi.dto.request.UpdatePasswordRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
-import com.example.datasetapi.model.UserManager.Provider;
-import com.example.datasetapi.model.UserManager.User;
+import com.example.datasetapi.model.userManager.Provider;
+import com.example.datasetapi.model.userManager.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
@@ -19,9 +19,8 @@ import java.util.Optional;
 @Service
 public interface UserService {
     ResponseEntity<ApiResponse> login(LoginRequest loginRequest, HttpServletResponse response);
-
-    public ResponseEntity<ApiResponse> register(RegisterRequest registerRequest);
-    public  ResponseEntity<ApiResponse> updatePassword(UpdatePasswordRequest updatePasswordRequest);
+    ResponseEntity<ApiResponse> register(RegisterRequest registerRequest);
+    ResponseEntity<ApiResponse> updatePassword(UpdatePasswordRequest updatePasswordRequest);
 
     User createUserForLoginByGoogleFlow(OAuth2User oAuth2User);
 
@@ -35,5 +34,6 @@ public interface UserService {
 
     ResponseEntity<ApiResponse> getUserInformationFromRequest(HttpServletRequest request);
     ResponseEntity<?> getWalletAmountFromToken(HttpServletRequest token);
+
     Provider findProviderById(long providerId);
 }

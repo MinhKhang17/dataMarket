@@ -10,15 +10,19 @@ import com.example.datasetapi.dto.service.ProvierIdentityDocumentDTO;
 import com.example.datasetapi.enums.DocumentType;
 import com.example.datasetapi.enums.VerificationStatus.RegistrationStatus;
 import com.example.datasetapi.enums.VerificationStatus.VerificationStatus;
-import com.example.datasetapi.model.UserManager.*;
+import com.example.datasetapi.model.userManager.*;
 import com.example.datasetapi.repository.*;
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.dto.response.LoginResponse;
 
 import com.example.datasetapi.model.paySystem.Wallet;
+import com.example.datasetapi.repository.RoleRepository;
+import com.example.datasetapi.repository.ProviderRegistrationRepository;
 import com.example.datasetapi.service.feature.ImageServiceImpl;
+import com.example.datasetapi.repository.WalletRepository;
 import com.example.datasetapi.util.PasswordUtil;
 import com.example.datasetapi.util.Validator;
+import com.example.datasetapi.repository.UserRepository;
 import com.example.datasetapi.util.JwtUtil;
 
 import jakarta.servlet.http.Cookie;
@@ -46,7 +50,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
 
-    private final TokenServiceImpl tokenService;
+    private final TokenService tokenService;
 
     private final RoleRepository roleRepository;
 
@@ -369,6 +373,9 @@ public class UserServiceImpl implements UserService {
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse(false, "Error uploading documents: " + e.getMessage(), null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(false, "An unexpected error occurred during registration", null));
         }
     }
 
