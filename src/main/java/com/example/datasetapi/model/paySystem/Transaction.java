@@ -4,6 +4,7 @@ import com.example.datasetapi.enums.TransferType;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -25,4 +26,14 @@ public class Transaction {
     @ManyToOne
     @JoinColumn
     private Wallet wallet;
+
+    @Column(unique = true) // đảm bảo không trùng TxnRef
+    private String txnRef;
+
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
 }
