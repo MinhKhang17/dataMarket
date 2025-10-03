@@ -34,12 +34,14 @@
         public String generateAccessToken(User user) {
             return Jwts.builder()
                     .setSubject(user.getUsername())
-                    .claim("role", user.getRole()).claim("id", user.getId())
+                    .claim("role", user.getRole().getName()) // 👈 chỉ lấy tên role
+                    .claim("id", user.getId())
                     .setIssuedAt(new Date())
                     .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 15)) // 15 phút
                     .signWith(key, SignatureAlgorithm.HS256)
                     .compact();
         }
+
 
         public String generateRefreshToken(String userId) {
             System.out.println("User id from generateRefreshToken: " + userId);
