@@ -1,4 +1,4 @@
-package com.example.datasetapi.service.Dataset;
+package com.example.datasetapi.service.dataset;
 
 import com.example.datasetapi.model.Dataset.DatasetInformation;
 import jakarta.servlet.http.HttpServletRequest;
