@@ -3,10 +3,13 @@ package com.example.datasetapi.service.Dataset;
 import com.example.datasetapi.config.S3Config;
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.enums.Datasets.DatasetStatus;
+import com.example.datasetapi.model.Dataset.Category;
 import com.example.datasetapi.model.Dataset.Dataset;
 import com.example.datasetapi.model.Dataset.DatasetType;
 import com.example.datasetapi.model.Dataset.DownloadToken;
+import com.example.datasetapi.repository.CategoryRepository;
 import com.example.datasetapi.repository.DatasetRepository;
+import com.example.datasetapi.repository.DatasetTypeRepository;
 import com.example.datasetapi.repository.DowloadTokenRepository;
 import com.example.datasetapi.service.user.TokenService;
 import jakarta.transaction.Transactional;
@@ -14,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -27,6 +31,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -39,6 +44,10 @@ public class DatasetServiceImpl implements DatasetService {
     private DatasetRepository datasetRepository;
     @Autowired
     private DowloadTokenRepository dowloadTokenRepository;
+    @Autowired
+    private CategoryRepository categoryRepository;
+    @Autowired
+    private DatasetTypeRepository datasetTypeRepository;
     DatasetServiceImpl(S3Client s3Client, S3Config s3Config, DatasetRepository datasetRepository,DowloadTokenRepository dowloadTokenRepository) {
     this.dowloadTokenRepository = dowloadTokenRepository;
         this.s3Client = s3Client;
@@ -47,6 +56,26 @@ public class DatasetServiceImpl implements DatasetService {
 
     @Value("${aws.bucket.name}")
     private String BUCKET_NAME;
+
+
+    @Override
+    public ResponseEntity<ApiResponse> getAllCategories() {
+        List<Category> categories = categoryRepository.findAll();
+        if(categories.isEmpty()){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return ResponseEntity.ok().body(new ApiResponse(true,"load Category success",categories));
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse> getAllDatasetType() {
+        List<DatasetType> datasetTypes = datasetTypeRepository.findAll();
+        if(datasetTypes.isEmpty()){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return ResponseEntity.ok().body(new ApiResponse(true,"load DatasetType success",datasetTypes));
+    }
+
 
     @Override
     public Dataset uploadCSVFileToPendingFolder(MultipartFile file,Dataset dataset) {
