@@ -97,7 +97,7 @@ public class DataInitializer implements CommandLineRunner {
         ds1.setName("EV_Station_Pass_1");
         ds1.setDatasetExtension(FileExtension.csv);
         ds1.setStatus(DatasetInforStatus.PENDING);
-        ds1.setFile_url(basePath); // đổi ID cho đúng file thật
+        ds1.setFile_url(basePath);
         ds1.setRowCount(100L);
         ds1.setDatasetType(marketOverview);
         datasetList.add(ds1);
