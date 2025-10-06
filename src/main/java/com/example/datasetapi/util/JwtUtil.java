@@ -2,7 +2,7 @@
 
     import com.example.datasetapi.model.Dataset.DownloadToken;
     import com.example.datasetapi.model.userManager.User;
-    import com.example.datasetapi.repository.DowloadTokenRepository;
+    import com.example.datasetapi.repository.DownloadTokenRepository;
     import io.jsonwebtoken.*;
     import io.jsonwebtoken.security.Keys;
     import jakarta.servlet.http.HttpServletRequest;
@@ -23,7 +23,7 @@
         private final long expirationTime;
 
         @Autowired
-        private DowloadTokenRepository  dowloadTokenRepository;
+        private DownloadTokenRepository  downloadTokenRepository;
         // Spring sẽ inject từ application.properties
         public JwtUtil(@Value("${jwt.secret}") String secret,
                        @Value("${jwt.expiration}") long expirationTime) {
@@ -61,7 +61,7 @@
             token.setDatasetId(datasetId);
             token.setExpiresAt(Instant.now().plus(ttl));
             token.setUsed(false);
-            return dowloadTokenRepository.save(token);
+            return downloadTokenRepository.save(token);
         }
 
 

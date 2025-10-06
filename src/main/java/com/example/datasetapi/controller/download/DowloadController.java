@@ -1,7 +1,7 @@
 package com.example.datasetapi.controller.download;
 
 import com.example.datasetapi.dto.response.ApiResponse;
-import com.example.datasetapi.service.Dataset.DatasetService;
+import com.example.datasetapi.service.dataset.DatasetService;
 import com.example.datasetapi.service.user.TokenService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,8 +13,6 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/dataset")
 public class DowloadController {
-
-
 
     @Autowired
     private TokenService tokenService;
@@ -35,12 +33,9 @@ public class DowloadController {
             @RequestParam String dowloadToken
     ) {
 
-        return datasetService.dowloadDataset(dowloadToken);
+        return datasetService.downloadDataset(dowloadToken);
 
     }
-
-
-
 
 //    @PostMapping("/upload")
 //    public ResponseEntity<?> uploadFile(MultipartFile file) throws IOException {

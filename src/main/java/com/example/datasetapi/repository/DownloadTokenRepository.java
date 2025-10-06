@@ -6,6 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.UUID;
 
 
-public interface DowloadTokenRepository extends JpaRepository<DownloadToken, UUID> {
+public interface DownloadTokenRepository extends JpaRepository<DownloadToken, UUID> {
     DownloadToken findDownloadTokenById(UUID id);
 }

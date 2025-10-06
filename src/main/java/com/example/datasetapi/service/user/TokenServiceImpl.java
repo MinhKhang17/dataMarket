@@ -4,7 +4,7 @@ import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.model.Dataset.DownloadToken;
 import com.example.datasetapi.model.userManager.Token;
 import com.example.datasetapi.model.userManager.User;
-import com.example.datasetapi.repository.DowloadTokenRepository;
+import com.example.datasetapi.repository.DownloadTokenRepository;
 import com.example.datasetapi.repository.TokenRepository;
 import com.example.datasetapi.util.JwtUtil;
 import jakarta.persistence.EntityNotFoundException;
@@ -22,11 +22,11 @@ import java.util.UUID;
 
 @Service
 public class TokenServiceImpl implements TokenService {
-    private final DowloadTokenRepository dowloadTokenRepository;
+    private final DownloadTokenRepository downloadTokenRepository;
 
     @Override
     public DownloadToken findDownloadTokenById(UUID tokenId) {
-        return dowloadTokenRepository.findById(tokenId)
+        return downloadTokenRepository.findById(tokenId)
                 .orElseThrow(() -> new EntityNotFoundException("DownloadToken not found with id: " + tokenId));
     }
 
@@ -65,10 +65,10 @@ public class TokenServiceImpl implements TokenService {
 
 
     @Autowired
-    public TokenServiceImpl(TokenRepository tokenRepository, JwtUtil jwtUtil, DowloadTokenRepository dowloadTokenRepository) {
+    public TokenServiceImpl(TokenRepository tokenRepository, JwtUtil jwtUtil, DownloadTokenRepository downloadTokenRepository) {
         this.tokenRepository = tokenRepository;
         this.jwtUtil = jwtUtil;
-        this.dowloadTokenRepository = dowloadTokenRepository;
+        this.downloadTokenRepository = downloadTokenRepository;
     }
 
 

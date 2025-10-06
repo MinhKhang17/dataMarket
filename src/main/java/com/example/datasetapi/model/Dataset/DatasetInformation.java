@@ -32,4 +32,8 @@ private String file_url;
 private FileExtension datasetExtension;
 @Transient
 private List<ValidationErrorDto> validationErrors;
+
+@OneToOne(fetch = FetchType.LAZY)
+@JoinColumn(name = "dataset_type_id")
+private DatasetType datasetType;
 }

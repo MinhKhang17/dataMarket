@@ -10,8 +10,8 @@ import com.example.datasetapi.model.Dataset.DownloadToken;
 import com.example.datasetapi.repository.CategoryRepository;
 import com.example.datasetapi.repository.DatasetRepository;
 import com.example.datasetapi.repository.DatasetTypeRepository;
-import com.example.datasetapi.repository.DowloadTokenRepository;
-import com.example.datasetapi.service.Dataset.DatasetService;
+import com.example.datasetapi.repository.DownloadTokenRepository;
+import com.example.datasetapi.service.dataset.DatasetService;
 import com.example.datasetapi.service.user.TokenService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,13 +44,13 @@ public class DatasetServiceImpl implements DatasetService {
     @Autowired
     private DatasetRepository datasetRepository;
     @Autowired
-    private DowloadTokenRepository dowloadTokenRepository;
+    private DownloadTokenRepository downloadTokenRepository;
     @Autowired
     private CategoryRepository categoryRepository;
     @Autowired
     private DatasetTypeRepository datasetTypeRepository;
-    DatasetServiceImpl(S3Client s3Client, S3Config s3Config, DatasetRepository datasetRepository,DowloadTokenRepository dowloadTokenRepository) {
-    this.dowloadTokenRepository = dowloadTokenRepository;
+    DatasetServiceImpl(S3Client s3Client, S3Config s3Config, DatasetRepository datasetRepository, DownloadTokenRepository downloadTokenRepository) {
+    this.downloadTokenRepository = downloadTokenRepository;
         this.s3Client = s3Client;
         this.datasetRepository = datasetRepository;
     }
@@ -91,8 +91,6 @@ public class DatasetServiceImpl implements DatasetService {
                             .build(),
                     RequestBody.fromBytes(file.getBytes()));
 
-
-
             dataset.setFileKey(fileKey);
             dataset.setName(fileName);
             dataset.setDatasetStatus(DatasetStatus.PEDDING);
@@ -106,10 +104,10 @@ public class DatasetServiceImpl implements DatasetService {
 
     @Transactional
     @Override
-    public ResponseEntity<?> dowloadDataset(String dowloadToken) {
+    public ResponseEntity<?> downloadDataset(String dowloadToken) {
 
         //lay dowload token tu request checck xem nguoi dung co permussion de su dung hay khong
-        Optional<DownloadToken> downloadTokenOptional = dowloadTokenRepository.findById(UUID.fromString(dowloadToken));
+        Optional<DownloadToken> downloadTokenOptional = downloadTokenRepository.findById(UUID.fromString(dowloadToken));
 
         //neu khong ton tai thi tra ve loi
         if(!downloadTokenOptional.isPresent()){
@@ -124,14 +122,13 @@ public class DatasetServiceImpl implements DatasetService {
             return ResponseEntity.internalServerError().body(new ApiResponse(false,"can not find dataset with id + "+datasetId,null));
         }
 
-
         Dataset dataset = datasetGetFromToken.get();
 
         String fileKey = dataset.getFileKey();
 
         DownloadToken downloadToken = downloadTokenOptional.get();
         downloadToken.setUsed(true);
-        dowloadTokenRepository.save(downloadToken);
+        downloadTokenRepository.save(downloadToken);
 
         GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                 .bucket(BUCKET_NAME)

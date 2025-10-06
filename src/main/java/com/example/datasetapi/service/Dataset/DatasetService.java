@@ -1,4 +1,4 @@
-package com.example.datasetapi.service.Dataset;
+package com.example.datasetapi.service.dataset;
 
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.model.Dataset.Dataset;
@@ -9,7 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 public interface DatasetService {
 
-    ResponseEntity<?> dowloadDataset(String dowloadToken);
+    ResponseEntity<?> downloadDataset(String dowloadToken);
 
     Dataset uploadCSVFileToPendingFolder(MultipartFile file,Dataset dataset);
     ResponseEntity<ApiResponse> getAllCategories();
