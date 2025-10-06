@@ -101,7 +101,7 @@ public class DataInitializer implements CommandLineRunner {
         List<DatasetInformation> datasetList = new ArrayList<>();
 
         DatasetInformation ds1 = new DatasetInformation();
-        ds1.setName("EV_Station_Pass_1");
+        ds1.setName("ev_station_mixed_errors");
         ds1.setDatasetExtension(FileExtension.csv);
         ds1.setStatus(DatasetInforStatus.PENDING);
         ds1.setFile_url(basePath);

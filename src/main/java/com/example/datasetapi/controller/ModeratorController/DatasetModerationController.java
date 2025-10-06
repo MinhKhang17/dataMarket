@@ -24,45 +24,45 @@ public class DatasetModerationController {
     private final DatasetValidateService datasetValidateService;
 
     //Lấy danh sách tất cả dataset để moderator xem
-    @GetMapping("/datasets")
-    public ResponseEntity<?> getAllDatasets() {
-        List<DatasetInformation> all = datasetInforRepository.findAll();
-        return ResponseEntity.ok(new ApiResponse(true, "Danh sách dataset", all));
-    }
+//    @GetMapping("/datasets")
+//    public ResponseEntity<?> getAllDatasets() {
+//        List<DatasetInformation> all = datasetInforRepository.findAll();
+//        return ResponseEntity.ok(new ApiResponse(true, "Danh sách dataset", all));
+//    }
 
     //Lấy chi tiết 1 dataset theo ID (bao gồm thông tin cơ bản)
-    @GetMapping("/datasets/{id}")
-    public ResponseEntity<?> getDatasetById(@PathVariable Long id) {
-        DatasetInformation ds = datasetInforRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy dataset với id: " + id));
-        return ResponseEntity.ok(new ApiResponse(true, "Chi tiết dataset", ds));
-    }
+//    @GetMapping("/datasets/{id}")
+//    public ResponseEntity<?> getDatasetById(@PathVariable Long id) {
+//        DatasetInformation ds = datasetInforRepository.findById(id)
+//                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy dataset với id: " + id));
+//        return ResponseEntity.ok(new ApiResponse(true, "Chi tiết dataset", ds));
+//    }
 
     //Lấy danh sách lỗi kiểm duyệt của 1 dataset
-    @GetMapping("/datasets/{id}/errors")
-    public ResponseEntity<?> getDatasetErrors(@PathVariable Long id) {
-        DatasetInformation ds = datasetInforRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy dataset với id: " + id));
-
-        List<DatasetValidationError> errors = datasetValidationErrorRepository.findByDatasetInformation(ds);
-
-        if (errors.isEmpty()) {
-            return ResponseEntity.ok(new ApiResponse(true, "Không có lỗi kiểm duyệt nào", List.of()));
-        }
-        return ResponseEntity.ok(new ApiResponse(true, "Danh sách lỗi kiểm duyệt", errors));
-    }
+//    @GetMapping("/datasets/{id}/errors")
+//    public ResponseEntity<?> getDatasetErrors(@PathVariable Long id) {
+//        DatasetInformation ds = datasetInforRepository.findById(id)
+//                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy dataset với id: " + id));
+//
+//        List<DatasetValidationError> errors = datasetValidationErrorRepository.findByDatasetInformation(ds);
+//
+//        if (errors.isEmpty()) {
+//            return ResponseEntity.ok(new ApiResponse(true, "Không có lỗi kiểm duyệt nào", List.of()));
+//        }
+//        return ResponseEntity.ok(new ApiResponse(true, "Danh sách lỗi kiểm duyệt", errors));
+//    }
 
 
      //Lọc dataset theo trạng thái kiểm duyệt
      //Ví dụ: /api/moderation/datasets/status?status=PENDING_MODERATION
 
-    @GetMapping("/datasets/status")
-    public ResponseEntity<?> getDatasetByStatus(@RequestParam String status) {
-        List<DatasetInformation> filtered = datasetInforRepository.findAll().stream()
-                .filter(ds -> ds.getStatus().name().equalsIgnoreCase(status))
-                .toList();
-        return ResponseEntity.ok(new ApiResponse(true, "Danh sách dataset theo trạng thái " + status, filtered));
-    }
+//    @GetMapping("/datasets/status")
+//    public ResponseEntity<?> getDatasetByStatus(@RequestParam String status) {
+//        List<DatasetInformation> filtered = datasetInforRepository.findAll().stream()
+//                .filter(ds -> ds.getStatus().name().equalsIgnoreCase(status))
+//                .toList();
+//        return ResponseEntity.ok(new ApiResponse(true, "Danh sách dataset theo trạng thái " + status, filtered));
+//    }
 
     @PostMapping("/moderate")
     public ResponseEntity<?> moderateDataset(
