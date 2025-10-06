@@ -20,6 +20,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.*;
 
@@ -86,7 +88,12 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void createModerationTestData() {
-        String basePath = "https://drive.google.com/drive/folders/1rYg93Jl0s1wOwSP6GUURf8md1tFEnxaV";
+        String basePath = Paths.get("ev_station_mixed_errors.csv").toString();
+        if (Files.exists(Paths.get(basePath))) {
+            System.out.println("Found file at: " + basePath);
+        } else {
+            System.out.println("File not found!");
+        }
 
         DatasetType marketOverview = datasetTypeRepository.findByName("EV_Station_Market_Overview");
         if (marketOverview == null) return;
