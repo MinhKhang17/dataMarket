@@ -4,7 +4,13 @@ import com.example.datasetapi.enums.DocumentType;
 import com.example.datasetapi.enums.UserStatus;
 import com.example.datasetapi.enums.VerificationStatus.RegistrationStatus;
 import com.example.datasetapi.enums.VerificationStatus.VerificationStatus;
-import com.example.datasetapi.model.Dataset.*;
+import com.example.datasetapi.enums.Datasets.FileExtension;
+import com.example.datasetapi.enums.Datasets.DatasetInforStatus;
+import com.example.datasetapi.model.Dataset.Category;
+import com.example.datasetapi.model.Dataset.Dataset;
+import com.example.datasetapi.model.Dataset.DatasetInformation;
+import com.example.datasetapi.model.Dataset.DatasetType;
+import com.example.datasetapi.model.Dataset.DatasetTypeColumn;
 import com.example.datasetapi.model.userManager.*;
 import com.example.datasetapi.repository.*;
 import jakarta.transaction.Transactional;
@@ -17,49 +23,38 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.*;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
 
-    private final RoleRepository roleRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final UserRepository userRepository;
-    private final ConsumerTypeRepository consumerTypeRepository;
-
-    private final ProviderRegistrationRepository providerRegistrationRepository;
-    private final ProviderIndentityDocumentRepository providerIndentityDocumentRepository;
-    private final CategoryRepository categoryRepository;
-    private final DatasetTypeRepository datasetTypeRepository;
-    private final Dataset_Type_Column_Repository datasetTypeColumnRepository;
-    private final DatasetRepository datasetRepository;
-    private final ProviderRepository providerRepository;
-
     @Autowired
-    public DataInitializer(DatasetRepository datasetRepository,
-                           Dataset_Type_Column_Repository datasetTypeColumnRepository,
-                           DatasetTypeRepository datasetTypeRepository,
-                           CategoryRepository categoryRepository,
-                           ProviderIndentityDocumentRepository providerIndentityDocumentRepository,
-                           ProviderRegistrationRepository providerRegistrationRepository,
-                           UserRepository userRepository,
-                           RoleRepository roleRepository,
-                           PasswordEncoder passwordEncoder,
-                           ProviderRepository providerRepository,
-                           ConsumerTypeRepository consumerTypeRepository) {
-        this.datasetRepository = datasetRepository;
-        this.roleRepository = roleRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.userRepository = userRepository;
-        this.consumerTypeRepository = consumerTypeRepository;
-        this.providerRegistrationRepository = providerRegistrationRepository;
-        this.providerIndentityDocumentRepository = providerIndentityDocumentRepository;
-    this.categoryRepository = categoryRepository;
-    this.datasetTypeRepository = datasetTypeRepository;
-    this.datasetTypeColumnRepository = datasetTypeColumnRepository;
-        this.providerRepository = providerRepository;
-    }
+    private final RoleRepository roleRepository;
+    @Autowired
+    private final PasswordEncoder passwordEncoder;
+    @Autowired
+    private final UserRepository userRepository;
+    @Autowired
+    private final ConsumerTypeRepository consumerTypeRepository;
+@Autowired
+    private final ProviderRegistrationRepository providerRegistrationRepository;
+@Autowired
+private final ProviderIndentityDocumentRepository providerIndentityDocumentRepository;
+@Autowired
+private final CategoryRepository categoryRepository;
+@Autowired
+private final DatasetTypeRepository datasetTypeRepository;
+@Autowired
+private final Dataset_Type_Column_Repository datasetTypeColumnRepository;
+@Autowired
+private final DatasetRepository datasetRepository;
+@Autowired
+private final ProviderRepository providerRepository;
+@Autowired
+private final DatasetInforRepository datasetInforRepository;
 
 
     @Override
@@ -93,6 +88,33 @@ public class DataInitializer implements CommandLineRunner {
         assignColumnAndCategoryToDatasetType();
 
         createDatasetDemo();
+        createModerationTestData();
+    }
+
+    private void createModerationTestData() {
+        String basePath = Paths.get("ev_station_mixed_errors.csv").toString();
+        if (Files.exists(Paths.get(basePath))) {
+            System.out.println("Found file at: " + basePath);
+        } else {
+            System.out.println("File not found!");
+        }
+
+        DatasetType marketOverview = datasetTypeRepository.findByName("EV_Station_Market_Overview");
+        if (marketOverview == null) return;
+
+        List<DatasetInformation> datasetList = new ArrayList<>();
+
+        DatasetInformation ds1 = new DatasetInformation();
+        ds1.setName("ev_station_mixed_errors");
+        ds1.setDatasetExtension(FileExtension.csv);
+        ds1.setStatus(DatasetInforStatus.PENDING);
+        ds1.setFile_url(basePath);
+        ds1.setRowCount(100L);
+        ds1.setDatasetType(marketOverview);
+        datasetList.add(ds1);
+
+        datasetInforRepository.saveAll(datasetList);
+        System.out.println("Seeded dataset_information test entries for moderation.");
     }
 
     private void createDatasetDemo() {
@@ -209,10 +231,7 @@ public class DataInitializer implements CommandLineRunner {
         // Dataset 8: EV_All_in_One
         DatasetType allInOne = datasetTypeRepository.findByName("EV_All_in_One");
         if (allInOne != null) {
-            List<DatasetTypeColumn> allInOneCols = datasetTypeColumnRepository.findAll(); // toàn bộ cột
-            List<Category> allInOneCategories = categoryRepository.findByNameIn(
-                    Arrays.asList("All")
-            );
+            List<DatasetTypeColumn> allInOneCols = datasetTypeColumnRepository.findAll();
             allInOne.setDatasetTypeColumnList(allInOneCols);
             datasetTypeRepository.save(allInOne);
         }

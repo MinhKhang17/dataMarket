@@ -1,5 +1,6 @@
 package com.example.datasetapi.model.Dataset;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -8,6 +9,7 @@ import java.util.List;
 @Table
 @Entity
 @Data
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class DatasetType {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,6 +37,4 @@ public class DatasetType {
 
     @Column
     private String keyFile;
-
-
 }

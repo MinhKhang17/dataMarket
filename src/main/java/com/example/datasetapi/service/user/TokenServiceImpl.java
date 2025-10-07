@@ -4,7 +4,7 @@ import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.model.Dataset.DownloadToken;
 import com.example.datasetapi.model.userManager.Token;
 import com.example.datasetapi.model.userManager.User;
-import com.example.datasetapi.repository.DowloadTokenRepository;
+import com.example.datasetapi.repository.DownloadTokenRepository;
 import com.example.datasetapi.repository.TokenRepository;
 import com.example.datasetapi.util.JwtUtil;
 import jakarta.persistence.EntityNotFoundException;

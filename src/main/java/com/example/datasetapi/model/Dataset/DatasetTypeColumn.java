@@ -14,5 +14,4 @@ public class DatasetTypeColumn {
     @Column
     private String columnName;
 
-
 }
