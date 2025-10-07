@@ -69,7 +69,7 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) throws Exception {
 
       roleRepository.save(new Role("ADMIN"));
-
+    roleRepository.save(new Role("PROVIDER"));
         roleRepository.save(new Role("CONSUMER"));
 
         System.out.println("Roles & permissions initialized.");
@@ -100,7 +100,9 @@ public class DataInitializer implements CommandLineRunner {
 
     private void createDatasetDemo() {
         Dataset dataset = new Dataset();
-        dataset.setDatasetType(datasetTypeRepository.findById(1L).get());
+
+//        dataset.setDatasetType(datasetTypeRepository.findById(1L).get());
+
         dataset.setFileKey("testUpload.txt");
         dataset.setName("testDataset");
 
@@ -110,7 +112,7 @@ public class DataInitializer implements CommandLineRunner {
         // Set categories on the SAVED entity
         List<Category> categories = new ArrayList<>();
         categories.add(categoryRepository.findById(1).get());
-        savedDataset.setCategories(categories);
+//        savedDataset.setCategories(categories);
 
         // Save the SAVED entity again, not the original
         datasetRepository.save(savedDataset);  // ✅ Correct reference
@@ -337,6 +339,7 @@ protected void createProviderRegistration() {
         user.setRole(roleRepository.getRolesByName("PROVIDER"));
         user.setEmail("provider@gmail.com");
         user.setUsername("provider");
+        user.setRole(roleRepository.getRolesByName("PROVIDER"));
         user.setPassword(passwordEncoder.encode("password"));
 
 
@@ -345,6 +348,7 @@ protected void createProviderRegistration() {
         provider.setProviderRegistration(registration); // registration đã managed trong transaction
         provider.setUser(user);
         provider.setBankAccount("123456789");
+
         providerRepository.save(provider);
     }
 

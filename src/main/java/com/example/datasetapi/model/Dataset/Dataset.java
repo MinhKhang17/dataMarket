@@ -20,21 +20,14 @@ private String name;
 @Column
 private String description;
 
-@ManyToMany()
-@JoinTable(
-        name = "dataset_category",
-        joinColumns = @JoinColumn(name = "dataset_id"),
-        inverseJoinColumns = @JoinColumn(name = "category_id")
-)
-private List<Category> categories;
-
-@ManyToOne(fetch = FetchType.LAZY)
-@JoinColumn(name = "dataset_type_id")
-private DatasetType datasetType;
-
 @Column
 private DatasetStatus datasetStatus;
 
 @Column
 private String fileKey;
+
+@ManyToOne
+@JoinColumn(name = "dataset_group_id")
+private DatasetGroup datasetGroup;
+
 }
