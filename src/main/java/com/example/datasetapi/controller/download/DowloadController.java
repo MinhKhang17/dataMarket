@@ -30,14 +30,14 @@ public class DowloadController {
         return tokenService.getDownloadToken(datasetId,request);
         }
 
-    @GetMapping("/download")
-    public ResponseEntity<?> downloadFile(
-            @RequestParam String dowloadToken
-    ) {
-
-        return datasetService.dowloadDataset(dowloadToken);
-
-    }
+//    @GetMapping("/download")
+//    public ResponseEntity<?> downloadFile(
+//            @RequestParam String dowloadToken
+//    ) {
+//
+//        return datasetService.dowloadDataset(dowloadToken);
+//
+//    }
 
 
 

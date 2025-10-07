@@ -22,6 +22,7 @@ public class RegisterController {
 
     @PostMapping()
     public ResponseEntity<ApiResponse> register(@RequestBody RegisterRequest registerRequest) {
+        System.out.println(registerRequest.getEmail());
         return userService.register(registerRequest);
     }
 

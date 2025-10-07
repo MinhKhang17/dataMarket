@@ -41,22 +41,22 @@ public class S3Config {
         System.out.println("==============================");
     }
 
-    @Bean
-    public S3Client s3Client() {
-        // Trim to remove any whitespace
-        String cleanAccessKey = accessKey.trim();
-        String cleanSecretKey = secretKey.trim();
-        String cleanRegion = region.trim();
-
-        AwsBasicCredentials awsBasicCredentials = AwsBasicCredentials.create(
-                cleanAccessKey,
-                cleanSecretKey
-        );
-
-        return S3Client.builder()
-                .region(Region.of(cleanRegion))
-                .credentialsProvider(StaticCredentialsProvider.create(awsBasicCredentials))
-                .httpClient(AwsCrtHttpClient.builder().build())  // Add this line
-                .build();
-    }
+//    @Bean
+//    public S3Client s3Client() {
+//        // Trim to remove any whitespace
+//        String cleanAccessKey = accessKey.trim();
+//        String cleanSecretKey = secretKey.trim();
+//        String cleanRegion = region.trim();
+//
+//        AwsBasicCredentials awsBasicCredentials = AwsBasicCredentials.create(
+//                cleanAccessKey,
+//                cleanSecretKey
+//        );
+//
+//        return S3Client.builder()
+//                .region(Region.of(cleanRegion))
+//                .credentialsProvider(StaticCredentialsProvider.create(awsBasicCredentials))
+//                .httpClient(AwsCrtHttpClient.builder().build())  // Add this line
+//                .build();
+//    }
 }

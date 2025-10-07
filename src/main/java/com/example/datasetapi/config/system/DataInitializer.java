@@ -4,10 +4,7 @@ import com.example.datasetapi.enums.DocumentType;
 import com.example.datasetapi.enums.UserStatus;
 import com.example.datasetapi.enums.VerificationStatus.RegistrationStatus;
 import com.example.datasetapi.enums.VerificationStatus.VerificationStatus;
-import com.example.datasetapi.model.Dataset.Category;
-import com.example.datasetapi.model.Dataset.Dataset;
-import com.example.datasetapi.model.Dataset.DatasetType;
-import com.example.datasetapi.model.Dataset.DatasetTypeColumn;
+import com.example.datasetapi.model.Dataset.*;
 import com.example.datasetapi.model.userManager.*;
 import com.example.datasetapi.repository.*;
 import jakarta.transaction.Transactional;
@@ -99,23 +96,22 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void createDatasetDemo() {
+        DatasetGroup datasetGroup = new DatasetGroup();
+        datasetGroup.setProvider(providerRepository.findById(3L).get());
+        datasetGroup.setDatasetType(datasetTypeRepository.getOne(1L));
+
         Dataset dataset = new Dataset();
 
-//        dataset.setDatasetType(datasetTypeRepository.findById(1L).get());
 
         dataset.setFileKey("testUpload.txt");
         dataset.setName("testDataset");
+        dataset.setFileKey("testUpload.txt");
+        dataset.setDescription("testDatasetDescription");
+        dataset.setDatasetGroup(datasetGroup);
 
         // Save first to get the ID
-        Dataset savedDataset = datasetRepository.save(dataset);
+        datasetRepository.save(dataset);
 
-        // Set categories on the SAVED entity
-        List<Category> categories = new ArrayList<>();
-        categories.add(categoryRepository.findById(1).get());
-//        savedDataset.setCategories(categories);
-
-        // Save the SAVED entity again, not the original
-        datasetRepository.save(savedDataset);  // ✅ Correct reference
     }
 
     private void assignColumnAndCategoryToDatasetType() {

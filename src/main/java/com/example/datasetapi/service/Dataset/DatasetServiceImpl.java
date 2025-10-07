@@ -39,8 +39,8 @@ import java.util.UUID;
 @Service
 public class DatasetServiceImpl implements DatasetService {
 
-    @Autowired
-    private S3Client s3Client;
+//    @Autowired
+//    private S3Client s3Client;
     @Autowired
     private DatasetRepository datasetRepository;
     @Autowired
@@ -49,11 +49,11 @@ public class DatasetServiceImpl implements DatasetService {
     private CategoryRepository categoryRepository;
     @Autowired
     private DatasetTypeRepository datasetTypeRepository;
-    DatasetServiceImpl(S3Client s3Client, S3Config s3Config, DatasetRepository datasetRepository,DowloadTokenRepository dowloadTokenRepository) {
-    this.dowloadTokenRepository = dowloadTokenRepository;
-        this.s3Client = s3Client;
-        this.datasetRepository = datasetRepository;
-    }
+//    DatasetServiceImpl(S3Client s3Client, S3Config s3Config, DatasetRepository datasetRepository,DowloadTokenRepository dowloadTokenRepository) {
+//    this.dowloadTokenRepository = dowloadTokenRepository;
+//        this.s3Client = s3Client;
+//        this.datasetRepository = datasetRepository;
+//    }
 
     @Value("${aws.bucket.name}")
     private String BUCKET_NAME;
@@ -78,73 +78,73 @@ public class DatasetServiceImpl implements DatasetService {
     }
 
 
-    @Override
-    public Dataset uploadCSVFileToPendingFolder(MultipartFile file,Dataset dataset) {
-        try {
-
-            String fileName = file.getOriginalFilename();
-            String fileKey = "PENDING/"+UUID.randomUUID()+file.getOriginalFilename();
-
-            s3Client.putObject(PutObjectRequest.builder()
-                            .bucket(BUCKET_NAME)
-                            .key(fileKey)
-                            .build(),
-                    RequestBody.fromBytes(file.getBytes()));
-
-
-
-            dataset.setFileKey(fileKey);
-            dataset.setName(fileName);
-            dataset.setDatasetStatus(DatasetStatus.PEDDING);
-            return datasetRepository.save(dataset);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-
-
-    @Transactional
-    @Override
-    public ResponseEntity<?> dowloadDataset(String dowloadToken) {
-
-        //lay dowload token tu request checck xem nguoi dung co permussion de su dung hay khong
-        Optional<DownloadToken> downloadTokenOptional = dowloadTokenRepository.findById(UUID.fromString(dowloadToken));
-
-        //neu khong ton tai thi tra ve loi
-        if(!downloadTokenOptional.isPresent()){
-            return ResponseEntity.internalServerError().body(new ApiResponse(false,"token is not valid",null));
-        }
-
-        long datasetId = downloadTokenOptional.get().getDatasetId();
-
-        Optional<Dataset> datasetGetFromToken = datasetRepository.findById(datasetId);
-
-        if(!datasetGetFromToken.isPresent()){
-            return ResponseEntity.internalServerError().body(new ApiResponse(false,"can not find dataset with id + "+datasetId,null));
-        }
+//    @Override
+//    public Dataset uploadCSVFileToPendingFolder(MultipartFile file,Dataset dataset) {
+//        try {
+//
+//            String fileName = file.getOriginalFilename();
+//            String fileKey = "PENDING/"+UUID.randomUUID()+file.getOriginalFilename();
+//
+//            s3Client.putObject(PutObjectRequest.builder()
+//                            .bucket(BUCKET_NAME)
+//                            .key(fileKey)
+//                            .build(),
+//                    RequestBody.fromBytes(file.getBytes()));
+//
+//
+//
+//            dataset.setFileKey(fileKey);
+//            dataset.setName(fileName);
+//            dataset.setDatasetStatus(DatasetStatus.PEDDING);
+//            return datasetRepository.save(dataset);
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
 
 
-        Dataset dataset = datasetGetFromToken.get();
 
-        String fileKey = dataset.getFileKey();
-
-        DownloadToken downloadToken = downloadTokenOptional.get();
-        downloadToken.setUsed(true);
-        dowloadTokenRepository.save(downloadToken);
-
-        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                .bucket(BUCKET_NAME)
-                .key(fileKey)
-                .build();
-
-        ResponseInputStream<GetObjectResponse> s3Object = s3Client.getObject(getObjectRequest);
-        InputStreamResource resource = new InputStreamResource(s3Object);
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"" + Paths.get(fileKey).getFileName().toString() + "\"")
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(resource);
-    }
+//    @Transactional
+//    @Override
+//    public ResponseEntity<?> dowloadDataset(String dowloadToken) {
+//
+//        //lay dowload token tu request checck xem nguoi dung co permussion de su dung hay khong
+//        Optional<DownloadToken> downloadTokenOptional = dowloadTokenRepository.findById(UUID.fromString(dowloadToken));
+//
+//        //neu khong ton tai thi tra ve loi
+//        if(!downloadTokenOptional.isPresent()){
+//            return ResponseEntity.internalServerError().body(new ApiResponse(false,"token is not valid",null));
+//        }
+//
+//        long datasetId = downloadTokenOptional.get().getDatasetId();
+//
+//        Optional<Dataset> datasetGetFromToken = datasetRepository.findById(datasetId);
+//
+//        if(!datasetGetFromToken.isPresent()){
+//            return ResponseEntity.internalServerError().body(new ApiResponse(false,"can not find dataset with id + "+datasetId,null));
+//        }
+//
+//
+//        Dataset dataset = datasetGetFromToken.get();
+//
+//        String fileKey = dataset.getFileKey();
+//
+//        DownloadToken downloadToken = downloadTokenOptional.get();
+//        downloadToken.setUsed(true);
+//        dowloadTokenRepository.save(downloadToken);
+//
+//        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+//                .bucket(BUCKET_NAME)
+//                .key(fileKey)
+//                .build();
+//
+//        ResponseInputStream<GetObjectResponse> s3Object = s3Client.getObject(getObjectRequest);
+//        InputStreamResource resource = new InputStreamResource(s3Object);
+//
+//        return ResponseEntity.ok()
+//                .header(HttpHeaders.CONTENT_DISPOSITION,
+//                        "attachment; filename=\"" + Paths.get(fileKey).getFileName().toString() + "\"")
+//                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+//                .body(resource);
+//    }
 }

@@ -9,9 +9,11 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 public interface DatasetService {
 
-    ResponseEntity<?> dowloadDataset(String dowloadToken);
+//    ResponseEntity<?> dowloadDataset(String dowloadToken);
 
-    Dataset uploadCSVFileToPendingFolder(MultipartFile file,Dataset dataset);
+//    Dataset uploadCSVFileToPendingFolder(MultipartFile file,Dataset dataset);
+
+
     ResponseEntity<ApiResponse> getAllCategories();
 
     ResponseEntity<ApiResponse> getAllDatasetType();

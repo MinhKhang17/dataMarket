@@ -22,7 +22,8 @@ private String name;
 private String description;
 
 @Column
-private DatasetStatus datasetStatus;
+@Enumerated(EnumType.STRING)
+private DatasetStatus datasetStatus = DatasetStatus.PEDDING;
 
 @Column
 private String fileKey;
@@ -36,9 +37,7 @@ private LocalDateTime created_at=LocalDateTime.now();
 private LocalDateTime updated_at=LocalDateTime.now();
 @Column
 private String title;
-@Column()
-@Enumerated(EnumType.STRING)
-private DatasetStatus status ;
+
 
 @ManyToOne(cascade = CascadeType.ALL)
 @JoinColumn(name = "dataset_group_id")
