@@ -1,4 +1,4 @@
-package com.example.datasetapi.service.dataset;
+package com.example.datasetapi.service.Dataset;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,7 +13,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Service
-public class LocalFileStorageService implements FileStorageService {
+public class LocalFileStorageService implements com.example.datasetapi.service.dataset.FileStorageService {
 
     private final Path root = Paths.get(System.getProperty("java.io.tmpdir"), "uploads");
 

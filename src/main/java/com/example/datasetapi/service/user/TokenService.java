@@ -23,7 +23,7 @@ public interface TokenService {
     @Transactional
     public void deleteByUserId(long userId);
 
-
+    public long getUserIdFromRequest(HttpServletRequest request);
 
    public DownloadToken findDownloadTokenById(UUID tokenId);
 

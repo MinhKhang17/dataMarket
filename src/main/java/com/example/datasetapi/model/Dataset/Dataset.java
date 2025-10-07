@@ -4,6 +4,7 @@ import com.example.datasetapi.enums.Datasets.DatasetStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -26,7 +27,20 @@ private DatasetStatus datasetStatus;
 @Column
 private String fileKey;
 
-@ManyToOne
+@Column
+private int version;
+
+@Column
+private LocalDateTime created_at=LocalDateTime.now();
+@Column
+private LocalDateTime updated_at=LocalDateTime.now();
+@Column
+private String title;
+@Column()
+@Enumerated(EnumType.STRING)
+private DatasetStatus status ;
+
+@ManyToOne(cascade = CascadeType.ALL)
 @JoinColumn(name = "dataset_group_id")
 private DatasetGroup datasetGroup;
 

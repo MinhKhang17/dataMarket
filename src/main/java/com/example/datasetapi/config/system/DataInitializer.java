@@ -71,8 +71,8 @@ public class DataInitializer implements CommandLineRunner {
       roleRepository.save(new Role("ADMIN"));
     roleRepository.save(new Role("PROVIDER"));
         roleRepository.save(new Role("CONSUMER"));
-
         System.out.println("Roles & permissions initialized.");
+
         createConsumerRole();
 
         createAdminRole();
@@ -262,21 +262,66 @@ public class DataInitializer implements CommandLineRunner {
 
     private void createDatasetType() {
 
-        List<String> datasetTypes = new ArrayList<>();
-        datasetTypes.add("EV_Station_Location_Basic");
-        datasetTypes.add("EV_Station_Geo_Usage");
-        datasetTypes.add("EV_Tech_Capacity");
-        datasetTypes.add("EV_Station_Market_Overview");
-        datasetTypes.add("EV_User_Behavior_Summary");
-        datasetTypes.add("EV_Pricing_Analytics");
-        datasetTypes.add("EV_Station_Performance_Trend");
-        datasetTypes.add("EV_All_in_One");
+        List<Category> categories = new ArrayList<>();
 
-        for(String datasetT:datasetTypes){
-            DatasetType datasetType = new DatasetType();
-            datasetType.setName(datasetT);
-            datasetTypeRepository.save(datasetType);
-        }
+        // 🟢 1. EV_Station_Location_Basic
+        DatasetType datasetType1 = new DatasetType();
+        datasetType1.setName("EV_Station_Location_Basic");
+        categories = categoryRepository.findAllByNameIn(List.of("Location"));
+        datasetType1.setCategories(categories);
+        datasetTypeRepository.save(datasetType1);
+
+        // 🟢 2. EV_Station_Geo_Usage
+        DatasetType datasetType2 = new DatasetType();
+        datasetType2.setName("EV_Station_Geo_Usage");
+        categories = categoryRepository.findAllByNameIn(List.of("Location", "Operation"));
+        datasetType2.setCategories(categories);
+        datasetTypeRepository.save(datasetType2);
+
+        // 🟢 3. EV_Tech_Capacity
+        DatasetType datasetType3 = new DatasetType();
+        datasetType3.setName("EV_Tech_Capacity");
+        categories = categoryRepository.findAllByNameIn(List.of("Technical", "Operational"));
+        datasetType3.setCategories(categories);
+        datasetTypeRepository.save(datasetType3);
+
+        // 🟢 4. EV_Station_Market_Overview
+        DatasetType datasetType4 = new DatasetType();
+        datasetType4.setName("EV_Station_Market_Overview");
+        categories = categoryRepository.findAllByNameIn(List.of("Location", "Technical", "Pricing & Payment"));
+        datasetType4.setCategories(categories);
+        datasetTypeRepository.save(datasetType4);
+
+        // 🟢 5. EV_User_Behavior_Summary
+        DatasetType datasetType5 = new DatasetType();
+        datasetType5.setName("EV_User_Behavior_Summary");
+        categories = categoryRepository.findAllByNameIn(List.of("User Behavior", "Operational"));
+        datasetType5.setCategories(categories);
+        datasetTypeRepository.save(datasetType5);
+
+        // 🟢 6. EV_Pricing_Analytics
+        DatasetType datasetType6 = new DatasetType();
+        datasetType6.setName("EV_Pricing_Analytics");
+        categories = categoryRepository.findAllByNameIn(List.of("Pricing & Payment"));
+        datasetType6.setCategories(categories);
+        datasetTypeRepository.save(datasetType6);
+
+        // 🟢 7. EV_Station_Performance_Trend
+        DatasetType datasetType7 = new DatasetType();
+        datasetType7.setName("EV_Station_Performance_Trend");
+        categories = categoryRepository.findAllByNameIn(List.of("Operational"));
+        datasetType7.setCategories(categories);
+        datasetTypeRepository.save(datasetType7);
+
+        // 🟢 8. EV_All_in_One
+        DatasetType datasetType8 = new DatasetType();
+        datasetType8.setName("EV_All_in_One");
+        categories = categoryRepository.findAllByNameIn(List.of(
+                "Location", "Technical", "Operational", "User Behavior", "Pricing & Payment"
+        ));
+        datasetType8.setCategories(categories);
+        datasetTypeRepository.save(datasetType8);
+        System.out.println("khoi tao dataset type");
     }
 
     private void createCategory() {
@@ -293,6 +338,7 @@ public class DataInitializer implements CommandLineRunner {
             newCategory.setName(cate);
             categoryRepository.save(newCategory);
         }
+        System.out.println("khoi tao category");
     }
 @Transactional
 protected void createProviderRegistration() {
@@ -342,14 +388,21 @@ protected void createProviderRegistration() {
         user.setRole(roleRepository.getRolesByName("PROVIDER"));
         user.setPassword(passwordEncoder.encode("password"));
 
+        //tao address gan cho provider de test thu mau
+        Address address = new Address();
+        address.setDistrict("test district");
+        address.setWard("test ward");
+        address.setProvince("test province");
 
         // 6️⃣ Tạo Provider, gán Registration và User
         Provider provider = new Provider();
         provider.setProviderRegistration(registration); // registration đã managed trong transaction
         provider.setUser(user);
         provider.setBankAccount("123456789");
+        provider.setAddresses(List.of(address));
 
         providerRepository.save(provider);
+    System.out.println("khoi tao provider");
     }
 
 
@@ -361,6 +414,7 @@ protected void createProviderRegistration() {
         user.setPassword(passwordEncoder.encode("password"));
         user.setRole(roleRepository.findByName("ADMIN").get());
         userRepository.save(user);
+        System.out.println("khoi tao admin ");
     }
 
     private void  createConsumerRole() {
@@ -370,6 +424,7 @@ protected void createProviderRegistration() {
         user.setEmail("consumer@gmail.com");
         user.setRole(roleRepository.findByName("CONSUMER").get());
         userRepository.save(user);
+        System.out.println("Khoi tao consumer");
     }
 
     private void createConsumerTypes() {
@@ -392,5 +447,6 @@ protected void createProviderRegistration() {
         ConsumerType t5 = new ConsumerType();
         t5.setName("Business");
         consumerTypeRepository.save(t5);
+        System.out.println("Khoi tao consumer type");
     }
 }

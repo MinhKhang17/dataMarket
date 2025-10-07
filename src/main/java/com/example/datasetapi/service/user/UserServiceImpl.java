@@ -83,6 +83,16 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new IllegalArgumentException("Provider not exits with id: " + providerId));
     }
 
+    @Override
+    public Address findProviderAddressByProviderIdAndAddressId(long providerId,long addressId) {
+    Optional<Provider> providerOptional = providerRepository.findById(providerId);
+    for(Address address : providerOptional.get().getAddresses()) {
+        if(address.getId() == addressId) {
+            return address;
+        }
+    }
+return null;
+    }
 
 
     @Override

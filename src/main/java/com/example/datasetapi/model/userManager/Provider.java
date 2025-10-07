@@ -25,7 +25,7 @@ public class Provider {
     @JoinColumn(name = "provider_registration_id") // FK tới ProviderRegistration
     private ProviderRegistration providerRegistration;
 
-    @OneToMany
+    @OneToMany(cascade =  CascadeType.ALL)
     @JoinColumn(name = "address")
     private List<Address> addresses;
 }

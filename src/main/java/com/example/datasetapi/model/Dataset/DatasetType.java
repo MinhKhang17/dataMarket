@@ -25,6 +25,14 @@ public class DatasetType {
     )
     private List<DatasetTypeColumn> datasetTypeColumnList;
 
+    @ManyToMany()
+    @JoinTable(
+            name = "dataset_type_category",
+            joinColumns = @JoinColumn(name = "dataset_type_id"),
+            inverseJoinColumns = @JoinColumn(name = "category_id")
+    )
+    private List<Category> categories;
+
     @Column
     private String keyFile;
 

@@ -22,6 +22,11 @@ import java.util.UUID;
 
 @Service
 public class TokenServiceImpl implements TokenService {
+    @Override
+    public long getUserIdFromRequest(HttpServletRequest request) {
+        return jwtUtil.getUserIdFromToken(resolveToken(request));
+    }
+
     private final DowloadTokenRepository dowloadTokenRepository;
 
     @Override

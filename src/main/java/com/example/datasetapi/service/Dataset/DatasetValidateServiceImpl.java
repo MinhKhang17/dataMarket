@@ -1,15 +1,17 @@
-package com.example.datasetapi.service.dataset;
+package com.example.datasetapi.service.Dataset;
 
+import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.dto.response.ValidationErrorDto;
+import com.example.datasetapi.model.Dataset.DatasetGroup;
+import com.example.datasetapi.model.userManager.Address;
+import com.example.datasetapi.repository.*;
 import com.example.datasetapi.service.Dataset.DatasetService;
 import com.example.datasetapi.enums.Datasets.*;
 import com.example.datasetapi.model.Dataset.Dataset;
 import com.example.datasetapi.model.Dataset.DatasetInformation;
 import com.example.datasetapi.model.Dataset.DatasetType;
 import com.example.datasetapi.model.userManager.Provider;
-import com.example.datasetapi.repository.DatasetInforRepository;
-import com.example.datasetapi.repository.DatasetTypeRepository;
 import com.example.datasetapi.service.user.TokenService;
 import com.example.datasetapi.service.user.UserService;
 import com.example.datasetapi.util.JwtUtil;
@@ -27,14 +29,14 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.stream.Collectors;
 
 
-
 @Service
-public class DatasetValidateServiceImpl implements DatasetValidateService {
+public class DatasetValidateServiceImpl implements com.example.datasetapi.service.Dataset.DatasetValidateService {
 
     private static final Set<String> CONNECTOR_ALLOWED = Set.of("CCS1", "CCS2", "CHAdeMO", "Type2", "GB/T");
     private static final Set<String> PRICING_MODEL_ALLOWED = Set.of("Flat", "Time-based", "Energy-based", "Subscription");
@@ -51,60 +53,132 @@ private TokenService tokenService;
     private JwtUtil jwtUtil;
     @Autowired
     private UserService userService;
+    @Autowired
+    private DatasetGroupRepository datasetGroupRepository;
+    @Autowired
+    private DatasetRepository datasetRepository;
 
     @Override
-    public ResponseEntity<?> uploadAndHeaderCheckCSVFile(Long datasetTypeId, MultipartFile file, String name, String description, HttpServletRequest request) {
+    public ResponseEntity<?> uploadAndHeaderCheckCSVFile(ProviderUploadDatasetRequest providerUploadDatasetRequest, HttpServletRequest request) {
         try {
-            String token = tokenService.resolveToken(request);
-            long provider_id = jwtUtil.getUserIdFromToken(token);
-
+            //lay id tu request
+            long provider_id = tokenService.getUserIdFromRequest(request);
+            //lay provider de gan cho dataset
             Provider provider = userService.findProviderById(provider_id);
-
-            DatasetType type = datasetTypeRepo.findById(datasetTypeId)
-                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy DatasetType: " + datasetTypeId));
-
-            String path = saveTemp(file);
-
-            String originalFilename = file.getOriginalFilename();
-            String extension = "";
-
-            if (originalFilename != null && originalFilename.contains(".")) {
-                extension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1);
-            }
-
-            Dataset dataset = new Dataset();
-            dataset.setDescription(description);
-//            dataset.setDatasetType(type);
-
+            //tao dataset infor de luu lỗi
             DatasetInformation ds = new DatasetInformation();
-            ds.setName(name);
+            //checkHeader
+            boolean isChecked = checkHeader(providerUploadDatasetRequest,ds);
+            if(!isChecked){
+                return ResponseEntity.badRequest().body(new ApiResponse(false,"dataset header check fail",ds));
+            }
+            //neu check thanh cong thi khoi tao dataset cho provider
+            Dataset dataset = new Dataset();
 
-            ds.setFile_url(path);
-            ds.setStatus(DatasetInforStatus.PENDING);
-            ds.setDatasetExtension(FileExtension.valueOf(extension));
-            ds = datasetInforRepository.save(ds);
+            checkExitsAndCreateDatasetGroupAndDateset(providerUploadDatasetRequest,provider,dataset);
 
-            try (Reader r = new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8)) {
+            //neu khong loi thi upload len cloud
+//                datasetService.uploadCSVFileToPendingFolder(providerUploadDatasetRequest.getFile(), dataset);
+
+            return ResponseEntity.ok().body(new ApiResponse(true,"check and upload to cloud success",ds));
+
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void checkExitsAndCreateDatasetGroupAndDateset(ProviderUploadDatasetRequest providerUploadDatasetRequest,Provider provider,Dataset dataset) {
+    try {
+        Optional<DatasetType> datasetType = datasetTypeRepo.findById(providerUploadDatasetRequest.getDataset_type_id());
+        if (!datasetType.isPresent()) {
+            throw new FileNotFoundException("Can not find dataset type");
+        }
+        Address address = userService.findProviderAddressByProviderIdAndAddressId(provider.getId(), providerUploadDatasetRequest.getProvider_address_id());
+
+        DatasetGroup datasetGroup = datasetGroupRepository.findByAddressAndDatasetType(address, datasetType.get());
+
+        if (datasetGroup == null) {
+            datasetGroup = new DatasetGroup();
+            datasetGroup.setDatasetType(datasetType.get());
+            datasetGroup.setAddress(address);
+            datasetGroup.setProvider(provider);
+//            datasetGroupRepository.save(datasetGroup);
+        }
+        dataset.setDatasetStatus(DatasetStatus.PEDDING);
+        dataset.setDatasetGroup(datasetGroup);
+        dataset.setVersion(datasetGroup.getVersion() + 1);
+        //luu tam de test
+        datasetRepository.save(dataset);
+    } catch (Exception e) {
+        throw new RuntimeException(e);
+    }
+    }
+
+
+    private boolean checkHeader(ProviderUploadDatasetRequest providerUploadDatasetRequest, DatasetInformation ds) {
+        try{
+            System.out.println("-----------------------------------------\n" +
+                    "Bat Dau Doc Dataset\n" +
+                    "-----------------------------------------");
+            DatasetType type = datasetTypeRepo.findById(providerUploadDatasetRequest.getDataset_type_id())
+                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy DatasetType: " + providerUploadDatasetRequest.getDataset_type_id()));
+    MultipartFile file = providerUploadDatasetRequest.getFile();
+         String path = saveTemp(file);
+
+         String originalFilename = file.getOriginalFilename();
+         String extension = "";
+
+         if (originalFilename != null && originalFilename.contains(".")) {
+                extension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1);
+         }
+
+          Dataset dataset = new Dataset();
+         dataset.setDescription(providerUploadDatasetRequest.getDescription());
+
+         ds.setName(providerUploadDatasetRequest.getTitle());
+
+         ds.setFile_url(path);
+         ds.setStatus(DatasetInforStatus.PENDING);
+         ds.setDatasetExtension(FileExtension.valueOf(extension));
+         ds = datasetInforRepository.save(ds);
+
+           try (Reader r = new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8)) {
                 CSVParser parser = CSVFormat.DEFAULT.withFirstRecordAsHeader().withTrim().parse(r);
 
-                List<ValidationErrorDto> errors = validateSchema(type, parser.getHeaderMap().keySet(), parser.getRecords().size());
+            List<ValidationErrorDto> errors = validateSchema(type, parser.getHeaderMap().keySet(), parser.getRecords().size());
 
-                if (!errors.isEmpty()) {
-                    ds.setStatus(DatasetInforStatus.SCHEMA_FAILED);
-                    ds.setValidationErrors(errors);
-                    ds = datasetInforRepository.save(ds);
-                } else {
-                    ds.setStatus(DatasetInforStatus.PENDING_MODERATION);
-                    ds.setRowCount((long) parser.getRecords().size());
-                    ds = datasetInforRepository.save(ds);
-                    //neu khong loi thi upload len cloud
-                    datasetService.uploadCSVFileToPendingFolder(file,dataset);
-                }
+            if (!errors.isEmpty()) {
+                ds.setStatus(DatasetInforStatus.SCHEMA_FAILED);
+                ds.setValidationErrors(errors);
+                ds = datasetInforRepository.save(ds);
+                return false;
+            } else {
+                ds.setStatus(DatasetInforStatus.PENDING_MODERATION);
+                ds.setRowCount((long) parser.getRecords().size());
+                ds = datasetInforRepository.save(ds);
+
+                return true;
             }
-            return ResponseEntity.ok().body(new ApiResponse(true,"check success",ds));
-        } catch (Exception e) {
-            throw new RuntimeException("Lỗi upload schema: " + e.getMessage(), e);
+      } catch (IOException e) {
+               throw new RuntimeException(e);
+           }
+           finally {
+               if (path != null) {
+                   try {
+
+                       System.out.println("-----------------------------------------\n" +
+                               "Da xoa dataset\n" +
+                               "-----------------------------------------");
+                       Files.deleteIfExists(Paths.get(path));
+                   } catch (IOException e) {
+                       System.err.println("⚠️ Không thể xóa file tạm: " + e.getMessage());
+                   }
+               }
+           }
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e);
         }
+
     }
 
     @Override
