@@ -73,7 +73,7 @@ private TokenService tokenService;
 
             Dataset dataset = new Dataset();
             dataset.setDescription(description);
-            dataset.setDatasetType(type);
+//            dataset.setDatasetType(type);
 
             DatasetInformation ds = new DatasetInformation();
             ds.setName(name);

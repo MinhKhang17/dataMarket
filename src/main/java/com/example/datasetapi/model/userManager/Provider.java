@@ -3,6 +3,8 @@ package com.example.datasetapi.model.userManager;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 @Entity
 @Table(name = "Provider")
@@ -22,4 +24,8 @@ public class Provider {
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "provider_registration_id") // FK tới ProviderRegistration
     private ProviderRegistration providerRegistration;
+
+    @OneToMany
+    @JoinColumn(name = "address")
+    private List<Address> addresses;
 }
