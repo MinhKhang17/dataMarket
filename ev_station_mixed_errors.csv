@@ -1,101 +1,51 @@
-Station_ID,Provider,Address,Connector_Type,Pricing_Model,Price_per_kWh
-ST0001,Charge+,703 Street A,CCS1,Flat,2725.27
-ST0002,Tesla,402 Street B,Type2,Flat,3757.86
-ST0003,EVN,730 Street C,GB/T,Time-based,3841.23
-ST0004,Charge+,556 Street D,Type2,Energy-based,4524.59
-ST0005,Charge+,162 Street E,GB/T,Energy-based,2305.65
-ST0006,Tesla,,GB/T,Time-based,3247.18
-ST0007,EVN,958 Street G,CHAdeMO,Time-based,3502.01
-ST0008,EVN,996 Street H,GB/T,Energy-based,4189.94
-ST0009,Charge+,270 Street I,Type2,Energy-based,1652.61
-ST0010,VinFast,863 Street J,GB/T,Subscription,4980.93
-ST0011,Charge+,816 Street K,CHAdeMO,,3144.81
-ST0012,Charge+,271 Street L,CHAdeMO,Time-based,2478.46
-ST0013,Charge+,456 Street M,Type2,Subscription,4592.23
-ST0014,Charge+,462 Street N,CCS2,Flat,4117.02
-ST0015,Tesla,727 Street O,CCS2,Subscription,4835.75
-ST0016,EVN,252 Street P,GB/T,Subscription,2657.63
-ST0017,Tesla,702 Street Q,CCS1,Flat,3434.68
-ST0018,Tesla,296 Street R,GB/T,Time-based,3503.02
-ST0019,Tesla,725 Street S,Type2,Flat,4931.16
-ST0020,Charge+,720 Street T,Type2,Subscription,1763.71
-ST0021,VinFast,749 Street U,Type2,Time-based,
-ST0022,EVN,338 Street V,Type2,Subscription,2168.19
-ST0023,VinFast,879 Street W,Type2,Flat,2439.66
-ST0024,Tesla,53 Street X,CHAdeMO,Flat,3198.48
-ST0025,Tesla,792 Street Y,CCS2,Subscription,2804.4
-ST0026,VinFast,922 Street Z,Type2,Energy-based,2881.42
-ST0027,VinFast,217 Street A,CCS1,Energy-based,4454.75
-ST0028,VinFast,764 Street B,CCS1,Flat,4755.06
-ST0029,Tesla,188 Street C,CCS1,Flat,1746.46
-ST0030,Tesla,380 Street D,CCS1,Energy-based,2231.22
-ST0030,Tesla,380 Street D,CCS1,Energy-based,2231.22
-ST0032,EVN,41 Street F,CCS1,Subscription,2755.26
-ST0033,Tesla,157 Street G,Type2,Subscription,2389.57
-ST0034,VinFast,15 Street H,GB/T,Energy-based,2533.52
-ST0035,VinFast,813 Street I,CCS1,Subscription,2628.93
-ST0036,EVN,65 Street J,CHAdeMO,Subscription,4470.34
-ST0037,Tesla,857 Street K,CHAdeMO,Time-based,1978.17
-ST0038,EVN,839 Street L,CCS1,Subscription,3981.19
-ST0039,EVN,521 Street M,GB/T,Flat,3434.87
-ST0040,Charge+,344 Street N,CCS1,Subscription,2537.79
-ST0041,Charge+,129 Street O,CHAdeMO,Subscription,five thousand
-ST0042,Charge+,648 Street P,CCS2,Energy-based,2396.72
-ST0043,VinFast,472 Street Q,Type2,Flat,3640.3
-ST0044,Tesla,63 Street R,CHAdeMO,Subscription,1785.58
-ST0045,Tesla,139 Street S,CCS1,Subscription,1518.15
-ST0046,Tesla,499 Street T,Type2,Time-based,3697.63
-ST0047,Tesla,593 Street U,CCS1,Subscription,2179.96
-ST0048,Charge+,392 Street V,CCS1,Subscription,1748.29
-ST0049,VinFast,675 Street W,CCS2,Time-based,2888.74
-ST0050,VinFast,419 Street X,Type2,Energy-based,1677.69
-ST0051,Charge+,289 Street Y,Type2,Subscription,999999
-ST0052,VinFast,379 Street Z,CCS2,Time-based,1596.66
-ST0053,Charge+,773 Street A,CHAdeMO,Flat,3526.03
-ST0054,Tesla,490 Street B,CCS1,Energy-based,3034.66
-ST0055,Charge+,231 Street C,GB/T,Flat,3852.09
-ST0056,Tesla,41 Street D,CCS1,Flat,2648.53
-ST0057,Tesla,28 Street E,CCS1,Time-based,2042.65
-ST0058,EVN,135 Street F,CHAdeMO,Subscription,4936.44
-ST0059,Charge+,201 Street G,CCS1,Time-based,4436.27
-ST0060,EVN,840 Street H,CCS2,Time-based,4511.42
-ST0061,Charge+,780 Street I,USB-C,Time-based,2375.88
-ST0062,Charge+,930 Street J,Type2,Time-based,1635.92
-ST0063,EVN,33 Street K,GB/T,Energy-based,2561.43
-ST0064,EVN,48 Street L,CCS1,Subscription,3379.79
-ST0065,Charge+,503 Street M,CCS1,Flat,2643.28
-ST0066,VinFast,407 Street N,CHAdeMO,Flat,4397.54
-ST0067,Tesla,574 Street O,CCS2,Subscription,2450.4
-ST0068,EVN,728 Street P,GB/T,Flat,4878.38
-ST0069,Tesla,805 Street Q,Type2,Subscription,3100.43
-ST0070,VinFast,99 Street R,CCS2,Flat,4447.08
-ST0071,VinFast,684 Street S,Type2,Per-minute,2180.33
-ST0072,VinFast,872 Street T,CHAdeMO,Flat,2939.74
-ST0073,EVN,726 Street U,CHAdeMO,Subscription,3948.29
-ST0074,VinFast,987 Street V,CCS1,Subscription,1984.24
-ST0075,EVN,547 Street W,GB/T,Subscription,1964.61
-ST0076,VinFast,961 Street X,Type2,Subscription,4893.38
-ST0077,Tesla,739 Street Y,CCS2,Subscription,4001.08
-ST0078,Tesla,613 Street Z,CHAdeMO,Energy-based,1643.74
-ST0079,Charge+,943 Street A,CCS1,Energy-based,2895.87
-ST0080,Tesla,462 Street B,CCS1,Flat,3017.32
-12345,Charge+,643 Street C,Type2,Subscription,4104.15
-ST0082,Tesla,769 Street D,CHAdeMO,Flat,2378.01
-ST0083,EVN,5 Street E,GB/T,Subscription,2145.17
-ST0084,Tesla,218 Street F,CHAdeMO,Subscription,1783.06
-ST0085,Charge+,503 Street G,Type2,Energy-based,2999.1
-ST0086,Charge+,767 Street H,Type2,Energy-based,3909.75
-ST0087,VinFast,398 Street I,CHAdeMO,Time-based,1703.68
-ST0088,EVN,871 Street J,Type2,Energy-based,4703.25
-ST0089,Tesla,795 Street K,CHAdeMO,Time-based,3048.23
-ST0090,VinFast,393 Street L,CCS2,Time-based,2339.26
-,,,,,
-ST0092,Tesla,15 Street N,CHAdeMO,Time-based,2140.03
-ST0093,VinFast,858 Street O,Type2,Time-based,4771.15
-ST0094,VinFast,554 Street P,Type2,Flat,3733.95
-ST0095,VinFast,892 Street Q,CCS1,Energy-based,3308.44
-ST0096,VinFast,461 Street R,CCS1,Time-based,3799.89
-ST0097,VinFast,691 Street S,CCS2,Subscription,3024.86
-ST0098,Tesla,575 Street T,CCS1,Energy-based,4055.14
-ST0099,VinFast,864 Street U,CHAdeMO,Energy-based,1667.01
-ST0100,EVN,743 Street V,Type2,Time-based,3481.13
+Station_ID,Connector_Type,Max_Power_kW
+ST0001,CCS1,50
+ST0002,Type2,22
+ST0003,GB/T,60
+ST0004,Type2,11
+ST0005,CHAdeMO,30
+ST0006,CCS2,150
+ST0007,GB/T,25
+ST0008,Type2,22
+ST0009,CCS1,60
+ST0010,CCS2,120
+ST0011,GB/T,
+ST0012,CCS1,100
+ST0013,CHAdeMO,50
+ST0014,CHAdeMO,50
+ST0015,Type2,22
+ST0016,Type2,22
+ST0017,CCS1,50
+ST0018,Type2,22
+ST0019,CCS2,120
+ST0020,CCS2,150
+ST0020,CCS2,150
+ST0021,GB/T,25
+ST0022,GB/T,25
+ST0023,CCS1,60
+ST0024,CHAdeMO,30
+ST0025,CHAdeMO,30
+ST0026,Type2,11
+ST0027,Type2,11
+ST0028,CCS1,50
+ST0029,GB/T,60
+ST0030,CCS2,150
+ST0030,CCS2,150
+ST0041,CCS1,abc
+ST0051,CCS2,9999
+ST0051,CCS2,9999
+ST0060,Type2,22
+ST0061,USB-C,60
+ST0070,CCS2,150
+ST0071,Type2,22
+ST0080,CCS1,50
+ST0082,CHAdeMO,30
+ST0085,Type2,
+ST0086,Type2,22
+ST0086,Type2,22
+ST0090,CCS2,120
+ST0092,CHAdeMO,30
+ST0095,CCS1,60
+ST0096,CCS1,
+ST0099,CHAdeMO,30
+ST0100,Type2,22

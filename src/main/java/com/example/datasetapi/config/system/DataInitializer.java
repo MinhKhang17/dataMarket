@@ -6,11 +6,7 @@ import com.example.datasetapi.enums.VerificationStatus.RegistrationStatus;
 import com.example.datasetapi.enums.VerificationStatus.VerificationStatus;
 import com.example.datasetapi.enums.Datasets.FileExtension;
 import com.example.datasetapi.enums.Datasets.DatasetInforStatus;
-import com.example.datasetapi.model.Dataset.Category;
-import com.example.datasetapi.model.Dataset.Dataset;
-import com.example.datasetapi.model.Dataset.DatasetInformation;
-import com.example.datasetapi.model.Dataset.DatasetType;
-import com.example.datasetapi.model.Dataset.DatasetTypeColumn;
+import com.example.datasetapi.model.Dataset.*;
 import com.example.datasetapi.model.userManager.*;
 import com.example.datasetapi.repository.*;
 import jakarta.transaction.Transactional;
@@ -32,36 +28,36 @@ import java.util.*;
 public class DataInitializer implements CommandLineRunner {
 
     @Autowired
-    private final RoleRepository roleRepository;
+    private  RoleRepository roleRepository;
     @Autowired
-    private final PasswordEncoder passwordEncoder;
+    private  PasswordEncoder passwordEncoder;
     @Autowired
-    private final UserRepository userRepository;
+    private  UserRepository userRepository;
     @Autowired
-    private final ConsumerTypeRepository consumerTypeRepository;
+    private  ConsumerTypeRepository consumerTypeRepository;
 @Autowired
-    private final ProviderRegistrationRepository providerRegistrationRepository;
+    private  ProviderRegistrationRepository providerRegistrationRepository;
 @Autowired
-private final ProviderIndentityDocumentRepository providerIndentityDocumentRepository;
+private  ProviderIndentityDocumentRepository providerIndentityDocumentRepository;
 @Autowired
-private final CategoryRepository categoryRepository;
+private  CategoryRepository categoryRepository;
 @Autowired
-private final DatasetTypeRepository datasetTypeRepository;
+private  DatasetTypeRepository datasetTypeRepository;
 @Autowired
-private final Dataset_Type_Column_Repository datasetTypeColumnRepository;
+private  Dataset_Type_Column_Repository datasetTypeColumnRepository;
 @Autowired
-private final DatasetRepository datasetRepository;
+private  DatasetRepository datasetRepository;
 @Autowired
-private final ProviderRepository providerRepository;
+private  ProviderRepository providerRepository;
 @Autowired
-private final DatasetInforRepository datasetInforRepository;
+private  DatasetInforRepository datasetInforRepository;
 
 
     @Override
     public void run(String... args) throws Exception {
-
-      roleRepository.save(new Role("ADMIN"));
-    roleRepository.save(new Role("PROVIDER"));
+    if(userRepository.count()==0){
+        roleRepository.save(new Role("ADMIN"));
+        roleRepository.save(new Role("PROVIDER"));
         roleRepository.save(new Role("CONSUMER"));
         System.out.println("Roles & permissions initialized.");
 
@@ -89,6 +85,14 @@ private final DatasetInforRepository datasetInforRepository;
 
         createDatasetDemo();
         createModerationTestData();
+
+    }
+    else {
+        System.out.println("Data already Init............" +
+                "======================================Stop Init Data========================================\n");
+
+    }
+        System.out.println("===========================Load Data success===========================\n");
     }
 
     private void createModerationTestData() {

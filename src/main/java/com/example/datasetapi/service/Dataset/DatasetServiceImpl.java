@@ -1,55 +1,52 @@
 package com.example.datasetapi.service.Dataset;
 
-import com.example.datasetapi.config.S3Config;
+import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.enums.Datasets.DatasetStatus;
-import com.example.datasetapi.model.Dataset.Category;
-import com.example.datasetapi.model.Dataset.Dataset;
-import com.example.datasetapi.model.Dataset.DatasetType;
-import com.example.datasetapi.model.Dataset.DownloadToken;
-import com.example.datasetapi.repository.CategoryRepository;
-import com.example.datasetapi.repository.DatasetRepository;
-import com.example.datasetapi.repository.DatasetTypeRepository;
-import com.example.datasetapi.repository.DowloadTokenRepository;
-import com.example.datasetapi.service.Dataset.DatasetService;
+import com.example.datasetapi.model.Dataset.*;
+import com.example.datasetapi.model.userManager.Address;
+import com.example.datasetapi.model.userManager.Provider;
+import com.example.datasetapi.repository.*;
 import com.example.datasetapi.service.user.TokenService;
-import jakarta.transaction.Transactional;
+import com.example.datasetapi.service.user.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-import software.amazon.awssdk.core.ResponseInputStream;
-import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectResponse;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
-import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 public class DatasetServiceImpl implements DatasetService {
 
-//    @Autowired
+
+    //    @Autowired
 //    private S3Client s3Client;
     @Autowired
     private DatasetRepository datasetRepository;
     @Autowired
-    private DowloadTokenRepository dowloadTokenRepository;
+    private DownloadTokenRepository dowloadTokenRepository;
     @Autowired
     private CategoryRepository categoryRepository;
     @Autowired
     private DatasetTypeRepository datasetTypeRepository;
-//    DatasetServiceImpl(S3Client s3Client, S3Config s3Config, DatasetRepository datasetRepository,DowloadTokenRepository dowloadTokenRepository) {
+    @Autowired
+    private DatasetValidateService datasetValidateService;
+    @Autowired
+    private TokenService tokenService;
+    @Autowired
+    private UserService userService;
+    @Autowired
+    private DatasetInforRepository datasetInforRepository;
+
+
+    @Autowired
+    private DatasetGroupRepository datasetGroupRepository;
+
+    //    DatasetServiceImpl(S3Client s3Client, S3Config s3Config, DatasetRepository datasetRepository,DowloadTokenRepository dowloadTokenRepository) {
 //    this.dowloadTokenRepository = dowloadTokenRepository;
 //        this.s3Client = s3Client;
 //        this.datasetRepository = datasetRepository;
@@ -76,6 +73,49 @@ public class DatasetServiceImpl implements DatasetService {
         }
         return ResponseEntity.ok().body(new ApiResponse(true,"load DatasetType success",datasetTypes));
     }
+    @Override
+    public void checkExitsAndCreateDatasetGroupAndDateset(ProviderUploadDatasetRequest providerUploadDatasetRequest,HttpServletRequest request) {
+        try {
+
+            Provider provider = userService.findProviderById(tokenService.getUserIdFromRequest(request));
+
+            Optional<DatasetInformation> datasetInformationOptional = datasetInforRepository.findById(providerUploadDatasetRequest.getDataset_Information_Id());
+
+            if(!datasetInformationOptional.isPresent()){
+                return;
+            }
+            DatasetInformation datasetInformation = datasetInformationOptional.get();
+            // một user có nhiều địa chỉ upload tìm theo địa chỉ và dataset type
+            Address address = userService.findProviderAddressByProviderIdAndAddressId(provider.getId(), providerUploadDatasetRequest.getProvider_address_id());
+            //check xem đã tồn tại một dataset group chưa nếu chưa thì mặc định nó là lần đầu
+            DatasetGroup datasetGroup = datasetGroupRepository.findByAddressAndDatasetType(address, datasetInformation.getDatasetType());
+
+            Dataset dataset = new Dataset();
+
+            //nếu là lần tạo đầu tiên thì tạo group để chứa các phiên bản
+            if (datasetGroup == null) {
+                datasetGroup = new DatasetGroup();
+                datasetGroup.setDatasetType(datasetInformation.getDatasetType());
+                datasetGroup.setAddress(address);
+                datasetGroup.setProvider(provider);
+            }
+            //nếu là lần tạo thứ 2 tăng version của dataset group
+            dataset.setDatasetStatus(DatasetStatus.PEDDING);
+            dataset.setDatasetGroup(datasetGroup);
+            dataset.setVersion(datasetGroup.getVersion() + 1);
+            datasetGroup.setVersion(datasetGroup.getVersion()+1);
+
+
+            //luu tam de test
+            datasetRepository.save(dataset);
+            datasetGroupRepository.save(datasetGroup);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+
 
 
 //    @Override
@@ -147,4 +187,6 @@ public class DatasetServiceImpl implements DatasetService {
 //                .contentType(MediaType.APPLICATION_OCTET_STREAM)
 //                .body(resource);
 //    }
+
+
 }

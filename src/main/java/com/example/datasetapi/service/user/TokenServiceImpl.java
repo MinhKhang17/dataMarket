@@ -27,7 +27,8 @@ public class TokenServiceImpl implements TokenService {
         return jwtUtil.getUserIdFromToken(resolveToken(request));
     }
 
-    private final DowloadTokenRepository dowloadTokenRepository;
+    @Autowired
+    private  DownloadTokenRepository dowloadTokenRepository;
 
     @Override
     public DownloadToken findDownloadTokenById(UUID tokenId) {
@@ -35,9 +36,9 @@ public class TokenServiceImpl implements TokenService {
                 .orElseThrow(() -> new EntityNotFoundException("DownloadToken not found with id: " + tokenId));
     }
 
-
+@Autowired
     private TokenRepository tokenRepository;
-
+@Autowired
     private JwtUtil jwtUtil;
 
     @Override
@@ -69,12 +70,7 @@ public class TokenServiceImpl implements TokenService {
     }
 
 
-    @Autowired
-    public TokenServiceImpl(TokenRepository tokenRepository, JwtUtil jwtUtil, DowloadTokenRepository dowloadTokenRepository) {
-        this.tokenRepository = tokenRepository;
-        this.jwtUtil = jwtUtil;
-        this.dowloadTokenRepository = dowloadTokenRepository;
-    }
+
 
 
     @Override

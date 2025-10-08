@@ -11,13 +11,10 @@ import java.util.List;
 import java.util.Map;
 
 public interface DatasetValidateService {
-    public ResponseEntity<?> uploadAndHeaderCheckCSVFile(ProviderUploadDatasetRequest providerUploadDatasetRequest, HttpServletRequest request);
-    public DatasetInformation uploadAndSchemaCheckByUrl(Long datasetTypeId,
-                                                        String fileUrl,
-                                                        String name,
-                                                        String description);
-    public Map<String, Object> moderate(Long datasetId, Double thresholdPercent);
 
-    void saveErrors(DatasetInformation datasetInformation, List<DatasetValidationError> errors);
-    List<DatasetValidationError> getErrorsByDataset(DatasetInformation datasetInformation);
+    ResponseEntity<?> updateInforOfDatasetCheckContentUploadToCloud(ProviderUploadDatasetRequest providerUploadDatasetRequest, HttpServletRequest request);
+
+    public ResponseEntity<?> uploadAndHeaderCheckCSVFile(MultipartFile file,long datasetTypeId, HttpServletRequest request);
+
+    ResponseEntity<?> getAllDatasetErrorWithDatasetInfor();
 }

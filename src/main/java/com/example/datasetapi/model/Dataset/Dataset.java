@@ -38,7 +38,6 @@ private LocalDateTime updated_at=LocalDateTime.now();
 @Column
 private String title;
 
-
 @ManyToOne(cascade = CascadeType.ALL)
 @JoinColumn(name = "dataset_group_id")
 private DatasetGroup datasetGroup;
