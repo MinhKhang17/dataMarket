@@ -19,6 +19,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Instant;
@@ -56,6 +57,7 @@ private  DatasetInforRepository datasetInforRepository;
     @Override
     public void run(String... args) throws Exception {
     if(userRepository.count()==0){
+        //viet trnng khun if else này
         roleRepository.save(new Role("ADMIN"));
         roleRepository.save(new Role("PROVIDER"));
         roleRepository.save(new Role("CONSUMER"));
@@ -76,7 +78,7 @@ private  DatasetInforRepository datasetInforRepository;
 
 
 
-
+        initVietnamLocations();
         createDatasetType();
 
         createDataset_Type_Columns();
@@ -467,5 +469,34 @@ protected void createProviderRegistration() {
         t5.setName("Business");
         consumerTypeRepository.save(t5);
         System.out.println("Khoi tao consumer type");
+    }
+
+    private void initVietnamLocations() {
+        try {
+            // Load JSON from resources/locaions.json (relative classpath)
+            String jsonPath = "locaions.json"; // resource path (src/main/resources/locaions.json)
+            InputStream is = getClass().getClassLoader().getResourceAsStream(jsonPath);
+            if (is == null) {
+                System.out.println("Could not find locations.json in resources!");
+                return;
+            }
+            String json = new String(is.readAllBytes());
+            // If you use Jackson (recommended):
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            Map<String, Object> locationData = mapper.readValue(json, Map.class);
+
+            // Example: Print the first province name
+            if (locationData.containsKey("provinces")) {
+                List<Map<String, Object>> provinces = (List<Map<String, Object>>) locationData.get("provinces");
+                if (!provinces.isEmpty()) {
+                    System.out.println("First province: " + provinces.get(0).get("name"));
+                }
+            }
+            System.out.println("Vietnam locations loaded to DataInit.");
+            // TODO: save locationData to DB if you have a LocationRepository
+            // locationRepository.saveAll(...);
+        } catch (Exception e) {
+            System.out.println("Error loading Vietnam locations: " + e.getMessage());
+        }
     }
 }

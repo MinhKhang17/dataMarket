@@ -13,7 +13,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Service
-public class LocalFileStorageService implements com.example.datasetapi.service.dataset.FileStorageService {
+public class LocalFileStorageService implements com.example.datasetapi.service.Dataset.FileStorageService {
 
     private final Path root = Paths.get(System.getProperty("java.io.tmpdir"), "uploads");
 
