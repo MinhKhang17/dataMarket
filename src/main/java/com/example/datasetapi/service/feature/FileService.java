@@ -11,7 +11,7 @@ import java.util.Map;
 
 public interface FileService {
     boolean checkHeader(MultipartFile file, long datasetTypeId, DatasetInformation ds, Provider provider);
-    public Map<String, Object> moderate(Long datasetId, DatasetInformation datasetInformation, DatasetType datasetType);
+    public Map<String, Object> moderate(DatasetInformation datasetInformation, DatasetType datasetType);
     public DatasetInformation uploadAndSchemaCheckByUrl(Long datasetTypeId,
                                                         String fileUrl,
                                                         String name,

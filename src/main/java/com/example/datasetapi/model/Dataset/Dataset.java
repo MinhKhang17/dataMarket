@@ -1,6 +1,7 @@
 package com.example.datasetapi.model.Dataset;
 
 import com.example.datasetapi.enums.Datasets.DatasetStatus;
+import com.example.datasetapi.model.userManager.Provider;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -23,7 +24,8 @@ private String description;
 
 @Column
 @Enumerated(EnumType.STRING)
-private DatasetStatus datasetStatus = DatasetStatus.PEDDING;
+private DatasetStatus datasetStatus = DatasetStatus.PENDING;
+
 
 @Column
 private String fileKey;
@@ -42,4 +44,6 @@ private String title;
 @JoinColumn(name = "dataset_group_id")
 private DatasetGroup datasetGroup;
 
+@ManyToOne
+    private Provider provider;
 }

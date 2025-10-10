@@ -2,15 +2,18 @@ package com.example.datasetapi.service.Dataset;
 
 import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
+import com.example.datasetapi.model.Dataset.Dataset;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+
+import java.io.File;
 
 @Service
 public interface DatasetService {
 
 
-    public void checkExitsAndCreateDatasetGroupAndDateset(ProviderUploadDatasetRequest providerUploadDatasetRequest,HttpServletRequest request);
+    public void checkExitsAndCreateDatasetGroupAndDateset(ProviderUploadDatasetRequest providerUploadDatasetRequest,long Provider_id);
 
 
     ResponseEntity<ApiResponse> getAllCategories();
@@ -18,4 +21,10 @@ public interface DatasetService {
     ResponseEntity<ApiResponse> getAllDatasetType();
 
 
+    ResponseEntity<?> acceptDataset(long datasetInforId, HttpServletRequest request);
+    Dataset uploadCSVFileToPendingFolder(File file, Dataset dataset);
+
+    ResponseEntity<?> getAllAllDataset();
+
+    ResponseEntity<?> rejectDataset(long datasetInforId, HttpServletRequest request,String reason);
 }

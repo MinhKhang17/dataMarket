@@ -5,22 +5,28 @@ import com.example.datasetapi.model.Dataset.DatasetType;
 import com.example.datasetapi.model.Dataset.DatasetValidationError;
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
 public class ModeratorDatasetInforResponseDto {
 
-    private DatasetInformation DatasetInformationId;
+    private long DatasetInformationId;
 
     private String file_name;
 
     private long row_count;
 
-    private DatasetType datasetType;
+    private long dataset_Type_Id;
 
     private long provider_id;
 
+    private String fullAddress;
+
+    private LocalDateTime createdAt;
+    private LocalDateTime checkContentAt;
     private List<DatasetValidationErrorDTO> datasetValidationErrorDTOList;
+
 
 
 }

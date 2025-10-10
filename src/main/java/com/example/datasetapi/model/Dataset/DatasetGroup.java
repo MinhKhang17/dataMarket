@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import org.springframework.boot.autoconfigure.web.WebProperties;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -15,7 +16,7 @@ import java.util.List;
 public class DatasetGroup {
 @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private long id;
 
     @OneToOne(cascade = CascadeType.ALL)
     private Address address;
@@ -32,4 +33,6 @@ public class DatasetGroup {
     @JoinColumn(name = "provider_id")
     private Provider provider;
 
+    @OneToMany(cascade = CascadeType.ALL)
+    private List<Dataset> datasets = new ArrayList<Dataset>();
 }

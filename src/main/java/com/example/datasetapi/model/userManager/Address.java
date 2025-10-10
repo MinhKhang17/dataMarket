@@ -17,7 +17,7 @@ public class Address {
     @Column
     private String province;
 
-    public String FulAddress(Address address) {
+    public String FulAddress() {
 
         return this.ward + " " + this.district + " " + this.province;
     }

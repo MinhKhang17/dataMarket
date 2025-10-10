@@ -1,8 +1,13 @@
 package com.example.datasetapi.service.Dataset;
 
+import com.example.datasetapi.Mapper.DatasetMapper;
+import com.example.datasetapi.Mapper.UserMapper;
+import com.example.datasetapi.Mapper.UserResponseDTOMapper;
 import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
 
+import com.example.datasetapi.dto.response.DatasetValidationErrorDTO;
+import com.example.datasetapi.model.userManager.Address;
 import com.example.datasetapi.repository.*;
 import com.example.datasetapi.model.Dataset.*;
 
@@ -27,8 +32,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -54,6 +61,11 @@ public class DatasetValidateServiceImpl implements DatasetValidateService {
     @Autowired
     private DatasetValidationErrorRepository datasetValidationErrorRepository;
 
+
+    public UserResponseDTOMapper userResponseDTOMapper = new UserMapper();
+    @Autowired
+    private DatasetMapper datasetMapper;
+
     @Override
     public ResponseEntity<?> updateInforOfDatasetCheckContentUploadToCloud(ProviderUploadDatasetRequest providerUploadDatasetRequest,HttpServletRequest request) {
 
@@ -72,13 +84,16 @@ public class DatasetValidateServiceImpl implements DatasetValidateService {
         if(datasetInformationOptional.get().getProvider().getId()!= tokenService.getUserIdFromRequest(request)){
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+        long provider_id = tokenService.getUserIdFromRequest(request);
+
+
             DatasetInformation datasetInformation = datasetInformationOptional.get();
         //call truoc de fetch day du thong tin
         datasetInformation.getDatasetType().getName();
         datasetInformation.getDatasetType().getDatasetTypeColumnList().get(0);
-
+        datasetInformation.setUpdateAt(LocalDateTime.now());
         CompletableFuture<Map<String, Object>> future =
-                asyncDatasetService.readAndUploadDataset(providerUploadDatasetRequest, request,datasetInformation.getDatasetType());
+                asyncDatasetService.readAndUploadDataset(providerUploadDatasetRequest,provider_id,datasetInformation.getDatasetType());
         future.thenAccept(result -> {
             // callback khi async xong
             // them socket de gui thong bao den user
@@ -103,11 +118,11 @@ public class DatasetValidateServiceImpl implements DatasetValidateService {
             boolean isChecked = fileService.checkHeader(file,datasetTypeId,ds,provider);
 
             if(!isChecked){
-                return ResponseEntity.ok().body(new ApiResponse(false,"dataset header checked",ds));
+                return ResponseEntity.ok().body(new ApiResponse(false,"dataset header checked and false",ds));
             }
             //neu check thanh cong thi khoi tao dataset cho provider
 
-            return ResponseEntity.ok().body(new ApiResponse(true,"check success",ds));
+            return ResponseEntity.ok().body(new ApiResponse(true,"check success",datasetMapper.toUploadHeaderResponseDto(ds)));
 
         } catch (IllegalArgumentException e) {
             throw new RuntimeException(e);
@@ -115,8 +130,11 @@ public class DatasetValidateServiceImpl implements DatasetValidateService {
     }
     @Override
     public ResponseEntity<?> getAllDatasetErrorWithDatasetInfor() {
-        List<DatasetInformation> datasetInformations = datasetInforRepository.findAll();
 
-
+        return ResponseEntity.ok().body(new ApiResponse(true,"Load success",datasetInforRepository.findAll()
+                .stream()
+                .map(userResponseDTOMapper :: toModeratorDatasetInforResponseDto )
+                .collect(Collectors.toList())
+));
     }
 }

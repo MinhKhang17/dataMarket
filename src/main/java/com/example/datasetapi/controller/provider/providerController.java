@@ -17,7 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class providerController {
     @Autowired
     private DatasetValidateService datasetValidateService;
-    @PostMapping("/validate-header")
+    @PostMapping("/validate-header-upload")
     public ResponseEntity<?> checkHeader(@RequestParam MultipartFile file, @RequestParam long datasetTypeId, HttpServletRequest request ) {
         return datasetValidateService.uploadAndHeaderCheckCSVFile(file,datasetTypeId,request);
     }

@@ -9,6 +9,7 @@ import com.example.datasetapi.model.Dataset.DatasetInformation;
 import com.example.datasetapi.model.Dataset.DatasetType;
 import com.example.datasetapi.model.Dataset.DatasetTypeColumn;
 import com.example.datasetapi.model.Dataset.DatasetValidationError;
+import com.example.datasetapi.model.userManager.Address;
 import com.example.datasetapi.model.userManager.Provider;
 import com.example.datasetapi.repository.DatasetInforRepository;
 import com.example.datasetapi.repository.DatasetTypeRepository;
@@ -17,20 +18,27 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
+
 
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class FileServiceImpl implements FileService {
+
     @Autowired
     private DatasetTypeRepository datasetTypeRepository;
     @Autowired
@@ -71,6 +79,7 @@ public class FileServiceImpl implements FileService {
             ds.setHeaderChecked(true);
             ds.setProvider(provider);
             ds.setDatasetType(type);
+            ds.setUpdateAt(LocalDateTime.now());
             ds = datasetInforRepository.save(ds);
 
             try (Reader r = new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8)) {
@@ -134,7 +143,7 @@ public class FileServiceImpl implements FileService {
                 if (!errors.isEmpty()) {
                     ds.setStatus(DatasetInforStatus.SCHEMA_FAILED);
                     ds.setValidationErrors(errors);
-                    ds = datasetInforRepository.save(ds);
+                    datasetInforRepository.delete(ds);
                 } else {
                     ds.setStatus(DatasetInforStatus.PENDING_MODERATION);
                     ds.setRowCount((long) parser.getRecords().size());
@@ -172,14 +181,16 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public Map<String, Object> moderate(Long dataset_infor_Id, DatasetInformation ds, DatasetType datasetType) {
+    public Map<String, Object> moderate(DatasetInformation ds, DatasetType datasetType) {
 
         try {
 
 
             if(!ds.isHeaderChecked()){
-                throw new IllegalStateException("Dataset is not checked header for dataset id=" + dataset_infor_Id);
+                throw new IllegalStateException("Dataset is not checked header for dataset id=" + ds.getId());
             }
+
+
 
             List<String> headers = datasetType.getDatasetTypeColumnList()
                     .stream().map(DatasetTypeColumn::getColumnName).toList();
@@ -302,13 +313,17 @@ public class FileServiceImpl implements FileService {
                 // save and result
                 double rate = totalCells == 0 ? 0 : (100.0 * totalErrors / totalCells);
                 boolean pass = rate <= THRE_HOLD_PERCENT;
-                ds.setStatus(pass ? DatasetInforStatus.APPROVED : DatasetInforStatus.REJECTED);
-                ds.setContentChecked(true);
-                datasetInforRepository.save(ds);
+                if (!pass) {
+                    datasetInforRepository.deleteById(ds.getId());
+                }
+                else {
+                    ds.setStatus(DatasetInforStatus.CONTENT_APPROVED);
+                    ds.setContentChecked(true);
+                    datasetInforRepository.save(ds);
 
-                errorRepository.deleteByDatasetInformation(ds);
-                errorRepository.saveAll(errors);
-
+                    errorRepository.deleteByDatasetInformation(ds);
+                    errorRepository.saveAll(errors);
+                }
 
 
                 return Map.of(
@@ -333,6 +348,16 @@ public class FileServiceImpl implements FileService {
 
         } catch (Exception e) {
             return Map.of("success", false, "message", e.getMessage());
+        }finally {
+            try {
+
+                System.out.println("-----------------------------------------\n" +
+                        "Da xoa dataset\n" +
+                        "-----------------------------------------");
+                Files.deleteIfExists(Paths.get(ds.getFile_url()));
+            } catch (IOException e) {
+                System.err.println("Không thể xóa file tạm: " + e.getMessage());
+            }
         }
     }
 
@@ -375,5 +400,8 @@ public class FileServiceImpl implements FileService {
     private String safeGet(CSVRecord r, String c) {
         return r.isMapped(c) ? r.get(c) : null;
     }
+
+
+
 
 }

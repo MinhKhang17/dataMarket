@@ -3,10 +3,12 @@ package com.example.datasetapi.model.Dataset;
 import com.example.datasetapi.dto.response.ValidationErrorDto;
 import com.example.datasetapi.enums.Datasets.DatasetInforStatus;
 import com.example.datasetapi.enums.Datasets.FileExtension;
+import com.example.datasetapi.model.userManager.Address;
 import com.example.datasetapi.model.userManager.Provider;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -22,7 +24,7 @@ private String name;
 
 @Enumerated(EnumType.STRING)
 @Column(nullable = false)
-private DatasetInforStatus status = DatasetInforStatus.PENDING;
+private DatasetInforStatus status;
 
 @Column
 private Long rowCount;
@@ -37,9 +39,8 @@ private FileExtension datasetExtension;
 @Transient
 private List<ValidationErrorDto> validationErrors;
 
-@Column
-@OneToMany
-@JoinColumn(name =  "dataset_valoidation_error_id")
+
+@OneToMany(mappedBy = "datasetInformation", cascade = CascadeType.ALL, orphanRemoval = true)
 private List<DatasetValidationError> datasetValidationErrorList;
 
 @ManyToOne(fetch = FetchType.LAZY)
@@ -49,4 +50,14 @@ private DatasetType datasetType;
 @ManyToOne
     @JoinColumn(name = "provider_id")
     private Provider provider;
+@ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "address_id")
+    private Address address;
+
+@Column
+private LocalDateTime createAt = LocalDateTime.now();
+@Column
+    private LocalDateTime updateAt = LocalDateTime.now();
+@OneToOne(cascade =  CascadeType.ALL)
+    private Dataset dataset;
 }

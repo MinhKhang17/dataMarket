@@ -59,6 +59,7 @@ private  DatasetInforRepository datasetInforRepository;
         roleRepository.save(new Role("ADMIN"));
         roleRepository.save(new Role("PROVIDER"));
         roleRepository.save(new Role("CONSUMER"));
+        roleRepository.save(new Role("MODERATOR"));
         System.out.println("Roles & permissions initialized.");
 
         createConsumerRole();
@@ -67,14 +68,13 @@ private  DatasetInforRepository datasetInforRepository;
 
         createConsumerTypes();
 
+        createModerator();
         System.out.println("Seeded roles, users, and consumer types.");
         //tao va gan provider dang ky mau tranh trung lap thong tin khi create-drop db
         createProviderRegistration();
 
 
         createCategory();
-
-
 
 
         createDatasetType();
@@ -93,6 +93,15 @@ private  DatasetInforRepository datasetInforRepository;
 
     }
         System.out.println("===========================Load Data success===========================\n");
+    }
+
+    private void createModerator() {
+        User user = new User();
+        user.setUsername("moderator");
+        user.setPassword(passwordEncoder.encode("moderator"));
+        user.setRole(roleRepository.findByName("MODERATOR").get());
+        user.setEmail("moderator@gmail.com");
+        userRepository.save(user);
     }
 
     private void createModerationTestData() {
@@ -115,6 +124,13 @@ private  DatasetInforRepository datasetInforRepository;
         ds1.setFile_url(basePath);
         ds1.setRowCount(100L);
         ds1.setDatasetType(marketOverview);
+        Provider provider = providerRepository.findById(4L).get();
+        Address address = new Address();
+        address.setProvince("test province");
+        address.setWard("test ward");
+        address.setDistrict("test district");
+        ds1.setAddress(address);
+        ds1.setProvider(provider);
         datasetList.add(ds1);
 
         datasetInforRepository.saveAll(datasetList);
@@ -123,7 +139,7 @@ private  DatasetInforRepository datasetInforRepository;
 
     private void createDatasetDemo() {
         DatasetGroup datasetGroup = new DatasetGroup();
-        datasetGroup.setProvider(providerRepository.findById(3L).get());
+        datasetGroup.setProvider(providerRepository.findById(4L).get());
         datasetGroup.setDatasetType(datasetTypeRepository.getOne(1L));
 
         Dataset dataset = new Dataset();
@@ -359,8 +375,9 @@ private  DatasetInforRepository datasetInforRepository;
         }
         System.out.println("khoi tao category");
     }
-@Transactional
-protected void createProviderRegistration() {
+
+
+        private void createProviderRegistration() {
         // 1️⃣ Tạo ProviderRegistration
         ProviderRegistration registration = new ProviderRegistration();
         registration.setFullName("Nguyen Van A");

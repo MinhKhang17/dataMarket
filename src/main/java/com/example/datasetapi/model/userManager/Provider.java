@@ -11,7 +11,7 @@ import java.util.List;
 public class Provider {
 
     @Id
-    private Long id; // id dùng chung với User
+    private long id; // id dùng chung với User
 
     @OneToOne
     @MapsId // dùng cùng primary key với User
