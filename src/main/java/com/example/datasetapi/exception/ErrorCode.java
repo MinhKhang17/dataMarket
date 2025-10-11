@@ -26,7 +26,8 @@ public enum ErrorCode {
 
     INTERNAL_SERVER_ERROR("INTERNAL_SERVER_ERROR", "Lỗi hệ thống, vui lòng thử lại sau"),
     BAD_REQUEST("BAD_REQUEST", "Yêu cầu không hợp lệ"),
-    INVALID_ROLE("INVALID_ROLE","role không hợp lệ" );
+    INVALID_ROLE("INVALID_ROLE","role không hợp lệ" ),
+    LOCAL_DATE_INVALID("LOCAL_DATE_INVALID","Ngày giờ không hợp lệ format chuẩn: yyyy-MM-dd");
 
     private final String code;
     private final String message;

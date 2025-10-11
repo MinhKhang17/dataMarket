@@ -8,6 +8,7 @@ import com.example.datasetapi.model.userManager.Provider;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -58,6 +59,8 @@ private DatasetType datasetType;
 private LocalDateTime createAt = LocalDateTime.now();
 @Column
     private LocalDateTime updateAt = LocalDateTime.now();
+@Column
+private LocalDate dataset_time;
 @OneToOne(cascade =  CascadeType.ALL)
     private Dataset dataset;
 }

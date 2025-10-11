@@ -9,6 +9,8 @@ public class Validator {
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
     private static final Pattern PASSWORD_PATTERN =    Pattern.compile("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!])(?=\\S+$).{8,}$");
+    private static final Pattern LOCAL_DATE_PATTERN =
+            Pattern.compile("^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$");
 
 
     public static boolean isValidEmail(String email) {
@@ -16,5 +18,8 @@ public class Validator {
     }
     public static boolean isValidPassword(String password) {
         return password != null && PASSWORD_PATTERN.matcher(password).matches();
+    }
+    public  static boolean isValidLocalDate(String localDateTime) {
+        return localDateTime != null && LOCAL_DATE_PATTERN.matcher(localDateTime).matches();
     }
 }

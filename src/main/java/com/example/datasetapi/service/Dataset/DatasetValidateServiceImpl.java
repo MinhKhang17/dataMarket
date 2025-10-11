@@ -7,6 +7,8 @@ import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
 
 import com.example.datasetapi.dto.response.DatasetValidationErrorDTO;
+import com.example.datasetapi.exception.CustomException;
+import com.example.datasetapi.exception.ErrorCode;
 import com.example.datasetapi.model.userManager.Address;
 import com.example.datasetapi.repository.*;
 import com.example.datasetapi.model.Dataset.*;
@@ -22,6 +24,7 @@ import com.example.datasetapi.service.feature.FileService;
 import com.example.datasetapi.service.user.TokenService;
 import com.example.datasetapi.service.user.UserService;
 
+import com.example.datasetapi.util.Validator;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -87,7 +90,10 @@ public class DatasetValidateServiceImpl implements DatasetValidateService {
         long provider_id = tokenService.getUserIdFromRequest(request);
 
 
-            DatasetInformation datasetInformation = datasetInformationOptional.get();
+        if(!Validator.isValidLocalDate(providerUploadDatasetRequest.getDataset_time())){
+            throw new CustomException(ErrorCode.LOCAL_DATE_INVALID);
+        }
+        DatasetInformation datasetInformation = datasetInformationOptional.get();
         //call truoc de fetch day du thong tin
         datasetInformation.getDatasetType().getName();
         datasetInformation.getDatasetType().getDatasetTypeColumnList().get(0);
