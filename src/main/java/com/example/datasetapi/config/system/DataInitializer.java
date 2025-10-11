@@ -7,8 +7,11 @@ import com.example.datasetapi.enums.VerificationStatus.VerificationStatus;
 import com.example.datasetapi.enums.Datasets.FileExtension;
 import com.example.datasetapi.enums.Datasets.DatasetInforStatus;
 import com.example.datasetapi.model.Dataset.*;
+import com.example.datasetapi.model.location.Commune;
+import com.example.datasetapi.model.location.Province;
 import com.example.datasetapi.model.userManager.*;
 import com.example.datasetapi.repository.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.example.datasetapi.model.userManager.User;
@@ -19,6 +22,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Instant;
@@ -35,22 +39,26 @@ public class DataInitializer implements CommandLineRunner {
     private  UserRepository userRepository;
     @Autowired
     private  ConsumerTypeRepository consumerTypeRepository;
-@Autowired
+    @Autowired
     private  ProviderRegistrationRepository providerRegistrationRepository;
-@Autowired
-private  ProviderIndentityDocumentRepository providerIndentityDocumentRepository;
-@Autowired
-private  CategoryRepository categoryRepository;
-@Autowired
-private  DatasetTypeRepository datasetTypeRepository;
-@Autowired
-private  Dataset_Type_Column_Repository datasetTypeColumnRepository;
-@Autowired
-private  DatasetRepository datasetRepository;
-@Autowired
-private  ProviderRepository providerRepository;
-@Autowired
-private  DatasetInforRepository datasetInforRepository;
+    @Autowired
+    private  ProviderIndentityDocumentRepository providerIndentityDocumentRepository;
+    @Autowired
+    private  CategoryRepository categoryRepository;
+    @Autowired
+    private  DatasetTypeRepository datasetTypeRepository;
+    @Autowired
+    private  Dataset_Type_Column_Repository datasetTypeColumnRepository;
+    @Autowired
+    private  DatasetRepository datasetRepository;
+    @Autowired
+    private  ProviderRepository providerRepository;
+    @Autowired
+    private  DatasetInforRepository datasetInforRepository;
+    @Autowired
+    private  ProvinceRepository provinceRepository;
+    @Autowired
+    private  CommuneRepository  communeRepository;
 
 
     @Override
@@ -75,8 +83,6 @@ private  DatasetInforRepository datasetInforRepository;
 
 
         createCategory();
-
-
         createDatasetType();
 
         createDataset_Type_Columns();
@@ -85,7 +91,7 @@ private  DatasetInforRepository datasetInforRepository;
 
         createDatasetDemo();
         createModerationTestData();
-
+        initVietnamLocations();
     }
     else {
         System.out.println("Data already Init............" +
@@ -485,4 +491,54 @@ private  DatasetInforRepository datasetInforRepository;
         consumerTypeRepository.save(t5);
         System.out.println("Khoi tao consumer type");
     }
+    private void initVietnamLocations() {
+        try {
+            InputStream is = getClass().getClassLoader().getResourceAsStream("location.json");
+            if (is == null) {
+                System.out.println("Không tìm thấy file location.json trong resources!");
+                return;
+            }
+
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, Object> data = mapper.readValue(is, Map.class);
+
+            // ---- Insert Provinces ----
+            List<Map<String, String>> provinces = (List<Map<String, String>>) data.get("province");
+            if (provinceRepository.count() == 0 && provinces != null) {
+                List<Province> provinceEntities = provinces.stream().map(p -> {
+                    Province province = new Province();
+                    province.setIdProvince(p.get("idProvince"));
+                    province.setName(p.get("name"));
+                    return province;
+                }).toList();
+                provinceRepository.saveAll(provinceEntities);
+                System.out.println("Đã khởi tạo " + provinceEntities.size() + " tỉnh/thành.");
+            }
+
+            // ---- Insert Communes ----
+            List<Map<String, String>> communes = (List<Map<String, String>>) data.get("commune");
+            if (communeRepository.count() == 0 && communes != null) {
+                List<Commune> communeEntities = new ArrayList<>();
+                for (Map<String, String> c : communes) {
+                    String idProvince = c.get("idProvince");
+                    Province province = provinceRepository.findById(idProvince).orElse(null);
+                    if (province == null) continue;
+
+                    Commune commune = new Commune();
+                    commune.setIdCommune(c.get("idCommune"));
+                    commune.setName(c.get("name"));
+                    commune.setProvince(province);
+                    communeEntities.add(commune);
+                }
+                communeRepository.saveAll(communeEntities);
+                System.out.println("Đã khởi tạo " + communeEntities.size() + " xã/phường.");
+            }
+
+            System.out.println("🎉 Dữ liệu địa lý Việt Nam đã được khởi tạo thành công!");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 }
