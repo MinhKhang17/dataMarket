@@ -10,6 +10,8 @@ import com.example.datasetapi.dto.service.ProvierIdentityDocumentDTO;
 import com.example.datasetapi.enums.DocumentType;
 import com.example.datasetapi.enums.VerificationStatus.RegistrationStatus;
 import com.example.datasetapi.enums.VerificationStatus.VerificationStatus;
+import com.example.datasetapi.exception.CustomException;
+import com.example.datasetapi.exception.ErrorCode;
 import com.example.datasetapi.model.userManager.*;
 import com.example.datasetapi.repository.*;
 import com.example.datasetapi.dto.response.ApiResponse;
@@ -99,6 +101,8 @@ return null;
     @Transactional
     public ResponseEntity<ApiResponse> login(LoginRequest loginRequest, HttpServletResponse response) {
         Optional<User> userOptional;
+
+
         if (Validator.isValidEmail(loginRequest.getUsername())) {
             userOptional = userRepository.findByEmail((loginRequest.getUsername()));
         }
@@ -106,15 +110,18 @@ return null;
         else {
             userOptional = userRepository.findByUsername(loginRequest.getUsername());
         }
+        if (!userOptional.isPresent()) {
+            throw new CustomException(ErrorCode.USER_NOT_FOUND);
+        }
 
-
-        if (userOptional.isPresent()) {
             User user = userOptional.get();
 
             boolean isValidPassword = PasswordUtil.matches(loginRequest.getPassword(), user.getPassword());
-            if (isValidPassword) {
+            if (!isValidPassword) {
+                throw new CustomException(ErrorCode.USER_NOT_FOUND);
+            }
 
-                //tao token
+            //tao token
                 String accessTokenCreated = tokenHandler(user, response);
                 LoginResponse loginResponse = new LoginResponse();
                 loginResponse.setAccessToken(accessTokenCreated);
@@ -122,16 +129,6 @@ return null;
 
 
                 return ResponseEntity.ok().body(new ApiResponse(true, "login Success", loginResponse));
-
-
-            } else {
-                return ResponseEntity.badRequest().body(new ApiResponse(false, "Invalid password", null));
-            }
-        } else {
-
-            return ResponseEntity.badRequest().body(new ApiResponse(false, "Invalid username or password", null));
-        }
-
     }
 
     @Transactional
@@ -167,23 +164,23 @@ return null;
     public ResponseEntity<ApiResponse> register(RegisterRequest registerRequest) {
         // check username
         if (userRepository.findByUsername(registerRequest.getUsername()).isPresent()) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, "Username already exists", registerRequest.getUsername()));
+            throw new CustomException(ErrorCode.USERNAME_ALREADY_EXISTS);
         }
 
         // check password
         if (registerRequest.getPassword().length() < 8) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, "Password too short", registerRequest.getUsername()));
+        throw new CustomException(ErrorCode.PASSWORD_TOO_SHORT);
         }
         if (!Validator.isValidPassword(registerRequest.getPassword())) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, "Invalid password", registerRequest.getUsername()));
+        throw new CustomException(ErrorCode.PASSWORD_TOO_WEAK);
         }
 
         // check email
         if (!Validator.isValidEmail(registerRequest.getEmail())) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, "Invalid email", registerRequest.getEmail()));
+            throw new CustomException(ErrorCode.EMAIL_INVALID);
         }
         if (userRepository.existsByEmail(registerRequest.getEmail())) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, "Email is exited", registerRequest.getEmail()));
+            throw new CustomException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
         // tạo user
@@ -195,8 +192,8 @@ return null;
 
         // gán role
         Optional<Role> roleOptional = roleRepository.findByName("CONSUMER");
-        if (!roleOptional.isPresent()) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, "Invalid role", registerRequest.getUsername()));
+        if (roleOptional.isEmpty()) {
+            throw new CustomException(ErrorCode.INVALID_ROLE);
         }
 
         user.setRole(roleOptional.get());

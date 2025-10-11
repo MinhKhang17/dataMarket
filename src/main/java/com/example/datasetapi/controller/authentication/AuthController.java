@@ -20,8 +20,6 @@ public class AuthController {
     }
 
     @PostMapping("provider/sendFormRegister")
-    @PermitAll // hoặc @PreAuthorize("permitAll()")
-
     public ResponseEntity<ApiResponse> sendFormRegister(@ModelAttribute ProviderRegistrationRequestDTO providerRegistrationDTO) {
         System.out.println(providerRegistrationDTO.getFullName());
         return userService.ProviderRegistrationProcess(providerRegistrationDTO);
