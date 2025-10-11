@@ -1,6 +1,6 @@
 package com.example.datasetapi.model.Dataset;
 
-import com.example.datasetapi.model.userManager.Address;
+import com.example.datasetapi.model.location.Location;
 import com.example.datasetapi.model.userManager.Provider;
 import com.example.datasetapi.model.userManager.User;
 import jakarta.persistence.*;
@@ -18,8 +18,9 @@ public class DatasetGroup {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    private Address address;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "location_id")
+    private Location location;
 
     @Column
     private int version = 0;

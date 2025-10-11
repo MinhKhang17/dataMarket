@@ -3,8 +3,9 @@ package com.example.datasetapi.service.feature;
 import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
 import com.example.datasetapi.model.Dataset.DatasetInformation;
 import com.example.datasetapi.model.Dataset.DatasetType;
-import com.example.datasetapi.model.userManager.Address;
-import com.example.datasetapi.repository.AddressRepository;
+//import com.example.datasetapi.model.userManager.Address;
+import com.example.datasetapi.model.location.Location;
+import com.example.datasetapi.repository.LocationRepository;
 import com.example.datasetapi.repository.DatasetInforRepository;
 import com.example.datasetapi.repository.DatasetRepository;
 import com.example.datasetapi.service.Dataset.DatasetService;
@@ -26,7 +27,7 @@ public class AsyncDatasetService {
     @Autowired
     private FileService fileService;
     @Autowired
-    private AddressRepository addressRepository;
+    private LocationRepository  locationRepository;
     @Autowired
     private DatasetService datasetService;
 
@@ -39,11 +40,11 @@ public class AsyncDatasetService {
                     datasetInforRepository.findById(providerUploadDatasetRequest.getDataset_Information_Id())
                             .orElseThrow(() -> new RuntimeException("Dataset not found"));
 
-            Optional<Address> addressOptional = addressRepository.findById(providerUploadDatasetRequest.getProvider_address_id());
+            Optional<Location> addressOptional = locationRepository.findById(providerUploadDatasetRequest.getProvider_location_id());
             if(!addressOptional.isPresent()) {
                 return  CompletableFuture.completedFuture(null);
             }
-            datasetInformation.setAddress(addressOptional.get());
+            datasetInformation.setLocation(addressOptional.get());
 
 
 

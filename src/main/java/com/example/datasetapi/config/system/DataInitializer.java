@@ -8,6 +8,7 @@ import com.example.datasetapi.enums.Datasets.FileExtension;
 import com.example.datasetapi.enums.Datasets.DatasetInforStatus;
 import com.example.datasetapi.model.Dataset.*;
 import com.example.datasetapi.model.location.Commune;
+import com.example.datasetapi.model.location.Location;
 import com.example.datasetapi.model.location.Province;
 import com.example.datasetapi.model.userManager.*;
 import com.example.datasetapi.repository.*;
@@ -69,7 +70,7 @@ public class DataInitializer implements CommandLineRunner {
         roleRepository.save(new Role("CONSUMER"));
         roleRepository.save(new Role("MODERATOR"));
         System.out.println("Roles & permissions initialized.");
-
+        initVietnamLocations();
         createConsumerRole();
 
         createAdminRole();
@@ -91,7 +92,7 @@ public class DataInitializer implements CommandLineRunner {
 
         createDatasetDemo();
         createModerationTestData();
-        initVietnamLocations();
+
     }
     else {
         System.out.println("Data already Init............" +
@@ -130,18 +131,32 @@ public class DataInitializer implements CommandLineRunner {
         ds1.setFile_url(basePath);
         ds1.setRowCount(100L);
         ds1.setDatasetType(marketOverview);
-        Provider provider = providerRepository.findById(4L).get();
-        Address address = new Address();
-        address.setProvince("test province");
-        address.setWard("test ward");
-        address.setDistrict("test district");
-        ds1.setAddress(address);
-        ds1.setProvider(provider);
-        datasetList.add(ds1);
 
+        Provider provider = providerRepository.findById(4L).get();
+        ds1.setProvider(provider);
+
+        // ✅ Tạo Location mới (thay Address)
+        Location location = new Location();
+
+        // Lấy dữ liệu từ bảng province & commune có sẵn
+        Province province = provinceRepository.findById("01") // Hà Nội
+                .orElseThrow(() -> new RuntimeException("Province not found: 01"));
+        Commune commune = communeRepository.findById("00008") // Phường Ngọc Hà
+                .orElseThrow(() -> new RuntimeException("Commune not found: 00008"));
+
+        // Gán dữ liệu
+        location.setProvince(province);
+        location.setCommune(commune);
+
+        // Gán location cho dataset
+        ds1.setLocation(location);
+
+        datasetList.add(ds1);
         datasetInforRepository.saveAll(datasetList);
-        System.out.println("Seeded dataset_information test entries for moderation.");
+
+        System.out.println("✅ Seeded dataset_information test entries for moderation with Location.");
     }
+
 
     private void createDatasetDemo() {
         DatasetGroup datasetGroup = new DatasetGroup();
@@ -383,7 +398,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
 
-        private void createProviderRegistration() {
+    private void createProviderRegistration() {
         // 1️⃣ Tạo ProviderRegistration
         ProviderRegistration registration = new ProviderRegistration();
         registration.setFullName("Nguyen Van A");
@@ -404,7 +419,7 @@ public class DataInitializer implements CommandLineRunner {
         doc1.setUploadedAt(Instant.now());
         doc1.setIdCardVerificationStatus(VerificationStatus.PENDING);
         doc1.setManager_id(0L);
-        doc1.setIdCardRetentionExpiry(Instant.now().plusSeconds(60*60*24*365));
+        doc1.setIdCardRetentionExpiry(Instant.now().plusSeconds(60L * 60 * 24 * 365));
         doc1.setDocumentType(DocumentType.CCCD_FRONT);
 
         // 3️⃣ Tạo document2
@@ -414,38 +429,42 @@ public class DataInitializer implements CommandLineRunner {
         doc2.setUploadedAt(Instant.now());
         doc2.setIdCardVerificationStatus(VerificationStatus.PENDING);
         doc2.setManager_id(0L);
-        doc2.setIdCardRetentionExpiry(Instant.now().plusSeconds(60*60*24*365));
+        doc2.setIdCardRetentionExpiry(Instant.now().plusSeconds(60L * 60 * 24 * 365));
         doc2.setDocumentType(DocumentType.CCCD_BACK);
 
         registration.setIdentityDocuments(List.of(doc1, doc2));
 
-        // 4️⃣ Lưu ProviderRegistration (Hibernate cascade sẽ lưu cả document)
-
-        // 5️⃣ Tạo User cho Provider
+        // 4️⃣ Tạo User cho Provider
         User user = new User();
         user.setUserStatus(UserStatus.ACTIVE);
         user.setRole(roleRepository.getRolesByName("PROVIDER"));
         user.setEmail("provider@gmail.com");
         user.setUsername("provider");
-        user.setRole(roleRepository.getRolesByName("PROVIDER"));
         user.setPassword(passwordEncoder.encode("password"));
 
-        //tao address gan cho provider de test thu mau
-        Address address = new Address();
-        address.setDistrict("test district");
-        address.setWard("test ward");
-        address.setProvince("test province");
+        // 5️⃣ Lấy province & commune thật từ DB
+        Province province = provinceRepository.findById("01") // Hà Nội
+                .orElseThrow(() -> new RuntimeException("Province not found"));
+        Commune commune = communeRepository.findById("00008") // Phường Ngọc Hà
+                .orElseThrow(() -> new RuntimeException("Commune not found"));
 
-        // 6️⃣ Tạo Provider, gán Registration và User
+        // 6️⃣ Tạo Location gán cho Provider
+        Location location = new Location();
+        location.setProvince(province);
+        location.setCommune(commune);
+
+        // 7️⃣ Tạo Provider, gán Registration, User và Location
         Provider provider = new Provider();
-        provider.setProviderRegistration(registration); // registration đã managed trong transaction
+        provider.setProviderRegistration(registration);
         provider.setUser(user);
         provider.setBankAccount("123456789");
-        provider.setAddresses(List.of(address));
+        provider.setLocation(List.of(location));
 
         providerRepository.save(provider);
-    System.out.println("khoi tao provider");
+
+        System.out.println("✅ Khởi tạo provider với Location: " + location.getFullLocation());
     }
+
 
 
 

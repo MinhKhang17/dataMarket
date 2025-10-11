@@ -12,6 +12,7 @@ import com.example.datasetapi.enums.VerificationStatus.RegistrationStatus;
 import com.example.datasetapi.enums.VerificationStatus.VerificationStatus;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
+import com.example.datasetapi.model.location.Location;
 import com.example.datasetapi.model.userManager.*;
 import com.example.datasetapi.repository.*;
 import com.example.datasetapi.dto.response.ApiResponse;
@@ -86,10 +87,10 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Address findProviderAddressByProviderIdAndAddressId(long providerId,long addressId) {
+    public Location findProviderLocationByProviderIdAndLocationId(long providerId, long locationId) {
     Optional<Provider> providerOptional = providerRepository.findById(providerId);
-    for(Address address : providerOptional.get().getAddresses()) {
-        if(address.getId() == addressId) {
+    for(Location address : providerOptional.get().getLocation()) {
+        if(address.getId() == locationId) {
             return address;
         }
     }

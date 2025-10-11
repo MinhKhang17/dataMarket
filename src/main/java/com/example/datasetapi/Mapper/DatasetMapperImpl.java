@@ -57,7 +57,7 @@ public class DatasetMapperImpl implements DatasetMapper {
     public DatasetReposonseDto toDatasetReposonseDto(DatasetGroup group) {
         DatasetReposonseDto datasetReposonseDto = new DatasetReposonseDto();
         datasetReposonseDto.setDatasetGroupId(group.getId());
-        datasetReposonseDto.setAddress(group.getAddress());
+        datasetReposonseDto.setLocation(group.getLocation());
         datasetReposonseDto.setLasted_version(group.getVersion());
         datasetReposonseDto.setDatasetTypeDto(toDatasetTypeDto(group.getDatasetType()));
         datasetReposonseDto.setDatasetDTOS(group.getDatasets().stream().
