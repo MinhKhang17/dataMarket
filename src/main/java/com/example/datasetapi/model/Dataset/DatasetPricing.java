@@ -14,6 +14,7 @@ public class DatasetPricing {
 
     private double price;
 
+    private double pricePerRequest;
 //    @Enumerated(EnumType.STRING)
 //    private PricingType pricingType = PricingType.UNDETERMINED;
 

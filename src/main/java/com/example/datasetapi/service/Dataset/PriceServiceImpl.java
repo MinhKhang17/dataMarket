@@ -59,7 +59,13 @@ public class PriceServiceImpl implements  PriceService {
             subTypePlan.setDatasetPricingList(calculatePricing(PricingMethod.SUBSCRIPTION,datasetPack,datasetInformation.getRowCount()));
             datasetPlans.add(subTypePlan);
 
-            datasetPlanRepo.saveAll(datasetPlans);
+
+            DatasetPlan apiPlan = new DatasetPlan();
+            apiPlan.setDataset(dataset);
+            apiPlan.setDatasetPricingList(calculatePricing(PricingMethod.API,datasetPack,datasetInformation.getRowCount()));
+            datasetPlans.add(apiPlan);
+        datasetPlanRepo.saveAll(datasetPlans);
+
     }
 
     private List<DatasetPricing> calculatePricing(PricingMethod pricingMethod, DatasetPack datasetPack, Long rowCount) {
@@ -89,7 +95,30 @@ public class PriceServiceImpl implements  PriceService {
            list.add(largePackPrice);
            return list;
        }
-       return list;
+       else {
+           PricingRule pricingRule = pricingRuleRepo.findByMethodAndSubType(pricingMethod, SubType.SMALL);
+           DatasetPricing smallApi = new DatasetPricing();
+           smallApi.setPricingRule(pricingRule);
+           smallApi.setPricePerRequest(apiPricingCal(pricingRule));
+           list.add(smallApi);
+
+           DatasetPricing mediumApi = new DatasetPricing();
+           pricingRule = pricingRuleRepo.findByMethodAndSubType(pricingMethod, SubType.MEDIUM);
+           mediumApi.setPricingRule(pricingRule);
+           mediumApi.setPricePerRequest(apiPricingCal(pricingRule));
+           list.add(mediumApi);
+
+           DatasetPricing largeApi = new DatasetPricing();
+           pricingRule= pricingRuleRepo.findByMethodAndSubType(pricingMethod, SubType.LARGE);
+           largeApi.setPricingRule(pricingRule);
+           largeApi.setPricePerRequest(apiPricingCal(pricingRule));
+           list.add(largeApi);
+           return list;
+        }
+    }
+
+    private double apiPricingCal(PricingRule pricingRule) {
+        return pricingRule.getBasePricePoint() / pricingRule.getRequestLimit();
     }
 
     private double subPricingCal(Long rowCount, PricingRule pricingRule) {

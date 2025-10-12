@@ -205,6 +205,8 @@ private PricingRuleRepo pricingRuleRepo;
         r7.setAllowOverage(false);
         r7.setProviderShare(40);
         r7.setPlatformShare(60);
+        r7.setSubType(SubType.SMALL);
+
         r7.setNote("API package with 10K requests");
         rules.add(r7);
 
@@ -213,6 +215,7 @@ private PricingRuleRepo pricingRuleRepo;
         r8.setPlanName("Pro 100K Call");
         r8.setBasePricePoint(3000.0);
         r8.setRequestLimit(100000L);
+        r8.setSubType(SubType.MEDIUM);
         r8.setDiscountPercent(5);
         r8.setAllowOverage(false);
         r8.setProviderShare(35);
@@ -226,6 +229,7 @@ private PricingRuleRepo pricingRuleRepo;
         r9.setBasePricePoint(20000.0);
         r9.setRequestLimit(1000000L);
         r9.setDiscountPercent(10);
+        r9.setSubType(SubType.LARGE);
         r9.setAllowOverage(false);
         r9.setProviderShare(30);
         r9.setPlatformShare(70);
