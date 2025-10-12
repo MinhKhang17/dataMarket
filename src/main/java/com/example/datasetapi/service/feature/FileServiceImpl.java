@@ -85,6 +85,10 @@ public class FileServiceImpl implements FileService {
             try (Reader r = new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8)) {
                 CSVParser parser = CSVFormat.DEFAULT.withFirstRecordAsHeader().withTrim().parse(r);
 
+                Set<String> headers = parser.getHeaderMap().keySet();
+                List<CSVRecord> recordList = parser.getRecords();
+                int rowCount = recordList.size();
+
                 List<ValidationErrorDto> errors = validateSchema(type, parser.getHeaderMap().keySet(), parser.getRecords().size());
 
                 if (!errors.isEmpty()) {
@@ -94,7 +98,7 @@ public class FileServiceImpl implements FileService {
                     return false;
                 } else {
                     ds.setStatus(DatasetInforStatus.PENDING_MODERATION);
-                    ds.setRowCount((long) parser.getRecords().size());
+                    ds.setRowCount((long) rowCount);
                     ds = datasetInforRepository.save(ds);
 
                     return true;

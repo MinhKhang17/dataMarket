@@ -2,6 +2,7 @@ package com.example.datasetapi.model.Dataset;
 
 import com.example.datasetapi.enums.Datasets.DatasetPack;
 import com.example.datasetapi.enums.Datasets.PricingMethod;
+import com.example.datasetapi.enums.Datasets.SubType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -29,11 +30,11 @@ public class PricingRule {
     @Column(name = "max_row")
     private Long maxRow;
 
-    @Column(name = "base_price_per_row_vnd")
-    private Double basePricePerRowVnd;
+    @Column(name = "base_price_per_row_point")
+    private Double basePricePerRowPoint;
 
     @Column(name = "base_price_point")
-    private Double basePricePoint;
+    private Double BasePricePoint;
 
     @Column(name = "row_limit")
     private Long rowLimit;
@@ -41,8 +42,8 @@ public class PricingRule {
     @Column(name = "time_limit_day")
     private Integer timeLimitDay;
 
-    @Column(name = "extra_cost_per_1k_point")
-    private Double extraCostPer1kPoint;
+    @Column(name = "extra_cost_per_1row_point")
+    private Double extraCostPer1rowpoint;
 
     @Column(name = "allow_overage")
     private Boolean allowOverage;
@@ -61,7 +62,8 @@ public class PricingRule {
 
     @Column(columnDefinition = "TEXT")
     private String note;
-
+    @Enumerated(EnumType.STRING)
+    private SubType subType;
     @Column()
     @Enumerated(EnumType.STRING)
     private DatasetPack datasetPack;

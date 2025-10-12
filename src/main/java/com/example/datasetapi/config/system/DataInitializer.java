@@ -1,13 +1,10 @@
 package com.example.datasetapi.config.system;
 
-import com.example.datasetapi.enums.Datasets.DatasetPack;
-import com.example.datasetapi.enums.Datasets.PricingMethod;
+import com.example.datasetapi.enums.Datasets.*;
 import com.example.datasetapi.enums.DocumentType;
 import com.example.datasetapi.enums.UserStatus;
 import com.example.datasetapi.enums.VerificationStatus.RegistrationStatus;
 import com.example.datasetapi.enums.VerificationStatus.VerificationStatus;
-import com.example.datasetapi.enums.Datasets.FileExtension;
-import com.example.datasetapi.enums.Datasets.DatasetInforStatus;
 import com.example.datasetapi.model.Dataset.*;
 import com.example.datasetapi.model.userManager.*;
 import com.example.datasetapi.repository.*;
@@ -102,88 +99,104 @@ private PricingRuleRepo pricingRuleRepo;
     private void createPricingRule() {
         List<PricingRule> rules = new ArrayList<>();
 
+        // ONE TIME - Small
         PricingRule r1 = new PricingRule();
         r1.setMethod(PricingMethod.ONE_TIME);
         r1.setPlanName("Small Pack");
         r1.setMinRow(1000L);
-        r1.setMaxRow(10000L);
-        r1.setBasePricePerRowVnd(5.0);
+        r1.setMaxRow(50000L);
+        //giá tính theo 1 row
+        r1.setBasePricePerRowPoint(0.5);
         r1.setAllowOverage(false);
         r1.setProviderShare(40);
         r1.setPlatformShare(60);
         r1.setDatasetPack(DatasetPack.SMALL);
-        r1.setNote("Small package for low row usage");
+        r1.setNote("Gói nhỏ cho nhu cầu thấp");
         rules.add(r1);
 
+        // ONE TIME - Medium
         PricingRule r2 = new PricingRule();
         r2.setMethod(PricingMethod.ONE_TIME);
         r2.setPlanName("Medium Pack");
-        r2.setMinRow(10001L);
-        r2.setMaxRow(100000L);
-        r2.setBasePricePerRowVnd(4.0);
+        r2.setMinRow(50001L);
+        r2.setMaxRow(200000L);
+        //giá tính theo row
+        r2.setBasePricePerRowPoint(0.4);
         r2.setDiscountPercent(5);
         r2.setAllowOverage(false);
         r2.setProviderShare(35);
         r2.setPlatformShare(65);
         r2.setDatasetPack(DatasetPack.MEDIUM);
-        r2.setNote("Medium package for moderate row usage");
+        r2.setNote("Gói trung bình cho nhu cầu vừa");
         rules.add(r2);
 
+        // ONE TIME - Large
         PricingRule r3 = new PricingRule();
         r3.setMethod(PricingMethod.ONE_TIME);
-        r3.setPlanName("Big Pack");
-        r3.setMinRow(100001L);
-        r3.setMaxRow(1000000L);
-        r3.setBasePricePerRowVnd(3.0);
+        r3.setPlanName("Large Pack");
+        r3.setMinRow(200001L);
+        r3.setMaxRow(600000L);
+        //giá tính theo row
+        r3.setBasePricePerRowPoint(0.3);
         r3.setDiscountPercent(10);
         r3.setAllowOverage(false);
         r3.setProviderShare(30);
         r3.setPlatformShare(70);
         r3.setDatasetPack(DatasetPack.LARGE);
-        r3.setNote("Big package for large row usage");
+        r3.setNote("Gói lớn cho nhu cầu cao");
         rules.add(r3);
 
+        // SUBSCRIPTION - Small
         PricingRule r4 = new PricingRule();
         r4.setMethod(PricingMethod.SUBSCRIPTION);
         r4.setPlanName("Basic Monthly");
-        r4.setBasePricePoint(200.0);
+        //điều chỉnh để thành giá tính theo sub
+        r4.setBasePricePoint(200.0); // 200 point = 200.000 VNĐ
         r4.setRowLimit(50000L);
         r4.setTimeLimitDay(30);
-        r4.setExtraCostPer1kPoint(2000.0);
+        r4.setExtraCostPer1rowpoint(4.0);
         r4.setAllowOverage(true);
         r4.setProviderShare(40);
         r4.setPlatformShare(60);
-        r4.setNote("30-day subscription package");
+        r4.setSubType(SubType.SMALL);
+        r4.setNote("Gói thuê bao 1 tháng cho nhu cầu thấp");
         rules.add(r4);
 
+        // SUBSCRIPTION - Medium
         PricingRule r5 = new PricingRule();
         r5.setMethod(PricingMethod.SUBSCRIPTION);
         r5.setPlanName("Pro 2 Months");
-        r5.setBasePricePoint(500.0);
+        //điều chỉnh để thành giá tính theo sub
+        r5.setBasePricePoint(600.0);
         r5.setRowLimit(200000L);
         r5.setTimeLimitDay(60);
-        r5.setExtraCostPer1kPoint(1500.0);
+        r5.setExtraCostPer1rowpoint(3.0);
         r5.setDiscountPercent(5);
         r5.setAllowOverage(true);
         r5.setProviderShare(35);
         r5.setPlatformShare(65);
-        r5.setNote("2-month subscription package");
+        r5.setSubType(SubType.MEDIUM);
+        r5.setNote("Gói thuê bao 2 tháng");
         rules.add(r5);
 
+        // SUBSCRIPTION - Large
         PricingRule r6 = new PricingRule();
         r6.setMethod(PricingMethod.SUBSCRIPTION);
         r6.setPlanName("Premium Yearly");
-        r6.setBasePricePoint(1000.0);
+        //điều chỉnh để thành giá tính theo sub
+        r6.setBasePricePoint(1200.0);
         r6.setRowLimit(600000L);
         r6.setTimeLimitDay(365);
-        r6.setExtraCostPer1kPoint(1000.0);
+        r6.setExtraCostPer1rowpoint(1.5);
         r6.setDiscountPercent(10);
         r6.setAllowOverage(true);
         r6.setProviderShare(30);
         r6.setPlatformShare(70);
-        r6.setNote("1-year subscription package");
+        r6.setSubType(SubType.LARGE);
+        r6.setNote("Gói thuê bao 1 năm");
         rules.add(r6);
 
+        // API Package (Giữ nguyên cấu hình cũ)
         PricingRule r7 = new PricingRule();
         r7.setMethod(PricingMethod.API);
         r7.setPlanName("Starter 10K Call");
@@ -204,7 +217,6 @@ private PricingRuleRepo pricingRuleRepo;
         r8.setAllowOverage(false);
         r8.setProviderShare(35);
         r8.setPlatformShare(65);
-
         r8.setNote("API package with 100K requests");
         rules.add(r8);
 
@@ -222,6 +234,7 @@ private PricingRuleRepo pricingRuleRepo;
 
         pricingRuleRepo.saveAll(rules);
     }
+
 
 
     private void createModerator() {

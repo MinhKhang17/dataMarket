@@ -149,7 +149,6 @@ private PriceService priceService;
             }
 
             setDatasetPack(dataset,datasetInformation);
-            priceService.createPricingForDataset(dataset,datasetInformation);
                 logger.info("Đã chạy xong method check tồn tại vào datasetgroup");
 //            //luu tam de test
             File file = new File(datasetInformation.getFile_url());
@@ -214,6 +213,8 @@ private PriceService priceService;
         reviewHistoryRepository.save(reviewHistory);
         ReviewHistoryDto reviewHistoryDto = datasetMapper.toReviewHistoryDto(reviewHistoryRepository.save(reviewHistory));
 
+        //tạo giá sau khi accept
+        priceService.createPricingForDataset(dataset,datasetInformationOptional.get());
 
         return ResponseEntity.ok().body(new ApiResponse(true,"Dataset Accepted Successfully",reviewHistoryDto));
     }

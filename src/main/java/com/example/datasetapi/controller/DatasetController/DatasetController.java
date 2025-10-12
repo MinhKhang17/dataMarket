@@ -21,7 +21,7 @@ public class DatasetController {
     }
     @GetMapping("/type/getAll")
     public ResponseEntity<ApiResponse> getAllDatasetType(){
-        return datasetService.getAllDatasetTypeWithCategoryAndCollumn();
+        return datasetService.getAllDatasetType();
     }
 
     @GetMapping("/getAll")
