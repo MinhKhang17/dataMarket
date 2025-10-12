@@ -1,5 +1,7 @@
 package com.example.datasetapi.config.system;
 
+import com.example.datasetapi.enums.Datasets.DatasetPack;
+import com.example.datasetapi.enums.Datasets.PricingMethod;
 import com.example.datasetapi.enums.DocumentType;
 import com.example.datasetapi.enums.UserStatus;
 import com.example.datasetapi.enums.VerificationStatus.RegistrationStatus;
@@ -51,7 +53,8 @@ private  DatasetRepository datasetRepository;
 private  ProviderRepository providerRepository;
 @Autowired
 private  DatasetInforRepository datasetInforRepository;
-
+@Autowired
+private PricingRuleRepo pricingRuleRepo;
 
     @Override
     public void run(String... args) throws Exception {
@@ -85,6 +88,7 @@ private  DatasetInforRepository datasetInforRepository;
 
         createDatasetDemo();
         createModerationTestData();
+        createPricingRule();
 
     }
     else {
@@ -94,6 +98,131 @@ private  DatasetInforRepository datasetInforRepository;
     }
         System.out.println("===========================Load Data success===========================\n");
     }
+
+    private void createPricingRule() {
+        List<PricingRule> rules = new ArrayList<>();
+
+        PricingRule r1 = new PricingRule();
+        r1.setMethod(PricingMethod.ONE_TIME);
+        r1.setPlanName("Small Pack");
+        r1.setMinRow(1000L);
+        r1.setMaxRow(10000L);
+        r1.setBasePricePerRowVnd(5.0);
+        r1.setAllowOverage(false);
+        r1.setProviderShare(40);
+        r1.setPlatformShare(60);
+        r1.setDatasetPack(DatasetPack.SMALL);
+        r1.setNote("Small package for low row usage");
+        rules.add(r1);
+
+        PricingRule r2 = new PricingRule();
+        r2.setMethod(PricingMethod.ONE_TIME);
+        r2.setPlanName("Medium Pack");
+        r2.setMinRow(10001L);
+        r2.setMaxRow(100000L);
+        r2.setBasePricePerRowVnd(4.0);
+        r2.setDiscountPercent(5);
+        r2.setAllowOverage(false);
+        r2.setProviderShare(35);
+        r2.setPlatformShare(65);
+        r2.setDatasetPack(DatasetPack.MEDIUM);
+        r2.setNote("Medium package for moderate row usage");
+        rules.add(r2);
+
+        PricingRule r3 = new PricingRule();
+        r3.setMethod(PricingMethod.ONE_TIME);
+        r3.setPlanName("Big Pack");
+        r3.setMinRow(100001L);
+        r3.setMaxRow(1000000L);
+        r3.setBasePricePerRowVnd(3.0);
+        r3.setDiscountPercent(10);
+        r3.setAllowOverage(false);
+        r3.setProviderShare(30);
+        r3.setPlatformShare(70);
+        r3.setDatasetPack(DatasetPack.LARGE);
+        r3.setNote("Big package for large row usage");
+        rules.add(r3);
+
+        PricingRule r4 = new PricingRule();
+        r4.setMethod(PricingMethod.SUBSCRIPTION);
+        r4.setPlanName("Basic Monthly");
+        r4.setBasePricePoint(200.0);
+        r4.setRowLimit(50000L);
+        r4.setTimeLimitDay(30);
+        r4.setExtraCostPer1kPoint(2000.0);
+        r4.setAllowOverage(true);
+        r4.setProviderShare(40);
+        r4.setPlatformShare(60);
+        r4.setNote("30-day subscription package");
+        rules.add(r4);
+
+        PricingRule r5 = new PricingRule();
+        r5.setMethod(PricingMethod.SUBSCRIPTION);
+        r5.setPlanName("Pro 2 Months");
+        r5.setBasePricePoint(500.0);
+        r5.setRowLimit(200000L);
+        r5.setTimeLimitDay(60);
+        r5.setExtraCostPer1kPoint(1500.0);
+        r5.setDiscountPercent(5);
+        r5.setAllowOverage(true);
+        r5.setProviderShare(35);
+        r5.setPlatformShare(65);
+        r5.setNote("2-month subscription package");
+        rules.add(r5);
+
+        PricingRule r6 = new PricingRule();
+        r6.setMethod(PricingMethod.SUBSCRIPTION);
+        r6.setPlanName("Premium Yearly");
+        r6.setBasePricePoint(1000.0);
+        r6.setRowLimit(600000L);
+        r6.setTimeLimitDay(365);
+        r6.setExtraCostPer1kPoint(1000.0);
+        r6.setDiscountPercent(10);
+        r6.setAllowOverage(true);
+        r6.setProviderShare(30);
+        r6.setPlatformShare(70);
+        r6.setNote("1-year subscription package");
+        rules.add(r6);
+
+        PricingRule r7 = new PricingRule();
+        r7.setMethod(PricingMethod.API);
+        r7.setPlanName("Starter 10K Call");
+        r7.setBasePricePoint(500.0);
+        r7.setRequestLimit(10000L);
+        r7.setAllowOverage(false);
+        r7.setProviderShare(40);
+        r7.setPlatformShare(60);
+        r7.setNote("API package with 10K requests");
+        rules.add(r7);
+
+        PricingRule r8 = new PricingRule();
+        r8.setMethod(PricingMethod.API);
+        r8.setPlanName("Pro 100K Call");
+        r8.setBasePricePoint(3000.0);
+        r8.setRequestLimit(100000L);
+        r8.setDiscountPercent(5);
+        r8.setAllowOverage(false);
+        r8.setProviderShare(35);
+        r8.setPlatformShare(65);
+
+        r8.setNote("API package with 100K requests");
+        rules.add(r8);
+
+        PricingRule r9 = new PricingRule();
+        r9.setMethod(PricingMethod.API);
+        r9.setPlanName("Enterprise 1M Call");
+        r9.setBasePricePoint(20000.0);
+        r9.setRequestLimit(1000000L);
+        r9.setDiscountPercent(10);
+        r9.setAllowOverage(false);
+        r9.setProviderShare(30);
+        r9.setPlatformShare(70);
+        r9.setNote("API package with 1M requests");
+        rules.add(r9);
+
+        pricingRuleRepo.saveAll(rules);
+    }
+
 
     private void createModerator() {
         User user = new User();

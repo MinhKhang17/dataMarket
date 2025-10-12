@@ -27,7 +27,10 @@ public enum ErrorCode {
     INTERNAL_SERVER_ERROR("INTERNAL_SERVER_ERROR", "Lỗi hệ thống, vui lòng thử lại sau"),
     BAD_REQUEST("BAD_REQUEST", "Yêu cầu không hợp lệ"),
     INVALID_ROLE("INVALID_ROLE","role không hợp lệ" ),
-    LOCAL_DATE_INVALID("LOCAL_DATE_INVALID","Ngày giờ không hợp lệ format chuẩn: yyyy-MM-dd");
+    LOCAL_DATE_INVALID("LOCAL_DATE_INVALID","Ngày giờ không hợp lệ format chuẩn: yyyy-MM-dd"),
+    DATASET_ROW_MIN_INVALID("DATASET_ROW_MIN_INVALID","Gói quá nhỏ" ),
+    DATASET_PACK_INVALID("DATASET_PACK_INVALID","Gói dataset chưa được phân loại package" ),
+    PRICING_RULE_INVALID("PRICING_RULE_INVALID","Không tìm thấy pricing rule" );
 
     private final String code;
     private final String message;

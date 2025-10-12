@@ -8,7 +8,9 @@ import com.example.datasetapi.repository.AddressRepository;
 import com.example.datasetapi.repository.DatasetInforRepository;
 import com.example.datasetapi.repository.DatasetRepository;
 import com.example.datasetapi.service.Dataset.DatasetService;
+import com.example.datasetapi.service.Dataset.PriceService;
 import jakarta.servlet.http.HttpServletRequest;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -29,7 +31,8 @@ public class AsyncDatasetService {
     private AddressRepository addressRepository;
     @Autowired
     private DatasetService datasetService;
-
+    @Autowired
+    private PriceService priceService;
     @Async
     public CompletableFuture<Map<String, Object>> readAndUploadDataset(ProviderUploadDatasetRequest providerUploadDatasetRequest, long provider_id, DatasetType datasetType) {
         try {
@@ -52,7 +55,6 @@ public class AsyncDatasetService {
 
 
                 datasetService.checkExitsAndCreateDatasetGroupAndDateset(providerUploadDatasetRequest,provider_id);
-
 
             return  CompletableFuture.completedFuture(result);
 

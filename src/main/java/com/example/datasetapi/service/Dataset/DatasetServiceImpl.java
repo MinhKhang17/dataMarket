@@ -6,7 +6,10 @@ import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.dto.response.DatasetReposonseDto;
 import com.example.datasetapi.dto.response.ReviewHistoryDto;
 import com.example.datasetapi.enums.Datasets.DatasetInforStatus;
+import com.example.datasetapi.enums.Datasets.DatasetPack;
 import com.example.datasetapi.enums.Datasets.DatasetStatus;
+import com.example.datasetapi.exception.CustomException;
+import com.example.datasetapi.exception.ErrorCode;
 import com.example.datasetapi.model.Dataset.*;
 import com.example.datasetapi.model.userManager.Address;
 import com.example.datasetapi.model.userManager.Provider;
@@ -77,8 +80,8 @@ private ReviewHistoryRepository reviewHistoryRepository;
 
 @Autowired
     private DatasetMapper datasetMapper;
-
-
+@Autowired
+private PriceService priceService;
 
 
 
@@ -144,7 +147,10 @@ private ReviewHistoryRepository reviewHistoryRepository;
                 dataset.setDatasetGroup(datasetGroup);
                 datasetGroup.getDatasets().add(dataset);
             }
-            logger.info("Đã chạy xong method check tồn tại vào datasetgroup");
+
+            setDatasetPack(dataset,datasetInformation);
+            priceService.createPricingForDataset(dataset,datasetInformation);
+                logger.info("Đã chạy xong method check tồn tại vào datasetgroup");
 //            //luu tam de test
             File file = new File(datasetInformation.getFile_url());
                 uploadCSVFileToPendingFolder(file, dataset);
@@ -158,6 +164,25 @@ private ReviewHistoryRepository reviewHistoryRepository;
             throw new RuntimeException(e);
         }
     }
+
+
+
+    private void setDatasetPack(Dataset dataset, DatasetInformation datasetInformation) {
+        long dataset_row = datasetInformation.getRowCount();
+        if(dataset_row<1000){
+            throw new CustomException(ErrorCode.DATASET_ROW_MIN_INVALID);
+        }
+        if(dataset_row >1000 && dataset_row <= 10000){
+            dataset.setDatasetPack(DatasetPack.SMALL);
+        }
+        else if(dataset_row >10000 && dataset_row <= 100000){
+            dataset.setDatasetPack(DatasetPack.MEDIUM);
+        }
+        else{
+            dataset.setDatasetPack(DatasetPack.LARGE);
+        }
+    }
+
     @Override
     public ResponseEntity<?> acceptDataset(long datasetInforId, HttpServletRequest request) {
         Optional<DatasetInformation> datasetInformationOptional = datasetInforRepository.findById(datasetInforId);

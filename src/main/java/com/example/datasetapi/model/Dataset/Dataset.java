@@ -1,5 +1,6 @@
 package com.example.datasetapi.model.Dataset;
 
+import com.example.datasetapi.enums.Datasets.DatasetPack;
 import com.example.datasetapi.enums.Datasets.DatasetStatus;
 import com.example.datasetapi.model.userManager.Provider;
 import jakarta.persistence.*;
@@ -46,4 +47,9 @@ private DatasetGroup datasetGroup;
 
 @ManyToOne
     private Provider provider;
+@Column
+    @Enumerated(EnumType.STRING)
+    private DatasetPack datasetPack=DatasetPack.UNDETERMINED;
+
+
 }
