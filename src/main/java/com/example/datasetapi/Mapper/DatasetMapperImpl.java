@@ -14,10 +14,16 @@ import java.util.stream.Collectors;
 
 @Component
 public class DatasetMapperImpl implements DatasetMapper {
+    public DatasetMapperImpl() {
+    }
+
     @Override
     public UploadHeaderResponseDto toUploadHeaderResponseDto(DatasetInformation ds) {
         UploadHeaderResponseDto uploadHeaderResponseDto = new UploadHeaderResponseDto();
         uploadHeaderResponseDto.setDatasetInformationId(ds.getId());
+        if(ds.getValidationErrors()==null||!ds.getValidationErrors().isEmpty()){
+            uploadHeaderResponseDto.setValidationErrorDtos(ds.getValidationErrors());
+        }
         return uploadHeaderResponseDto;
     }
 

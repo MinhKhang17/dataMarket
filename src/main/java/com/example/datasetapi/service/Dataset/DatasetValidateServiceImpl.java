@@ -124,7 +124,7 @@ public class DatasetValidateServiceImpl implements DatasetValidateService {
             boolean isChecked = fileService.checkHeader(file,datasetTypeId,ds,provider);
 
             if(!isChecked){
-                return ResponseEntity.ok().body(new ApiResponse(false,"dataset header checked and false",ds));
+                return ResponseEntity.badRequest().body(new ApiResponse(false,"dataset header checked and false",datasetMapper.toUploadHeaderResponseDto(ds)));
             }
             //neu check thanh cong thi khoi tao dataset cho provider
 
