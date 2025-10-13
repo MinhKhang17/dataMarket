@@ -1,4 +1,4 @@
-package com.example.datasetapi.service.dataset;
+package com.example.datasetapi.service.Dataset;
 
 import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
