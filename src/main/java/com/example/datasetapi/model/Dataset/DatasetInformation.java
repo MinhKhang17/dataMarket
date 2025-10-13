@@ -1,4 +1,4 @@
-package com.example.datasetapi.model.Dataset;
+package com.example.datasetapi.model.dataset;
 
 import com.example.datasetapi.dto.response.ValidationErrorDto;
 import com.example.datasetapi.enums.Datasets.DatasetInforStatus;

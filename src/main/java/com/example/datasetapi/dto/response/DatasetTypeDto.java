@@ -1,6 +1,6 @@
 package com.example.datasetapi.dto.response;
 
-import com.example.datasetapi.model.Dataset.Category;
+import com.example.datasetapi.model.dataset.Category;
 import lombok.Data;
 
 import java.util.List;

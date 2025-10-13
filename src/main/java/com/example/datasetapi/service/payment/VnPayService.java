@@ -3,11 +3,14 @@ package com.example.datasetapi.service.payment;
 import com.example.datasetapi.config.VnpayProperties;
 import com.example.datasetapi.dto.request.CreateVnpayPaymentRequest;
 import com.example.datasetapi.enums.TransferType;
+import com.example.datasetapi.exception.CustomException;
+import com.example.datasetapi.exception.ErrorCode;
 import com.example.datasetapi.model.paySystem.Transaction;
 import com.example.datasetapi.model.userManager.User;
 import com.example.datasetapi.model.paySystem.Wallet;
 import com.example.datasetapi.repository.TransactionRepository;
 import com.example.datasetapi.repository.WalletRepository;
+import com.example.datasetapi.service.user.TokenService;
 import com.example.datasetapi.service.user.TokenServiceImpl;
 import com.example.datasetapi.service.user.UserService;
 import com.example.datasetapi.util.JwtUtil;
@@ -33,6 +36,8 @@ public class VnPayService {
     private final TransactionRepository transactionRepository;
     private final UserService userService;
     private final JwtUtil jwtUtil;
+    private final TokenService tokenService;
+    private final HttpServletRequest request;
     private final TokenServiceImpl tokenServiceImpl;
 
     public VnPayService(VnpayProperties props,
@@ -40,22 +45,27 @@ public class VnPayService {
                         WalletRepository walletRepository, TransactionRepository transactionRepository,
                         UserService userService,
                         JwtUtil jwtUtil,
-                        TokenServiceImpl tokenServiceImpl) {
+                        TokenServiceImpl tokenServiceImpl, TokenService tokenService, HttpServletRequest request) {
         this.props = props;
         this.paymentService = paymentService;
         this.walletRepository = walletRepository;
         this.transactionRepository = transactionRepository;
         this.userService = userService;
         this.jwtUtil = jwtUtil;
+        this.tokenService = tokenService;
+        this.request = request;
         this.tokenServiceImpl = tokenServiceImpl;
     }
 
     // Tạo URL thanh toán
     public String createPaymentUrl(HttpServletRequest servletRequest, CreateVnpayPaymentRequest reqBody) {
-        String token = tokenServiceImpl.resolveToken(servletRequest);
+        String token = tokenService.resolveToken(request);
+        if(token == null) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
+        }
         Long userId = jwtUtil.getUserIdFromToken(token);
         if (userId == null) {
-            throw new RuntimeException("Không lấy được userId từ token");
+            throw new CustomException(ErrorCode.INVALID_TOKEN);
         }
 
         BigDecimal inVnd = new BigDecimal(safe(reqBody.getAmount()));
@@ -127,7 +137,7 @@ public class VnPayService {
                 Wallet wallet = walletRepository.findByUserId(uid).orElseGet(() -> {
                     Wallet w = new Wallet();
                     User u = userService.findUserById(uid)
-                            .orElseThrow(() -> new RuntimeException("User not found"));
+                            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
                     w.setUser(u);
                     w.setAmount(0L);
                     return walletRepository.save(w);

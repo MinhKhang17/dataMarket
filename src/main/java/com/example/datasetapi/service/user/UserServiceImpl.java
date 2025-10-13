@@ -1,6 +1,6 @@
 package com.example.datasetapi.service.user;
 
-import com.example.datasetapi.Mapper.UserMapper;
+import com.example.datasetapi.mapper.UserMapper;
 import com.example.datasetapi.dto.request.LoginRequest;
 import com.example.datasetapi.dto.request.ProviderRegistrationRequestDTO;
 import com.example.datasetapi.dto.request.RegisterRequest;
@@ -48,24 +48,17 @@ import java.util.*;
 public class UserServiceImpl implements UserService {
 
     private final String GOOGLEPROVIDER= "GOOGLE";
-
     private final JwtUtil jwtUtil;
-
     private final UserRepository userRepository;
-
     private final TokenService tokenService;
-
     private final RoleRepository roleRepository;
-
     private final ImageServiceImpl imageService;
     private final WalletRepository walletRepository;
-
-
     private final ProviderIndentityDocumentRepository providerIdentityDocumentRepository;
-
     private final ProviderRegistrationRepository providerRegistrationRepository;
-
     private final ProviderRepository providerRepository;
+
+
     @Autowired
     public UserServiceImpl(ProviderRepository providerRepository,UserRepository userRepository, JwtUtil jwtUtil, TokenServiceImpl tokenService, RoleRepository roleRepository, ImageServiceImpl imageService, ProviderIndentityDocumentRepository providerIdentityDocumentRepository, ProviderRegistrationRepository providerRegistrationRepository, WalletRepository walletRepository) {
         this.userRepository = userRepository;
@@ -158,7 +151,6 @@ return null;
 
     }
 
-
     @Override
     @Transactional
 
@@ -213,21 +205,21 @@ return null;
     @Transactional
     @Override
     public ResponseEntity<ApiResponse> updatePassword(UpdatePasswordRequest request) {
-        try {
             // check input
             if (request == null || request.getNewPassword() == null ||
                     request.getOldPassword() == null || request.getConfirmPassword() == null) {
-                return ResponseEntity.badRequest().body(new ApiResponse(false, "Missing input", null));
+                throw new CustomException(ErrorCode.MISSING_REQUIRED_FIELD);
             }
             if (!request.getNewPassword().equals(request.getConfirmPassword())) {
-                return ResponseEntity.badRequest().body(new ApiResponse(false, "New password and confirm password do not match", null));
+                throw new CustomException(ErrorCode.PASSWORD_MISMATCH);
             }
             if (request.getNewPassword().length() < 8) {
-                return ResponseEntity.badRequest().body(new ApiResponse(false, "New password too short", null));
+                throw new CustomException(ErrorCode.PASSWORD_TOO_SHORT);
             }
             if (!Validator.isValidPassword(request.getNewPassword())) {
-                return ResponseEntity.badRequest().body(new ApiResponse(false, "Invalid new password", null));
+                throw new CustomException(ErrorCode.PASSWORD_TOO_WEAK);
             }
+
 
             // check user
             String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -238,7 +230,7 @@ return null;
 
             // check old password
             if (!PasswordUtil.matches(request.getOldPassword(), userOptional.get().getPassword())) {
-                return ResponseEntity.badRequest().body(new ApiResponse(false, "Old password is incorrect", null));
+                throw new CustomException(ErrorCode.OLD_PASSWORD_INCORRECT);
             }
 
             //update password
@@ -247,9 +239,7 @@ return null;
             userRepository.save(user);
 
             return ResponseEntity.ok().body(new ApiResponse(true, "Password update successfully", user.getUsername()));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, "Error", e.getMessage()));
-        }
+
     }
 
 
@@ -261,7 +251,7 @@ return null;
         if (!user.isPresent()) {
             User newUser = new User();
             newUser.setUsername(oAuth2User.getAttribute("name"));
-            newUser.setPassword(randowPassword());
+            newUser.setPassword(randomPassword());
             newUser.setEmail(email);
             Role role = roleRepository.findByName("CONSUMER").get();
             newUser.setRole(role);
@@ -321,9 +311,9 @@ return null;
     }
 
 
-    private String randowPassword() {
-        String randowPassword = UUID.randomUUID().toString();
-        String encodedPassword = PasswordUtil.encode(randowPassword);
+    private String randomPassword() {
+        String randomPassword = UUID.randomUUID().toString();
+        String encodedPassword = PasswordUtil.encode(randomPassword);
         return encodedPassword;
     }
 
@@ -333,30 +323,25 @@ return null;
             System.out.println(providerRegistrationDTO.getFullName());
             // Validate input
             if (providerRegistrationDTO == null) {
-                return ResponseEntity.badRequest()
-                        .body(new ApiResponse(false, "Registration data is required", null));
+                throw new CustomException(ErrorCode.MISSING_REQUIRED_FIELD);
             }
 
             // Validate basic fields
             if (providerRegistrationDTO.getFullName() == null || providerRegistrationDTO.getFullName().trim().isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .body(new ApiResponse(false, "Full name is required", null));
+                throw new CustomException(ErrorCode.MISSING_REQUIRED_FIELD);
             }
 
             if (providerRegistrationDTO.getEmail() == null || providerRegistrationDTO.getEmail().trim().isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .body(new ApiResponse(false, "Email is required", null));
+                throw new CustomException(ErrorCode.MISSING_REQUIRED_FIELD);
             }
 
             if (providerRegistrationDTO.getPhoneNumber() == null || providerRegistrationDTO.getPhoneNumber().trim().isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .body(new ApiResponse(false, "Phone number is required", null));
+                throw new CustomException(ErrorCode.MISSING_REQUIRED_FIELD);
             }
 
             // Check if email already exists
             if (providerRegistrationRepository.existsByEmail(providerRegistrationDTO.getEmail())) {
-                return ResponseEntity.badRequest()
-                        .body(new ApiResponse(false, "Email already exists in the system", null));
+                throw new CustomException(ErrorCode.EMAIL_ALREADY_EXISTS);
             }
 
             // Process registration using the existing registerProvider method
@@ -412,12 +397,6 @@ return null;
         providerRegistration.setFullName(providerRegistrationDTO.getFullName());
         providerRegistration.setEmail(providerRegistrationDTO.getEmail());
         providerRegistration.setPhoneNumber(providerRegistrationDTO.getPhoneNumber());
-
-        // Set thông tin địa chỉ (nếu có trong DTO - cần thêm vào DTO)
-        // providerRegistration.setAddressLine(providerRegistrationDTO.getAddressLine());
-        // providerRegistration.setCity(providerRegistrationDTO.getCity());
-        // providerRegistration.setDistrict(providerRegistrationDTO.getDistrict());
-        // providerRegistration.setWard(providerRegistrationDTO.getWard());
 
         // Set trạng thái và thời gian
         providerRegistration.setRegistrationStatus(RegistrationStatus.PENDING);

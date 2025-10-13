@@ -1,7 +1,9 @@
 package com.example.datasetapi.service.user;
 
 import com.example.datasetapi.dto.response.ApiResponse;
-import com.example.datasetapi.model.Dataset.DownloadToken;
+import com.example.datasetapi.exception.CustomException;
+import com.example.datasetapi.exception.ErrorCode;
+import com.example.datasetapi.model.dataset.DownloadToken;
 import com.example.datasetapi.model.userManager.Token;
 import com.example.datasetapi.model.userManager.User;
 import com.example.datasetapi.repository.DownloadTokenRepository;
@@ -28,11 +30,11 @@ public class TokenServiceImpl implements TokenService {
     }
 
     @Autowired
-    private  DownloadTokenRepository dowloadTokenRepository;
+    private  DownloadTokenRepository downloadTokenRepository;
 
     @Override
     public DownloadToken findDownloadTokenById(UUID tokenId) {
-        return dowloadTokenRepository.findById(tokenId)
+        return downloadTokenRepository.findById(tokenId)
                 .orElseThrow(() -> new EntityNotFoundException("DownloadToken not found with id: " + tokenId));
     }
 
@@ -61,12 +63,11 @@ public class TokenServiceImpl implements TokenService {
 
                 return ResponseEntity.ok().body(new ApiResponse(true, "Token refreshed successfully", accessToken));
             } else {
-                return ResponseEntity.badRequest().body(new ApiResponse(false, "Token not found", null));
+                throw new CustomException(ErrorCode.TOKEN_NOT_FOUND);
             }
 
         }
-        return ResponseEntity.badRequest().body(new ApiResponse(false, "Token not found", null));
-
+        throw new CustomException(ErrorCode.REFRESH_TOKEN_INVALID);
     }
 
 

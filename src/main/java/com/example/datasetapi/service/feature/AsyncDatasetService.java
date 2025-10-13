@@ -41,7 +41,7 @@ public class AsyncDatasetService {
             System.out.println(" Bắt đầu đọc content...");
             DatasetInformation datasetInformation =
                     datasetInforRepository.findById(providerUploadDatasetRequest.getDataset_Information_Id())
-                            .orElseThrow(() -> new RuntimeException("Dataset not found"));
+                            .orElseThrow(() -> new CustomException(ErrorCode.DATASET_NOT_FOUND));
 
             Optional<Location> addressOptional = locationRepository.findById(providerUploadDatasetRequest.getProvider_location_id());
             if(!addressOptional.isPresent()) {
@@ -56,6 +56,7 @@ public class AsyncDatasetService {
 
 
                 datasetService.checkExitsAndCreateDatasetGroupAndDateset(providerUploadDatasetRequest,provider_id);
+
 
             return  CompletableFuture.completedFuture(result);
 

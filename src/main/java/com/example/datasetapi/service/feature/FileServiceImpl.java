@@ -9,7 +9,7 @@ import com.example.datasetapi.model.Dataset.DatasetInformation;
 import com.example.datasetapi.model.Dataset.DatasetType;
 import com.example.datasetapi.model.Dataset.DatasetTypeColumn;
 import com.example.datasetapi.model.Dataset.DatasetValidationError;
-//import com.example.datasetapi.model.userManager.Address;
+import com.example.datasetapi.model.userManager.Address;
 import com.example.datasetapi.model.userManager.Provider;
 import com.example.datasetapi.repository.DatasetInforRepository;
 import com.example.datasetapi.repository.DatasetTypeRepository;
@@ -18,8 +18,6 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -54,10 +52,10 @@ public class FileServiceImpl implements FileService {
     public boolean checkHeader(MultipartFile file, long datasetTypeId, DatasetInformation ds, Provider provider) {
         try{
             System.out.println("-----------------------------------------\n" +
-                    "Bat Dau Doc Dataset\n" +
+                    "Start reading Dataset\n" +
                     "-----------------------------------------");
             DatasetType type = datasetTypeRepository.findById(datasetTypeId)
-                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy DatasetType: " + datasetTypeId));
+                    .orElseThrow(() -> new IllegalArgumentException("DatasetType not found:" + datasetTypeId));
 
             String path = saveTemp(file);
 
@@ -130,7 +128,7 @@ public class FileServiceImpl implements FileService {
     public DatasetInformation uploadAndSchemaCheckByUrl(Long datasetTypeId, String fileUrl, String name, String description) {
         try {
             DatasetType type = datasetTypeRepository.findById(datasetTypeId)
-                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy DatasetType: " + datasetTypeId));
+                    .orElseThrow(() -> new IllegalArgumentException("DatasetType not found: " + datasetTypeId));
 
             DatasetInformation ds = new DatasetInformation();
             ds.setName(name);
@@ -356,11 +354,11 @@ public class FileServiceImpl implements FileService {
             try {
 
                 System.out.println("-----------------------------------------\n" +
-                        "Da xoa dataset\n" +
+                        "Deleted dataset\n" +
                         "-----------------------------------------");
                 Files.deleteIfExists(Paths.get(ds.getFile_url()));
             } catch (IOException e) {
-                System.err.println("Không thể xóa file tạm: " + e.getMessage());
+                System.err.println("Can not delete current file: " + e.getMessage());
             }
         }
     }
