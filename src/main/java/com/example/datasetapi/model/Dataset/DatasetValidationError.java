@@ -1,4 +1,5 @@
-package com.example.datasetapi.model.dataset;
+package com.example.datasetapi.model.Dataset;
+
 
 import com.example.datasetapi.enums.Datasets.ErrorCode;
 import com.example.datasetapi.enums.Datasets.ValidationPhase;

@@ -1,4 +1,4 @@
-package com.example.datasetapi.model.dataset;
+package com.example.datasetapi.model.Dataset;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;

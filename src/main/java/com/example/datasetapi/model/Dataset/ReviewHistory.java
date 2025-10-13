@@ -1,7 +1,7 @@
-package com.example.datasetapi.model.dataset;
+package com.example.datasetapi.model.Dataset;
 
-import com.example.datasetapi.model.userManager.Provider;
-import com.example.datasetapi.model.userManager.User;
+import com.example.datasetapi.model.UserManager.Provider;
+import com.example.datasetapi.model.UserManager.User;
 import jakarta.persistence.*;
 import lombok.Data;
 

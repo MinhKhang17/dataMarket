@@ -1,9 +1,6 @@
 package com.example.datasetapi.dto.response;
 
-import com.example.datasetapi.model.dataset.Dataset;
-import com.example.datasetapi.model.userManager.Provider;
-import com.example.datasetapi.model.userManager.User;
-import jakarta.persistence.*;
+import com.example.datasetapi.model.Dataset.Dataset;
 import lombok.Data;
 
 import java.time.LocalDateTime;

@@ -1,6 +1,6 @@
 package com.example.datasetapi.repository;
 
-import com.example.datasetapi.model.userManager.Token;
+import com.example.datasetapi.model.UserManager.Token;
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;

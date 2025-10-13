@@ -1,11 +1,9 @@
-package com.example.datasetapi.model.dataset;
+package com.example.datasetapi.model.Dataset;
 
 import com.example.datasetapi.model.location.Location;
-import com.example.datasetapi.model.userManager.Provider;
-import com.example.datasetapi.model.userManager.User;
+import com.example.datasetapi.model.UserManager.Provider;
 import jakarta.persistence.*;
 import lombok.Data;
-import org.springframework.boot.autoconfigure.web.WebProperties;
 
 import java.util.ArrayList;
 import java.util.List;

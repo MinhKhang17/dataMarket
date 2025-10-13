@@ -1,9 +1,9 @@
 package com.example.datasetapi.service.user;
 
 import com.example.datasetapi.dto.response.ApiResponse;
-import com.example.datasetapi.model.dataset.DownloadToken;
-import com.example.datasetapi.model.userManager.Token;
-import com.example.datasetapi.model.userManager.User;
+import com.example.datasetapi.model.Dataset.DownloadToken;
+import com.example.datasetapi.model.UserManager.Token;
+import com.example.datasetapi.model.UserManager.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;

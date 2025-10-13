@@ -1,7 +1,5 @@
 package com.example.datasetapi.exception;
 
-import lombok.Data;
-
 public enum ErrorCode {
 
     //Tokken errors

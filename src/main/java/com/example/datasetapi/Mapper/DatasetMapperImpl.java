@@ -1,11 +1,11 @@
-package com.example.datasetapi.mapper;
+package com.example.datasetapi.Mapper;
 
 import com.example.datasetapi.config.ModelMapper;
 import com.example.datasetapi.dto.response.*;
 import com.example.datasetapi.enums.Datasets.DatasetStatus;
-import com.example.datasetapi.model.dataset.*;
-import com.example.datasetapi.model.userManager.Provider;
-import com.example.datasetapi.model.userManager.User;
+import com.example.datasetapi.model.Dataset.*;
+import com.example.datasetapi.model.UserManager.Provider;
+import com.example.datasetapi.model.UserManager.User;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

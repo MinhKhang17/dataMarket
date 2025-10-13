@@ -11,7 +11,6 @@ import com.example.datasetapi.repository.WalletRepository;
 import com.example.datasetapi.repository.WithdrawRequestRepository;
 import com.example.datasetapi.service.user.TokenService;
 import com.example.datasetapi.util.JwtUtil;
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

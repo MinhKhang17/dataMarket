@@ -1,22 +1,20 @@
 package com.example.datasetapi.service.feature;
 
 import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
+import com.example.datasetapi.exception.CustomException;
+import com.example.datasetapi.exception.ErrorCode;
 import com.example.datasetapi.model.Dataset.DatasetInformation;
 import com.example.datasetapi.model.Dataset.DatasetType;
 //import com.example.datasetapi.model.userManager.Address;
 import com.example.datasetapi.model.location.Location;
 import com.example.datasetapi.repository.LocationRepository;
 import com.example.datasetapi.repository.DatasetInforRepository;
-import com.example.datasetapi.repository.DatasetRepository;
 import com.example.datasetapi.service.Dataset.DatasetService;
 import com.example.datasetapi.service.Dataset.PriceService;
-import jakarta.servlet.http.HttpServletRequest;
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;

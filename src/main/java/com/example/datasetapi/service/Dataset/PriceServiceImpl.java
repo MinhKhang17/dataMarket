@@ -2,7 +2,6 @@ package com.example.datasetapi.service.Dataset;
 
 import com.example.datasetapi.enums.Datasets.DatasetPack;
 import com.example.datasetapi.enums.Datasets.PricingMethod;
-import com.example.datasetapi.enums.Datasets.PricingType;
 import com.example.datasetapi.enums.Datasets.SubType;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
@@ -14,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class PriceServiceImpl implements  PriceService {

@@ -1,7 +1,7 @@
 package com.example.datasetapi.repository;
 
-import com.example.datasetapi.model.dataset.DatasetInformation;
-import com.example.datasetapi.model.dataset.DatasetValidationError;
+import com.example.datasetapi.model.Dataset.DatasetInformation;
+import com.example.datasetapi.model.Dataset.DatasetValidationError;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

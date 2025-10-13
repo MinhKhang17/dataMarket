@@ -1,11 +1,11 @@
-package com.example.datasetapi.mapper;
+package com.example.datasetapi.Mapper;
 
 import com.example.datasetapi.dto.response.DatasetValidationErrorDTO;
 import com.example.datasetapi.dto.response.ModeratorDatasetInforResponseDto;
 import com.example.datasetapi.dto.response.UserInformationResponseForAuthMe;
-import com.example.datasetapi.model.dataset.DatasetInformation;
-import com.example.datasetapi.model.dataset.DatasetValidationError;
-import com.example.datasetapi.model.userManager.User;
+import com.example.datasetapi.model.Dataset.DatasetInformation;
+import com.example.datasetapi.model.Dataset.DatasetValidationError;
+import com.example.datasetapi.model.UserManager.User;
 
 import java.util.List;
 import java.util.stream.Collectors;

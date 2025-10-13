@@ -6,18 +6,13 @@ import com.example.datasetapi.Mapper.UserResponseDTOMapper;
 import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
 
-import com.example.datasetapi.dto.response.DatasetValidationErrorDTO;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
-import com.example.datasetapi.model.userManager.Address;
 import com.example.datasetapi.repository.*;
-import com.example.datasetapi.model.Dataset.*;
-
-import com.example.datasetapi.enums.Datasets.*;
 
 import com.example.datasetapi.model.Dataset.DatasetInformation;
 
-import com.example.datasetapi.model.userManager.Provider;
+import com.example.datasetapi.model.UserManager.Provider;
 
 import com.example.datasetapi.service.feature.AsyncDatasetService;
 import com.example.datasetapi.service.feature.FileService;
@@ -32,8 +27,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.io.*;
 
 import java.time.LocalDateTime;
 import java.util.*;

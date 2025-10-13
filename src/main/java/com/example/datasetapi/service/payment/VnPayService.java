@@ -6,7 +6,7 @@ import com.example.datasetapi.enums.TransferType;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
 import com.example.datasetapi.model.paySystem.Transaction;
-import com.example.datasetapi.model.userManager.User;
+import com.example.datasetapi.model.UserManager.User;
 import com.example.datasetapi.model.paySystem.Wallet;
 import com.example.datasetapi.repository.TransactionRepository;
 import com.example.datasetapi.repository.WalletRepository;

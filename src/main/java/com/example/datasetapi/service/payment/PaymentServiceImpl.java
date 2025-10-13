@@ -4,7 +4,7 @@ import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.enums.TransferType;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
-import com.example.datasetapi.model.userManager.User;
+import com.example.datasetapi.model.UserManager.User;
 import com.example.datasetapi.model.paySystem.Wallet;
 import com.example.datasetapi.repository.WalletRepository;
 import com.example.datasetapi.service.user.TokenServiceImpl;
@@ -12,9 +12,7 @@ import com.example.datasetapi.service.user.UserServiceImpl;
 import com.example.datasetapi.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.token.TokenService;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;

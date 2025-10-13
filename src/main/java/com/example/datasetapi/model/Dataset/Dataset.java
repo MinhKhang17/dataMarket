@@ -1,13 +1,12 @@
-package com.example.datasetapi.model.dataset;
+package com.example.datasetapi.model.Dataset;
 
 import com.example.datasetapi.enums.Datasets.DatasetPack;
 import com.example.datasetapi.enums.Datasets.DatasetStatus;
-import com.example.datasetapi.model.userManager.Provider;
+import com.example.datasetapi.model.UserManager.Provider;
 import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Data
 @Entity

@@ -1,6 +1,6 @@
 package com.example.datasetapi.model.paySystem;
 
-import com.example.datasetapi.model.userManager.User;
+import com.example.datasetapi.model.UserManager.User;
 import jakarta.persistence.*;
 import lombok.Data;
 

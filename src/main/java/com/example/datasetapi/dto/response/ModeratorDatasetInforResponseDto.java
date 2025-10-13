@@ -1,8 +1,8 @@
 package com.example.datasetapi.dto.response;
 
-import com.example.datasetapi.model.dataset.DatasetInformation;
-import com.example.datasetapi.model.dataset.DatasetType;
-import com.example.datasetapi.model.dataset.DatasetValidationError;
+import com.example.datasetapi.model.Dataset.DatasetInformation;
+import com.example.datasetapi.model.Dataset.DatasetType;
+import com.example.datasetapi.model.Dataset.DatasetValidationError;
 import lombok.Data;
 
 import java.time.LocalDateTime;

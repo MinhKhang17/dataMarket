@@ -1,7 +1,7 @@
     package com.example.datasetapi.util;
 
-    import com.example.datasetapi.model.dataset.DownloadToken;
-    import com.example.datasetapi.model.userManager.User;
+    import com.example.datasetapi.model.Dataset.DownloadToken;
+    import com.example.datasetapi.model.UserManager.User;
     import com.example.datasetapi.repository.DownloadTokenRepository;
     import io.jsonwebtoken.*;
     import io.jsonwebtoken.security.Keys;

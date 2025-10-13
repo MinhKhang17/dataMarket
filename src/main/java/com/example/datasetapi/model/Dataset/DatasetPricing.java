@@ -1,6 +1,5 @@
 package com.example.datasetapi.model.Dataset;
 
-import com.example.datasetapi.enums.Datasets.PricingType;
 import jakarta.persistence.*;
 import lombok.Data;
 

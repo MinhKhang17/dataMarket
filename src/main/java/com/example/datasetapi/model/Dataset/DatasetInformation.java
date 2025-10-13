@@ -1,11 +1,11 @@
-package com.example.datasetapi.model.dataset;
+package com.example.datasetapi.model.Dataset;
 
 import com.example.datasetapi.dto.response.ValidationErrorDto;
 import com.example.datasetapi.enums.Datasets.DatasetInforStatus;
 import com.example.datasetapi.enums.Datasets.FileExtension;
 import com.example.datasetapi.model.location.Location;
 //import com.example.datasetapi.model.userManager.Address;
-import com.example.datasetapi.model.userManager.Provider;
+import com.example.datasetapi.model.UserManager.Provider;
 import jakarta.persistence.*;
 import lombok.Data;
 
