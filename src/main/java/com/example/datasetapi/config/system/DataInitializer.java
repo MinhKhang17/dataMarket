@@ -59,7 +59,7 @@ private  ProviderRepository providerRepository;
 private  DatasetInforRepository datasetInforRepository;
     @Autowired
     private PricingRuleRepo pricingRuleRepo;
-
+@Autowired
     private  ProvinceRepository provinceRepository;
     @Autowired
     private  CommuneRepository  communeRepository;
