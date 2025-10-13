@@ -1,4 +1,4 @@
-package com.example.datasetapi.model.Dataset;
+package com.example.datasetapi.model.dataset;
 
 import com.example.datasetapi.model.userManager.Provider;
 import com.example.datasetapi.model.userManager.User;

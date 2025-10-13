@@ -1,24 +1,17 @@
-package com.example.datasetapi.service.Dataset;
+package com.example.datasetapi.service.dataset;
 
-import com.example.datasetapi.Mapper.DatasetMapper;
-import com.example.datasetapi.Mapper.UserMapper;
-import com.example.datasetapi.Mapper.UserResponseDTOMapper;
+import com.example.datasetapi.mapper.DatasetMapper;
+import com.example.datasetapi.mapper.UserMapper;
+import com.example.datasetapi.mapper.UserResponseDTOMapper;
 import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
 
-import com.example.datasetapi.dto.response.DatasetValidationErrorDTO;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
-import com.example.datasetapi.model.userManager.Address;
 import com.example.datasetapi.repository.*;
-import com.example.datasetapi.model.Dataset.*;
 
-import com.example.datasetapi.enums.Datasets.*;
-
-import com.example.datasetapi.model.Dataset.DatasetInformation;
-
+import com.example.datasetapi.model.dataset.DatasetInformation;
 import com.example.datasetapi.model.userManager.Provider;
-
 import com.example.datasetapi.service.feature.AsyncDatasetService;
 import com.example.datasetapi.service.feature.FileService;
 import com.example.datasetapi.service.user.TokenService;
@@ -33,8 +26,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.*;
-
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -47,8 +38,6 @@ public class DatasetValidateServiceImpl implements DatasetValidateService {
 
     private static final Set<String> CONNECTOR_ALLOWED = Set.of("CCS1", "CCS2", "CHAdeMO", "Type2", "GB/T");
     private static final Set<String> PRICING_MODEL_ALLOWED = Set.of("Flat", "Time-based", "Energy-based", "Subscription");
-
-
     @Autowired
     private TokenService tokenService;
 
@@ -58,12 +47,9 @@ public class DatasetValidateServiceImpl implements DatasetValidateService {
     private FileService fileService;
 
     @Autowired
-  private   AsyncDatasetService asyncDatasetService;
+    private AsyncDatasetService asyncDatasetService;
     @Autowired
     private DatasetInforRepository datasetInforRepository;
-    @Autowired
-    private DatasetValidationErrorRepository datasetValidationErrorRepository;
-
 
     public UserResponseDTOMapper userResponseDTOMapper = new UserMapper();
     @Autowired
@@ -76,7 +62,7 @@ public class DatasetValidateServiceImpl implements DatasetValidateService {
 
        //check xem dataset có tồn tại hay không
         if(!datasetInformationOptional.isPresent()){
-           return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            throw new CustomException(ErrorCode.DATASET_NOT_FOUND);
         }
 
         //check xem đã check header hay chưa
@@ -87,8 +73,8 @@ public class DatasetValidateServiceImpl implements DatasetValidateService {
         if(datasetInformationOptional.get().getProvider().getId()!= tokenService.getUserIdFromRequest(request)){
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        long provider_id = tokenService.getUserIdFromRequest(request);
 
+        long provider_id = tokenService.getUserIdFromRequest(request);
 
         if(!Validator.isValidLocalDate(providerUploadDatasetRequest.getDataset_time())){
             throw new CustomException(ErrorCode.LOCAL_DATE_INVALID);
@@ -136,11 +122,10 @@ public class DatasetValidateServiceImpl implements DatasetValidateService {
     }
     @Override
     public ResponseEntity<?> getAllDatasetErrorWithDatasetInfor() {
-
         return ResponseEntity.ok().body(new ApiResponse(true,"Load success",datasetInforRepository.findAll()
                 .stream()
                 .map(userResponseDTOMapper :: toModeratorDatasetInforResponseDto )
                 .collect(Collectors.toList())
-));
+        ));
     }
 }

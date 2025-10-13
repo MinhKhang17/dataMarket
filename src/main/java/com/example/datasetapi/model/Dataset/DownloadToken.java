@@ -1,4 +1,4 @@
-package com.example.datasetapi.model.Dataset;
+package com.example.datasetapi.model.dataset;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

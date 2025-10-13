@@ -1,11 +1,10 @@
     package com.example.datasetapi.util;
 
-    import com.example.datasetapi.model.Dataset.DownloadToken;
+    import com.example.datasetapi.model.dataset.DownloadToken;
     import com.example.datasetapi.model.userManager.User;
     import com.example.datasetapi.repository.DownloadTokenRepository;
     import io.jsonwebtoken.*;
     import io.jsonwebtoken.security.Keys;
-    import jakarta.servlet.http.HttpServletRequest;
     import org.springframework.beans.factory.annotation.Autowired;
     import org.springframework.beans.factory.annotation.Value;
     import org.springframework.stereotype.Component;
@@ -15,7 +14,6 @@
     import java.time.Instant;
     import java.util.Date;
     import java.util.UUID;
-    import java.util.stream.Collectors;
 
     @Component
     public class JwtUtil {

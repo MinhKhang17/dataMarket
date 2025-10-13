@@ -2,6 +2,8 @@ package com.example.datasetapi.service.payment;
 
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.enums.TransferType;
+import com.example.datasetapi.exception.CustomException;
+import com.example.datasetapi.exception.ErrorCode;
 import com.example.datasetapi.model.userManager.User;
 import com.example.datasetapi.model.paySystem.Wallet;
 import com.example.datasetapi.repository.WalletRepository;
@@ -12,6 +14,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.token.TokenService;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -20,12 +23,13 @@ import java.util.Optional;
 public class PaymentServiceImpl implements PaymentService{
     private final JwtUtil jwtUtil;
     private final TokenServiceImpl tokenServiceImpl;
-    private UserServiceImpl userService;
-    private WalletRepository walletRepository;
-    private TransactionService transactionService;
+    private final UserServiceImpl userService;
+    private final WalletRepository walletRepository;
+    private final TransactionService transactionService;
+
 
     @Autowired
-    public PaymentServiceImpl(UserServiceImpl userService, WalletRepository walletRepository, JwtUtil jwtUtil, TokenServiceImpl tokenServiceImpl,TransactionService transactionService) {
+    public PaymentServiceImpl(UserServiceImpl userService, WalletRepository walletRepository, JwtUtil jwtUtil, TokenServiceImpl tokenServiceImpl, TransactionService transactionService) {
         this.userService = userService;
         this.walletRepository = walletRepository;
         this.jwtUtil = jwtUtil;
@@ -37,12 +41,18 @@ public class PaymentServiceImpl implements PaymentService{
     public ResponseEntity<ApiResponse> createWallet(HttpServletRequest request) {
         Wallet wallet = new Wallet();
 
-        long userId = jwtUtil.getUserIdFromToken(tokenServiceImpl.resolveToken(request));
-
+        String token = tokenServiceImpl.resolveToken(request);
+        if(token == null) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
+        }
+        Long userId = jwtUtil.getUserIdFromToken(token);
+        if (userId == null) {
+            throw new CustomException(ErrorCode.INVALID_TOKEN);
+        }
         Optional<User> user = userService.findUserById(userId);
 
         if(!user.isPresent()){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            throw new CustomException(ErrorCode.USER_NOT_FOUND);
         }
 
         wallet.setUser(user.get());

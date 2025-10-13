@@ -1,10 +1,10 @@
-package com.example.datasetapi.Mapper;
+package com.example.datasetapi.mapper;
 
 import com.example.datasetapi.dto.response.DatasetReposonseDto;
 import com.example.datasetapi.dto.response.DatasetValidationErrorDTO;
 import com.example.datasetapi.dto.response.ReviewHistoryDto;
 import com.example.datasetapi.dto.response.UploadHeaderResponseDto;
-import com.example.datasetapi.model.Dataset.*;
+import com.example.datasetapi.model.dataset.*;
 
 public interface DatasetMapper {
     DatasetValidationErrorDTO toDatasetValidationDto(DatasetValidationError datasetValidationError);

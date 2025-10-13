@@ -3,31 +3,56 @@ package com.example.datasetapi.exception;
 import lombok.Data;
 
 public enum ErrorCode {
-    //lỗi người dùng
-    USER_NOT_FOUND("USER_NOT_FOUND", "Tài khoản không tồn tại"),
-    USERNAME_ALREADY_EXISTS("USERNAME_ALREADY_EXISTS", "Tên tài khoản đã được sử dụng"),
-    EMAIL_ALREADY_EXISTS("EMAIL_ALREADY_EXISTS", "Email đã được đăng ký"),
-    INVALID_CREDENTIALS("INVALID_CREDENTIALS", "Tên đăng nhập hoặc mật khẩu không đúng"),
-    ACCOUNT_DISABLED("ACCOUNT_DISABLED", "Tài khoản đã bị vô hiệu hóa"),
-    ACCOUNT_LOCKED("ACCOUNT_LOCKED", "Tài khoản đã bị khóa"),
-    PASSWORD_TOO_WEAK("PASSWORD_TOO_WEAK", "Mật khẩu quá yếu"),
-    PASSWORD_TOO_SHORT("PASSWORD_TOO_SHORT","Mật khẩu quá ngắn" ),
-    INVALID_TOKEN("INVALID_TOKEN", "Token không hợp lệ hoặc đã hết hạn"),
-    TOKEN_EXPIRED("TOKEN_EXPIRED", "Token đã hết hạn"),
-    UNAUTHORIZED("UNAUTHORIZED", "Bạn không có quyền truy cập"),
-    REFRESH_TOKEN_INVALID("REFRESH_TOKEN_INVALID", "Refresh token không hợp lệ"),
-    LOGOUT_FAILED("LOGOUT_FAILED", "Đăng xuất thất bại"),
-    EMAIL_INVALID("EMAIL_INVALID","Email không hợp lệ"),
-    //lỗi dataset
-    DATASET_NOT_FOUND("DATASET_NOT_FOUND", "Dataset không tồn tại"),
-    DATASET_ALREADY_EXISTS("DATASET_ALREADY_EXISTS", "Dataset đã tồn tại"),
-    DATASET_GROUP_CONFLICT("DATASET_GROUP_CONFLICT", "Dataset đã được gán vào group này"),
+
+    //Tokken errors
+    INVALID_TOKEN("INVALID_TOKEN", "Token is invalid or expired"),
+    UNAUTHORIZED("UNAUTHORIZED", "You are not authorized to access this resource"),
+    TOKEN_EXPIRED("TOKEN_EXPIRED", "Token has expired"),
+    REFRESH_TOKEN_INVALID("REFRESH_TOKEN_INVALID", "Refresh token is invalid"),
+    TOKEN_NOT_FOUND("TOKEN_NOT_FOUND", "Token not found"),
+
+    //User errors
+    USER_NOT_FOUND("USER_NOT_FOUND", "User account not found"),
+    USERNAME_ALREADY_EXISTS("USERNAME_ALREADY_EXISTS", "Username is already taken"),
+    EMAIL_ALREADY_EXISTS("EMAIL_ALREADY_EXISTS", "Email is already registered"),
+    INVALID_CREDENTIALS("INVALID_CREDENTIALS", "Invalid username or password"),
+    ACCOUNT_DISABLED("ACCOUNT_DISABLED", "User account is disabled"),
+    ACCOUNT_LOCKED("ACCOUNT_LOCKED", "User account is locked"),
+    LOGOUT_FAILED("LOGOUT_FAILED", "Logout failed"),
+    EMAIL_INVALID("EMAIL_INVALID", "Invalid email format"),
+
+    PASSWORD_TOO_WEAK("PASSWORD_TOO_WEAK", "Password is too weak"),
+    PASSWORD_TOO_SHORT("PASSWORD_TOO_SHORT", "Password is too short"),
+    PASSWORD_MISMATCH("PASSWORD_MISMATCH", "Passwords do not match"),
+    OLD_PASSWORD_INCORRECT("OLD_PASSWORD_INCORRECT", "Old password is incorrect"),
+
+    // Input errors
+    REGISTRATION_DISABLED("REGISTRATION_DISABLED", "User registration is currently disabled"),
+    INVALID_INPUT("INVALID_INPUT", "Invalid input data"),
+    MISSING_REQUIRED_FIELD("MISSING_REQUIRED_FIELD", "Missing required field"),
+
+    // Dataset errors
+    DATASET_NOT_FOUND("DATASET_NOT_FOUND", "Dataset not found"),
+    DATASET_ALREADY_EXISTS("DATASET_ALREADY_EXISTS", "Dataset already exists"),
+    DATASET_GROUP_CONFLICT("DATASET_GROUP_CONFLICT", "Dataset is already assigned to this group"),
+    DATASET_NOT_PENDING("DATASET_NOT_PENDING", "Dataset is not in pending status"),
+    DATASET_INFO_NOT_APPROVED("DATASET_INFO_NOT_APPROVED", "Dataset information is not approved yet"),
+    //
+    INTERNAL_SERVER_ERROR("INTERNAL_SERVER_ERROR", "Internal server error. Please try again later"),
+    BAD_REQUEST("BAD_REQUEST", "Invalid request"),
+    INVALID_ROLE("INVALID_ROLE", "Invalid user role"),
+    LOCAL_DATE_INVALID("LOCAL_DATE_INVALID", "Invalid date format. Expected format: yyyy-MM-dd"),
+
+    // Wallet errors
+    WALLET_NOT_FOUND("WALLET_NOT_FOUND", "Wallet not found"),
+    INVALID_WITHDRAW_AMOUNT("INVALID_WITHDRAW_AMOUNT", "Withdraw amount must be greater than 0"),
+    INSUFFICIENT_FUNDS("INSUFFICIENT_FUNDS", "Not enough balance in wallet"),
+
+    // Survey errors
+    INVALID_TYPE_ID("INVALID_TYPE_ID", "One or more provided type IDs are invalid");
 
 
-    INTERNAL_SERVER_ERROR("INTERNAL_SERVER_ERROR", "Lỗi hệ thống, vui lòng thử lại sau"),
-    BAD_REQUEST("BAD_REQUEST", "Yêu cầu không hợp lệ"),
-    INVALID_ROLE("INVALID_ROLE","role không hợp lệ" ),
-    LOCAL_DATE_INVALID("LOCAL_DATE_INVALID","Ngày giờ không hợp lệ format chuẩn: yyyy-MM-dd");
+
 
     private final String code;
     private final String message;

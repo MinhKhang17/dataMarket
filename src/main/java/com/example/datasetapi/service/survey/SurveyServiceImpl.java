@@ -5,6 +5,8 @@ import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.dto.response.ConsumerResponse;
 import com.example.datasetapi.dto.response.ConsumerTypeResponse;
 import com.example.datasetapi.dto.response.TypeOptionResponse;
+import com.example.datasetapi.exception.CustomException;
+import com.example.datasetapi.exception.ErrorCode;
 import com.example.datasetapi.model.userManager.Consumer;
 import com.example.datasetapi.model.userManager.ConsumerType;
 import com.example.datasetapi.model.userManager.User;
@@ -34,15 +36,14 @@ public class SurveyServiceImpl implements SurveyService {
 
     @Override
     public ResponseEntity<ApiResponse> getOptionsForSurvey() {
-        try {
             String token = tokenService.resolveToken(request);
             if(token == null) {
-                return ResponseEntity.status(401).body(new ApiResponse(false, "Missing/invalid Authorization", null));
+                throw new CustomException(ErrorCode.UNAUTHORIZED);
             }
 
             Long userId = jwtUtil.getUserIdFromToken(token);
             if (userId == null) {
-                return ResponseEntity.status(401).body(new ApiResponse(false, "Invalid or expired token", null));
+                throw new CustomException(ErrorCode.INVALID_TOKEN);
             }
 
             Consumer consumer = consumerRepository.findById(userId).orElse(null);
@@ -53,21 +54,21 @@ public class SurveyServiceImpl implements SurveyService {
                     .map(t -> new TypeOptionResponse(t.getId(), t.getName(), selectedTypeIds.contains(t.getId())))
                     .toList();
             return ResponseEntity.ok(new ApiResponse(true, "OK", options));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).body(new ApiResponse(false, e.getMessage(), null));
-        }
     }
 
     @Override
     @Transactional
     public ResponseEntity<ApiResponse> submitSurveyResponses(ConsumerRequest consumerRequest) {
-        try {
             String token = tokenService.resolveToken(request);
+            if(token == null) {
+                throw new CustomException(ErrorCode.UNAUTHORIZED);
+            }
 
             Long userId = jwtUtil.getUserIdFromToken(token);
-            if (userId == null) return ResponseEntity.status(401)
-                    .body(new ApiResponse(false, "Invalid or expired token", null));
+            if (userId == null) {
+                throw new CustomException(ErrorCode.INVALID_TOKEN);
+            }
+
 
             Consumer consumer = consumerRepository.findById(userId).orElseGet(() -> {
                 User u = userRepository.findById(userId).orElseThrow();
@@ -77,8 +78,7 @@ public class SurveyServiceImpl implements SurveyService {
                 return consumerRepository.save(c);
             });
 
-            List<Long> typeIds = (consumerRequest.getTypeIds() == null)
-                    ? new ArrayList<>() : new ArrayList<>(consumerRequest.getTypeIds());
+            List<Long> typeIds = (consumerRequest.getTypeIds() == null) ? new ArrayList<>() : new ArrayList<>(consumerRequest.getTypeIds());
 
             if (consumerRequest.getOtherType() != null && !consumerRequest.getOtherType().isBlank()) {
                 String name = consumerRequest.getOtherType().trim();
@@ -92,8 +92,9 @@ public class SurveyServiceImpl implements SurveyService {
             }
 
             List<ConsumerType> types = typeIds.isEmpty() ? List.of() : consumerTypeRepository.findAllById(typeIds);
-            if (types.size() != typeIds.size())
-                return ResponseEntity.badRequest().body(new ApiResponse(false, "Some typeIds are invalid", null));
+            if (types.size() != typeIds.size()) {
+                throw new CustomException(ErrorCode.INVALID_TYPE_ID);
+            }
 
             consumer.getConsumerTypes().clear();
             consumer.getConsumerTypes().addAll(types);
@@ -103,10 +104,5 @@ public class SurveyServiceImpl implements SurveyService {
             var result = types.stream().map(t -> new ConsumerTypeResponse(t.getId(), t.getName())).toList();
             return ResponseEntity.ok(new ApiResponse(true, "Survey submitted",
                     new ConsumerResponse(consumer.getId(), result, consumer.isDoSurvey())));
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).body(new ApiResponse(false, e.getMessage(), null));
-        }
     }
 }

@@ -1,19 +1,18 @@
 package com.example.datasetapi.service.feature;
 
 import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
-import com.example.datasetapi.model.Dataset.DatasetInformation;
-import com.example.datasetapi.model.Dataset.DatasetType;
+import com.example.datasetapi.exception.CustomException;
+import com.example.datasetapi.exception.ErrorCode;
+import com.example.datasetapi.model.dataset.DatasetInformation;
+import com.example.datasetapi.model.dataset.DatasetType;
 import com.example.datasetapi.model.userManager.Address;
 import com.example.datasetapi.repository.AddressRepository;
 import com.example.datasetapi.repository.DatasetInforRepository;
-import com.example.datasetapi.repository.DatasetRepository;
-import com.example.datasetapi.service.Dataset.DatasetService;
-import jakarta.servlet.http.HttpServletRequest;
+import com.example.datasetapi.service.dataset.DatasetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -37,7 +36,7 @@ public class AsyncDatasetService {
             System.out.println(" Bắt đầu đọc content...");
             DatasetInformation datasetInformation =
                     datasetInforRepository.findById(providerUploadDatasetRequest.getDataset_Information_Id())
-                            .orElseThrow(() -> new RuntimeException("Dataset not found"));
+                            .orElseThrow(() -> new CustomException(ErrorCode.DATASET_NOT_FOUND));
 
             Optional<Address> addressOptional = addressRepository.findById(providerUploadDatasetRequest.getProvider_address_id());
             if(!addressOptional.isPresent()) {

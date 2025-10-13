@@ -1,13 +1,15 @@
-package com.example.datasetapi.service.Dataset;
+package com.example.datasetapi.service.dataset;
 
-import com.example.datasetapi.Mapper.DatasetMapper;
+import com.example.datasetapi.exception.CustomException;
+import com.example.datasetapi.exception.ErrorCode;
+import com.example.datasetapi.mapper.DatasetMapper;
 import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.dto.response.DatasetReposonseDto;
 import com.example.datasetapi.dto.response.ReviewHistoryDto;
 import com.example.datasetapi.enums.Datasets.DatasetInforStatus;
 import com.example.datasetapi.enums.Datasets.DatasetStatus;
-import com.example.datasetapi.model.Dataset.*;
+import com.example.datasetapi.model.dataset.*;
 import com.example.datasetapi.model.userManager.Address;
 import com.example.datasetapi.model.userManager.Provider;
 import com.example.datasetapi.repository.*;
@@ -15,6 +17,9 @@ import com.example.datasetapi.service.user.TokenService;
 import com.example.datasetapi.service.user.UserService;
 import com.example.datasetapi.util.DateUtil;
 import jakarta.servlet.http.HttpServletRequest;
+import com.example.datasetapi.model.dataset.Dataset;
+import com.example.datasetapi.repository.DatasetRepository;
+import com.example.datasetapi.repository.DownloadTokenRepository;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
@@ -26,7 +31,6 @@ import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.s3.S3Client;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -48,46 +52,32 @@ public class DatasetServiceImpl implements DatasetService {
             return ResponseEntity.ok().body(new ApiResponse(true,"load dataset success",datasetReposonseDtoList));
     }
 
-    //    @Autowired
-//    private S3Client s3Client;
     @Autowired
     private DatasetRepository datasetRepository;
-    @Autowired
-    private DownloadTokenRepository dowloadTokenRepository;
     @Autowired
     private CategoryRepository categoryRepository;
     @Autowired
     private DatasetTypeRepository datasetTypeRepository;
-
     @Autowired
     private TokenService tokenService;
     @Autowired
     private UserService userService;
     @Autowired
     private DatasetInforRepository datasetInforRepository;
-
-
     @Autowired
     private DatasetGroupRepository datasetGroupRepository;
-
     @Autowired
     private S3Client s3Client;
-@Autowired
-private ReviewHistoryRepository reviewHistoryRepository;
-
-@Autowired
+    @Autowired
+    private ReviewHistoryRepository reviewHistoryRepository;
+    @Autowired
     private DatasetMapper datasetMapper;
-
-
-
 
 
     @Value("${aws.bucket.name}")
     private String BUCKET_NAME;
 
-
     private static final Logger logger =  LoggerFactory.getLogger(DatasetServiceImpl.class);
-
 
     @Override
     public ResponseEntity<ApiResponse> getAllCategories() {
@@ -130,7 +120,7 @@ private ReviewHistoryRepository reviewHistoryRepository;
             Provider provider = userService.findProviderById(provider_id);
             //nếu là lần tạo đầu tiên thì tạo group để chứa các phiên bản
             if (datasetGroup == null) {
-                logger.info("Lần tạo đầu tiên tạo datasetGroup");
+                logger.info("First time create dataset group");
                 datasetGroup = new DatasetGroup();
                 datasetGroup.setDatasetType(datasetInformation.getDatasetType());
                 datasetGroup.setAddress(address);
@@ -139,7 +129,7 @@ private ReviewHistoryRepository reviewHistoryRepository;
             }
             else {
                 //nếu là lần tạo thứ 2 tăng version của dataset group
-                logger.info("Dataset group đã tồn tại không tạo mới");
+                logger.info("Dataset group is existed do not create new one");
                 dataset.setDatasetStatus(DatasetStatus.PENDING);
                 dataset.setDatasetGroup(datasetGroup);
                 datasetGroup.getDatasets().add(dataset);
@@ -148,7 +138,7 @@ private ReviewHistoryRepository reviewHistoryRepository;
 //            //luu tam de test
             File file = new File(datasetInformation.getFile_url());
                 uploadCSVFileToPendingFolder(file, dataset);
-            System.out.println(" Upload thành công!");
+            System.out.println("Upload success!");
             datasetInformation.setDataset(dataset);
             datasetInformation.setDataset_time(DateUtil.parseToLocalDate(providerUploadDatasetRequest.getDataset_time()));
             datasetInforRepository.save(datasetInformation);
@@ -161,20 +151,18 @@ private ReviewHistoryRepository reviewHistoryRepository;
     @Override
     public ResponseEntity<?> acceptDataset(long datasetInforId, HttpServletRequest request) {
         Optional<DatasetInformation> datasetInformationOptional = datasetInforRepository.findById(datasetInforId);
-
         long moderator_id = tokenService.getUserIdFromRequest(request);
 
         if(datasetInformationOptional.isEmpty()){
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            throw new CustomException(ErrorCode.DATASET_NOT_FOUND);
         }
 
         if(!datasetInformationOptional.get().getDataset().getDatasetStatus().equals(DatasetStatus.PENDING)){
-            System.out.println("dataset khong pendding");
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            throw new CustomException(ErrorCode.DATASET_NOT_PENDING);
         }
+
         if(!datasetInformationOptional.get().getStatus().equals(DatasetInforStatus.CONTENT_APPROVED)){
-            System.out.println("datasetInfor khong pendding");
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            throw new CustomException(ErrorCode.DATASET_INFO_NOT_APPROVED);
         }
 
         Dataset dataset = datasetInformationOptional.get().getDataset();
@@ -192,31 +180,31 @@ private ReviewHistoryRepository reviewHistoryRepository;
 
         return ResponseEntity.ok().body(new ApiResponse(true,"Dataset Accepted Successfully",reviewHistoryDto));
     }
+
     @Override
     public ResponseEntity<ApiResponse> rejectDataset(long datasetInforId,HttpServletRequest request,String reason) {
 
         long moderator_id = tokenService.getUserIdFromRequest(request);
-            Optional<DatasetInformation> datasetInformation = datasetInforRepository.findById(datasetInforId);
+        Optional<DatasetInformation> datasetInformation = datasetInforRepository.findById(datasetInforId);
 
-            if(datasetInformation.isEmpty()){
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
+        if(datasetInformation.isEmpty()){
+            throw new CustomException(ErrorCode.DATASET_NOT_FOUND);
+        }
 
         if(!datasetInformation.get().getDataset().getDatasetStatus().equals(DatasetStatus.PENDING)){
-            System.out.println("dataset khong pendding");
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            throw new CustomException(ErrorCode.DATASET_NOT_PENDING);
         }
         if(!datasetInformation.get().getStatus().equals(DatasetInforStatus.CONTENT_APPROVED)){
-            System.out.println("datasetInfor khong pendding");
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            throw new CustomException(ErrorCode.DATASET_INFO_NOT_APPROVED);
         }
-            ReviewHistory reviewHistory = new ReviewHistory();
-            reviewHistory.setProvider(userService.findProviderById(datasetInformation.get().getProvider().getId()));
-            reviewHistory.setDataset(datasetInformation.get().getDataset());
-            reviewHistory.setModerator(userService.findUserById(moderator_id).get());
-            reviewHistory.setReason(reason);
-            datasetInformation.get().getDataset().setDatasetStatus(DatasetStatus.REJECT);
-            datasetInformation.get().setStatus(DatasetInforStatus.CONTENT_REJECTED);
+
+        ReviewHistory reviewHistory = new ReviewHistory();
+        reviewHistory.setProvider(userService.findProviderById(datasetInformation.get().getProvider().getId()));
+        reviewHistory.setDataset(datasetInformation.get().getDataset());
+        reviewHistory.setModerator(userService.findUserById(moderator_id).get());
+        reviewHistory.setReason(reason);
+        datasetInformation.get().getDataset().setDatasetStatus(DatasetStatus.REJECT);
+        datasetInformation.get().setStatus(DatasetInforStatus.CONTENT_REJECTED);
         return ResponseEntity.ok().body(new ApiResponse(true,"Dataset Reject Successfully",datasetMapper.toReviewHistoryDto(reviewHistoryRepository.save(reviewHistory))));
     }
 
