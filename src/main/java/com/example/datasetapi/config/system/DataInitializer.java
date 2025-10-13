@@ -5,9 +5,15 @@ import com.example.datasetapi.enums.DocumentType;
 import com.example.datasetapi.enums.UserStatus;
 import com.example.datasetapi.enums.VerificationStatus.RegistrationStatus;
 import com.example.datasetapi.enums.VerificationStatus.VerificationStatus;
+import com.example.datasetapi.enums.Datasets.FileExtension;
+import com.example.datasetapi.enums.Datasets.DatasetInforStatus;
 import com.example.datasetapi.model.Dataset.*;
+import com.example.datasetapi.model.location.Commune;
+import com.example.datasetapi.model.location.Location;
+import com.example.datasetapi.model.location.Province;
 import com.example.datasetapi.model.userManager.*;
 import com.example.datasetapi.repository.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.example.datasetapi.model.userManager.User;
@@ -18,6 +24,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Instant;
@@ -50,8 +57,13 @@ private  DatasetRepository datasetRepository;
 private  ProviderRepository providerRepository;
 @Autowired
 private  DatasetInforRepository datasetInforRepository;
-@Autowired
-private PricingRuleRepo pricingRuleRepo;
+    @Autowired
+    private PricingRuleRepo pricingRuleRepo;
+
+    private  ProvinceRepository provinceRepository;
+    @Autowired
+    private  CommuneRepository  communeRepository;
+
 
     @Override
     public void run(String... args) throws Exception {
@@ -61,7 +73,7 @@ private PricingRuleRepo pricingRuleRepo;
         roleRepository.save(new Role("CONSUMER"));
         roleRepository.save(new Role("MODERATOR"));
         System.out.println("Roles & permissions initialized.");
-
+        initVietnamLocations();
         createConsumerRole();
 
         createAdminRole();
@@ -270,18 +282,33 @@ private PricingRuleRepo pricingRuleRepo;
         ds1.setFile_url(basePath);
         ds1.setRowCount(100L);
         ds1.setDatasetType(marketOverview);
+
         Provider provider = providerRepository.findById(4L).get();
-        Address address = new Address();
-        address.setProvince("test province");
-        address.setWard("test ward");
-        address.setDistrict("test district");
-        ds1.setAddress(address);
         ds1.setProvider(provider);
+
+        // ✅ Tạo Location mới (thay Address)
+        Location location = new Location();
+
+        // Lấy dữ liệu từ bảng province & commune có sẵn
+        Province province = provinceRepository.findById("01") // Hà Nội
+                .orElseThrow(() -> new RuntimeException("Province not found: 01"));
+        Commune commune = communeRepository.findById("00008") // Phường Ngọc Hà
+                .orElseThrow(() -> new RuntimeException("Commune not found: 00008"));
+
+        // Gán dữ liệu
+        location.setProvince(province);
+        location.setCommune(commune);
+
+        // Gán location cho dataset
+        ds1.setLocation(location);
+
         datasetList.add(ds1);
 
         datasetInforRepository.saveAll(datasetList);
-        System.out.println("Seeded dataset_information test entries for moderation.");
+
+        System.out.println("✅ Seeded dataset_information test entries for moderation with Location.");
     }
+
 
     private void createDatasetDemo() {
         DatasetGroup datasetGroup = new DatasetGroup();
@@ -523,7 +550,7 @@ private PricingRuleRepo pricingRuleRepo;
     }
 
 
-        private void createProviderRegistration() {
+    private void createProviderRegistration() {
         // 1️⃣ Tạo ProviderRegistration
         ProviderRegistration registration = new ProviderRegistration();
         registration.setFullName("Nguyen Van A");
@@ -544,7 +571,7 @@ private PricingRuleRepo pricingRuleRepo;
         doc1.setUploadedAt(Instant.now());
         doc1.setIdCardVerificationStatus(VerificationStatus.PENDING);
         doc1.setManager_id(0L);
-        doc1.setIdCardRetentionExpiry(Instant.now().plusSeconds(60*60*24*365));
+        doc1.setIdCardRetentionExpiry(Instant.now().plusSeconds(60L * 60 * 24 * 365));
         doc1.setDocumentType(DocumentType.CCCD_FRONT);
 
         // 3️⃣ Tạo document2
@@ -554,14 +581,12 @@ private PricingRuleRepo pricingRuleRepo;
         doc2.setUploadedAt(Instant.now());
         doc2.setIdCardVerificationStatus(VerificationStatus.PENDING);
         doc2.setManager_id(0L);
-        doc2.setIdCardRetentionExpiry(Instant.now().plusSeconds(60*60*24*365));
+        doc2.setIdCardRetentionExpiry(Instant.now().plusSeconds(60L * 60 * 24 * 365));
         doc2.setDocumentType(DocumentType.CCCD_BACK);
 
         registration.setIdentityDocuments(List.of(doc1, doc2));
 
-        // 4️⃣ Lưu ProviderRegistration (Hibernate cascade sẽ lưu cả document)
-
-        // 5️⃣ Tạo User cho Provider
+        // 4️⃣ Tạo User cho Provider
         User user = new User();
         user.setUserStatus(UserStatus.ACTIVE);
         user.setRole(roleRepository.getRolesByName("PROVIDER"));
@@ -570,21 +595,27 @@ private PricingRuleRepo pricingRuleRepo;
         user.setRole(roleRepository.getRolesByName("PROVIDER"));
         user.setPassword(passwordEncoder.encode("password"));
 
-        //tao address gan cho provider de test thu mau
-        Address address = new Address();
-        address.setDistrict("test district");
-        address.setWard("test ward");
-        address.setProvince("test province");
+        // 5️⃣ Lấy province & commune thật từ DB
+        Province province = provinceRepository.findById("01") // Hà Nội
+                .orElseThrow(() -> new RuntimeException("Province not found"));
+        Commune commune = communeRepository.findById("00008") // Phường Ngọc Hà
+                .orElseThrow(() -> new RuntimeException("Commune not found"));
 
-        // 6️⃣ Tạo Provider, gán Registration và User
+        // 6️⃣ Tạo Location gán cho Provider
+        Location location = new Location();
+        location.setProvince(province);
+        location.setCommune(commune);
+
+        // 7️⃣ Tạo Provider, gán Registration, User và Location
         Provider provider = new Provider();
-        provider.setProviderRegistration(registration); // registration đã managed trong transaction
+        provider.setProviderRegistration(registration);
         provider.setUser(user);
         provider.setBankAccount("123456789");
-        provider.setAddresses(List.of(address));
+        provider.setLocation(List.of(location));
 
         providerRepository.save(provider);
-    System.out.println("khoi tao provider");
+
+        System.out.println("✅ Khởi tạo provider với Location: " + location.getFullLocation());
     }
 
 
@@ -631,4 +662,54 @@ private PricingRuleRepo pricingRuleRepo;
         consumerTypeRepository.save(t5);
         System.out.println("Khoi tao consumer type");
     }
+    private void initVietnamLocations() {
+        try {
+            InputStream is = getClass().getClassLoader().getResourceAsStream("location.json");
+            if (is == null) {
+                System.out.println("Không tìm thấy file location.json trong resources!");
+                return;
+            }
+
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, Object> data = mapper.readValue(is, Map.class);
+
+            // ---- Insert Provinces ----
+            List<Map<String, String>> provinces = (List<Map<String, String>>) data.get("province");
+            if (provinceRepository.count() == 0 && provinces != null) {
+                List<Province> provinceEntities = provinces.stream().map(p -> {
+                    Province province = new Province();
+                    province.setIdProvince(p.get("idProvince"));
+                    province.setName(p.get("name"));
+                    return province;
+                }).toList();
+                provinceRepository.saveAll(provinceEntities);
+                System.out.println("Đã khởi tạo " + provinceEntities.size() + " tỉnh/thành.");
+            }
+
+            // ---- Insert Communes ----
+            List<Map<String, String>> communes = (List<Map<String, String>>) data.get("commune");
+            if (communeRepository.count() == 0 && communes != null) {
+                List<Commune> communeEntities = new ArrayList<>();
+                for (Map<String, String> c : communes) {
+                    String idProvince = c.get("idProvince");
+                    Province province = provinceRepository.findById(idProvince).orElse(null);
+                    if (province == null) continue;
+
+                    Commune commune = new Commune();
+                    commune.setIdCommune(c.get("idCommune"));
+                    commune.setName(c.get("name"));
+                    commune.setProvince(province);
+                    communeEntities.add(commune);
+                }
+                communeRepository.saveAll(communeEntities);
+                System.out.println("Đã khởi tạo " + communeEntities.size() + " xã/phường.");
+            }
+
+            System.out.println("🎉 Dữ liệu địa lý Việt Nam đã được khởi tạo thành công!");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 }

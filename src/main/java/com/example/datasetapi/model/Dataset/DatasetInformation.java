@@ -3,7 +3,8 @@ package com.example.datasetapi.model.Dataset;
 import com.example.datasetapi.dto.response.ValidationErrorDto;
 import com.example.datasetapi.enums.Datasets.DatasetInforStatus;
 import com.example.datasetapi.enums.Datasets.FileExtension;
-import com.example.datasetapi.model.userManager.Address;
+import com.example.datasetapi.model.location.Location;
+//import com.example.datasetapi.model.userManager.Address;
 import com.example.datasetapi.model.userManager.Provider;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -52,8 +53,8 @@ private DatasetType datasetType;
     @JoinColumn(name = "provider_id")
     private Provider provider;
 @ManyToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "address_id")
-    private Address address;
+    @JoinColumn(name = "location_id")
+    private Location location;
 
 @Column
 private LocalDateTime createAt = LocalDateTime.now();

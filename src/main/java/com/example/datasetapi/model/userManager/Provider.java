@@ -1,5 +1,6 @@
 package com.example.datasetapi.model.userManager;
 
+import com.example.datasetapi.model.location.Location;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -26,6 +27,6 @@ public class Provider {
     private ProviderRegistration providerRegistration;
 
     @OneToMany(cascade =  CascadeType.ALL)
-    @JoinColumn(name = "address")
-    private List<Address> addresses;
+    @JoinColumn(name = "location")
+    private List<Location> Location;
 }

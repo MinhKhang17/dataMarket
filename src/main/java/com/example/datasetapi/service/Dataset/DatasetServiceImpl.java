@@ -11,7 +11,8 @@ import com.example.datasetapi.enums.Datasets.DatasetStatus;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
 import com.example.datasetapi.model.Dataset.*;
-import com.example.datasetapi.model.userManager.Address;
+//import com.example.datasetapi.model.userManager.Address;
+import com.example.datasetapi.model.location.Location;
 import com.example.datasetapi.model.userManager.Provider;
 import com.example.datasetapi.repository.*;
 import com.example.datasetapi.service.user.TokenService;
@@ -125,9 +126,9 @@ private PriceService priceService;
             }
             DatasetInformation datasetInformation = datasetInformationOptional.get();
             // một user có nhiều địa chỉ upload tìm theo địa chỉ và dataset type
-            Address address = userService.findProviderAddressByProviderIdAndAddressId(provider_id, providerUploadDatasetRequest.getProvider_address_id());
+            Location location = userService.findProviderLocationByProviderIdAndLocationId(provider_id, providerUploadDatasetRequest.getProvider_location_id());
             //check xem đã tồn tại một dataset group chưa nếu chưa thì mặc định nó là lần đầu
-            DatasetGroup datasetGroup = datasetGroupRepository.findByAddressAndDatasetType(address, datasetInformation.getDatasetType());
+            DatasetGroup datasetGroup = datasetGroupRepository.findByLocationAndDatasetType(location, datasetInformation.getDatasetType());
 
             Dataset dataset = new Dataset();
             Provider provider = userService.findProviderById(provider_id);
@@ -136,7 +137,7 @@ private PriceService priceService;
                 logger.info("Lần tạo đầu tiên tạo datasetGroup");
                 datasetGroup = new DatasetGroup();
                 datasetGroup.setDatasetType(datasetInformation.getDatasetType());
-                datasetGroup.setAddress(address);
+                datasetGroup.setLocation(location);
                 datasetGroup.setProvider(provider);
                 datasetGroup.getDatasets().add(dataset);
             }
