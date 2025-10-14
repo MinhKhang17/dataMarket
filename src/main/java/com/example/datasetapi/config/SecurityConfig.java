@@ -114,7 +114,8 @@ public class SecurityConfig {
                                 "/api/test/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
-                                "/api/moderation/**"
+                                "/api/moderation/**",
+                                "/api/location/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
