@@ -10,4 +10,8 @@ public class CommuneDTO {
     private String name;
     private String provinceId;
     private String provinceName;
+
+    public CommuneDTO() {
+
+    }
 }

@@ -31,7 +31,7 @@ public class UserMapper implements UserResponseDTOMapper {
         moderatorDatasetInforResponseDto.setFile_name(datasetInformation.getName());
         moderatorDatasetInforResponseDto.setRow_count(datasetInformation.getRowCount());
         moderatorDatasetInforResponseDto.setProvider_id(datasetInformation.getProvider().getId());
-        moderatorDatasetInforResponseDto.setCommuneDTO(toComuneDTO(datasetInformation.getCommune()));
+        moderatorDatasetInforResponseDto.setCommuneDTO(toCommuneDTO(datasetInformation.getCommune()));
         moderatorDatasetInforResponseDto.setCreatedAt(datasetInformation.getCreateAt());
         moderatorDatasetInforResponseDto.setCheckContentAt(datasetInformation.getUpdateAt());
         List<DatasetValidationErrorDTO> datasetValidationErrorDTOList =
@@ -46,12 +46,16 @@ public class UserMapper implements UserResponseDTOMapper {
 
     }
 
-    private CommuneDTO toComuneDTO(Commune commune) {
-        CommuneDTO communeDTO = new CommuneDTO();
-        communeDTO.setCommuneID(commune.getIdCommune());
-        communeDTO.setCommuneName(commune.getName());
-        communeDTO.setProvince(toProvineDTO(commune.getProvince()));
-        return communeDTO;
+    private CommuneDTO toCommuneDTO(Commune commune) {
+        if (commune == null) return null;
+        CommuneDTO dto = new CommuneDTO();
+        dto.setIdCommune(commune.getIdCommune());
+        dto.setName(commune.getName());
+        if (commune.getProvince() != null) {
+            dto.setProvinceId(commune.getProvince().getIdProvince());
+            dto.setProvinceName(commune.getProvince().getName());
+        }
+        return dto;
     }
 
     private ProvinceDTO toProvineDTO(Province province) {

@@ -77,18 +77,25 @@ public class DatasetMapperImpl implements DatasetMapper {
     }
 private DatasetChildGroupDTO toDatasetChildGroupDTO(DatasetGroup datasetGroup){
         DatasetChildGroupDTO dto = new DatasetChildGroupDTO();
-        dto.setCommuneDto(toComuneDTO(datasetGroup.getCommune()));
+        dto.setCommuneDto(toCommuneDTO(datasetGroup.getCommune()));
         if(datasetGroup.getDatasets()!= null){
             dto.setDatasetDtoList(datasetGroup.getDatasets().stream().map(this::toDatasetDto).collect(Collectors.toList()));
         }
         return dto;
 }
-    private CommuneDTO toComuneDTO(Commune commune) {
-        CommuneDTO communeDTO = new CommuneDTO();
-        communeDTO.setCommuneID(commune.getIdCommune());
-        communeDTO.setCommuneName(commune.getName());
-        communeDTO.setProvince(toProvineDTO(commune.getProvince()));
-        return communeDTO;
+    private CommuneDTO toCommuneDTO(Commune commune) {
+        if (commune == null) return null;
+
+        CommuneDTO dto = new CommuneDTO();
+        dto.setIdCommune(commune.getIdCommune());
+        dto.setName(commune.getName());
+
+        if (commune.getProvince() != null) {
+            dto.setProvinceId(commune.getProvince().getIdProvince());
+            dto.setProvinceName(commune.getProvince().getName());
+        }
+
+        return dto;
     }
 
     private ProvinceDTO toProvineDTO(Province province) {
