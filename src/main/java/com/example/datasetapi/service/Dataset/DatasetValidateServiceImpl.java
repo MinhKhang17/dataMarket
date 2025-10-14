@@ -73,8 +73,6 @@ public class DatasetValidateServiceImpl implements DatasetValidateService {
 
     private ResponseEntity<?> updateInforOfDatasetCheckContentUploadToCloud(ProviderUploadDatasetRequest providerUploadDatasetRequest,HttpServletRequest request,DatasetInformation ds) {
 try {
-
-
     //check xem đã check header hay chưa
     if (!ds.isHeaderChecked()) {
         return ResponseEntity.badRequest().body(new ApiResponse(false, "The dataset hasn't been checked for headers.", null));
