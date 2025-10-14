@@ -39,8 +39,12 @@ public class DatasetGroup {
     @OneToMany(cascade = CascadeType.ALL)
     private List<Dataset> datasets = new ArrayList<Dataset>();
 
-    @OneToMany(cascade = CascadeType.ALL)
-    private List<DatasetGroup> datasetGroups = new ArrayList<DatasetGroup>();
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DatasetGroup> datasetGroups = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private DatasetGroup parent;
 
     //sẽ null khi là dataset group con
     @ManyToOne
@@ -52,4 +56,5 @@ public class DatasetGroup {
 
     @Column
     private LocalDateTime updateAt = LocalDateTime.now();
+    private boolean isHaveData =false;
 }

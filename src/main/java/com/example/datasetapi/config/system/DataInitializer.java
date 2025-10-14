@@ -314,7 +314,7 @@ private  DatasetInforRepository datasetInforRepository;
         dataset.setName("testDataset");
         dataset.setFileKey("testUpload.txt");
         dataset.setDescription("testDatasetDescription");
-        dataset.setDatasetGroup(datasetGroup);
+        dataset.setDatasetChildGroup(datasetGroup);
 
         // Save first to get the ID
         datasetRepository.save(dataset);

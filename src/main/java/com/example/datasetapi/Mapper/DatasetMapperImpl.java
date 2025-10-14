@@ -79,7 +79,10 @@ private DatasetChildGroupDTO toDatasetChildGroupDTO(DatasetGroup datasetGroup){
         DatasetChildGroupDTO dto = new DatasetChildGroupDTO();
         dto.setCommuneDto(toCommuneDTO(datasetGroup.getCommune()));
         if(datasetGroup.getDatasets()!= null){
-            dto.setDatasetDtoList(datasetGroup.getDatasets().stream().map(this::toDatasetDto).collect(Collectors.toList()));
+            dto.setDatasetDtoList(datasetGroup.getDatasets().stream()
+                            .filter(dataset -> dataset.getDatasetStatus()==DatasetStatus.APPROVE)
+                    .map(this::toDatasetDto)
+                    .collect(Collectors.toList()));
         }
         return dto;
 }

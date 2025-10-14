@@ -121,7 +121,7 @@ private CommuneRepository communeRepository;
 
             Provider provider = userService.findProviderById(provider_id);
 
-            //check xem đã tồn tại một dataset group chưa nếu chưa thì mặc định nó là lần đầu
+            //check xem đã tồn tại một dataset group parent chưa nếu chưa thì mặc định nó là lần đầu
             Optional<DatasetGroup> datasetGroupParentOptionnal = datasetGroupRepository.findByProviderAndDatasetGroupTypeAndProvinceAndDatasetType(provider,DatasetGroupType.PARENT, commune.getProvince(),datasetInformation.getDatasetType());
             DatasetGroup datasetGroupParent = new DatasetGroup();
             if(datasetGroupParentOptionnal.isEmpty()){
@@ -151,20 +151,20 @@ private CommuneRepository communeRepository;
             Dataset dataset = new Dataset();
             //nếu là lần tạo đầu tiên thì tạo group để chứa các phiên bản
             if (!haveDatasetGroup) {
-                logger.info("First time create dataset group");
                 datasetGroupFollowCommune = new DatasetGroup();
                 datasetGroupFollowCommune.setDatasetGroupType(DatasetGroupType.CHILD);
                 datasetGroupFollowCommune.setDatasetType(datasetInformation.getDatasetType());
                 datasetGroupFollowCommune.setCommune(commune);
                 datasetGroupFollowCommune.setProvider(provider);
+                datasetGroupFollowCommune.setParent(datasetGroupParent);
                 datasetGroupFollowCommune.getDatasets().add(dataset);
                 datasetGroupParent.getDatasetGroups().add(datasetGroupFollowCommune);
+                dataset.setDatasetChildGroup(datasetGroupFollowCommune);
             }
             else {
                 //nếu là lần tạo thứ 2 thì chỉ cần gán dataset mới vào
-                logger.info("Dataset group is existed do not create new one");
                 dataset.setDatasetStatus(DatasetStatus.PENDING);
-                dataset.setDatasetGroup(datasetGroupFollowCommune);
+                dataset.setDatasetChildGroup(datasetGroupFollowCommune);
                 datasetGroupFollowCommune.getDatasets().add(dataset);
             }
 
@@ -224,7 +224,17 @@ private CommuneRepository communeRepository;
         Dataset dataset = datasetInformationOptional.get().getDataset();
         dataset.setDatasetStatus(DatasetStatus.APPROVE);
         datasetInformationOptional.get().setStatus(DatasetInforStatus.APPROVED);
+        //cập nhật thông tin của datasetGroup
+        DatasetGroup child = dataset.getDatasetChildGroup();
+        DatasetGroup parent = dataset.getDatasetChildGroup().getParent();
 
+        dataset.setVersion(child.getVersion()+1);
+        child.setVersion(child.getVersion()+1);
+        if(!parent.isHaveData()){
+            parent.setHaveData(true);
+        }
+
+        datasetRepository.save(dataset);
 
         ReviewHistory reviewHistory = new ReviewHistory();
         reviewHistory.setDataset(dataset);
@@ -270,6 +280,7 @@ private CommuneRepository communeRepository;
     public ResponseEntity<?> getAllDatasetParent() {
         List<DatasetParentReposonseDto> datasetReposonseDtoList = datasetGroupRepository.findByDatasetGroupType(DatasetGroupType.PARENT)
                 .stream()
+                .filter(datasetGroup -> datasetGroup.isHaveData())
                 .map(datasetMapper::toDatasetParentReposonseDto)
                 .collect(Collectors.toList());
         return ResponseEntity.ok().body(new ApiResponse(true,"load dataset success",datasetReposonseDtoList));

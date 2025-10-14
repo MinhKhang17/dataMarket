@@ -44,7 +44,7 @@ private String title;
 @ManyToOne(cascade = CascadeType.ALL)
 @JsonIgnore
 @JoinColumn(name = "dataset_group_id")
-private DatasetGroup datasetGroup;
+private DatasetGroup datasetChildGroup;
 
 @ManyToOne(cascade = CascadeType.ALL)
     private Provider provider;
