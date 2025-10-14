@@ -6,7 +6,6 @@ import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.scheduling.annotation.EnableAsync;
 
 @SpringBootApplication
-@EnableAsync
 public class DatasetApiApplication {
 
     public static void main(String[] args) {

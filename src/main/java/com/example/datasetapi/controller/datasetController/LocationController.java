@@ -12,8 +12,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/location/")
 public class LocationController {
-    @GetMapping
+    @GetMapping("/getAll")
     public ResponseEntity<?> getAllProvinces() {return null;}
-    @GetMapping
+    @GetMapping("/getAll/{id}")
     public ResponseEntity<?> getAllCommunesByProvineId() {return null;}
 }

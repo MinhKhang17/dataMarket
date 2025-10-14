@@ -14,6 +14,7 @@ import com.example.datasetapi.service.user.TokenService;
 import com.example.datasetapi.service.user.TokenServiceImpl;
 import com.example.datasetapi.service.user.UserService;
 import com.example.datasetapi.util.JwtUtil;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -61,11 +62,11 @@ public class VnPayService {
     public String createPaymentUrl(HttpServletRequest servletRequest, CreateVnpayPaymentRequest reqBody) {
         String token = tokenService.resolveToken(request);
         if(token == null) {
-            throw new CustomException(ErrorCode.UNAUTHORIZED);
+            throw new CustomException(HttpStatus.UNAUTHORIZED,ErrorCode.UNAUTHORIZED);
         }
         Long userId = jwtUtil.getUserIdFromToken(token);
         if (userId == null) {
-            throw new CustomException(ErrorCode.INVALID_TOKEN);
+            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.INVALID_TOKEN);
         }
 
         BigDecimal inVnd = new BigDecimal(safe(reqBody.getAmount()));
@@ -137,7 +138,7 @@ public class VnPayService {
                 Wallet wallet = walletRepository.findByUserId(uid).orElseGet(() -> {
                     Wallet w = new Wallet();
                     User u = userService.findUserById(uid)
-                            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                            .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.USER_NOT_FOUND));
                     w.setUser(u);
                     w.setAmount(0L);
                     return walletRepository.save(w);

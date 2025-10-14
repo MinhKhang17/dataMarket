@@ -6,8 +6,10 @@ import com.example.datasetapi.Mapper.UserResponseDTOMapper;
 import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
 
+import com.example.datasetapi.enums.Datasets.DatasetInforStatus;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
+import com.example.datasetapi.model.location.Commune;
 import com.example.datasetapi.repository.*;
 
 import com.example.datasetapi.model.Dataset.DatasetInformation;
@@ -28,6 +30,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -61,52 +66,81 @@ public class DatasetValidateServiceImpl implements DatasetValidateService {
     public UserResponseDTOMapper userResponseDTOMapper = new UserMapper();
     @Autowired
     private DatasetMapper datasetMapper;
-
+    @Autowired
+    private CommuneRepository communeRepository;
+    @Autowired
+    private DatasetService datasetService;
     @Override
     public ResponseEntity<?> updateInforOfDatasetCheckContentUploadToCloud(ProviderUploadDatasetRequest providerUploadDatasetRequest,HttpServletRequest request) {
+try {
+    Optional<DatasetInformation> datasetInformationOptional = datasetInforRepository.findById(providerUploadDatasetRequest.getDataset_Information_Id());
 
-        Optional<DatasetInformation> datasetInformationOptional = datasetInforRepository.findById(providerUploadDatasetRequest.getDataset_Information_Id());
+    //check xem dataset có tồn tại hay không
+    if (!datasetInformationOptional.isPresent()) {
+        throw new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND);
+    }
 
-       //check xem dataset có tồn tại hay không
-        if(!datasetInformationOptional.isPresent()){
-           throw new CustomException(ErrorCode.DATASET_NOT_FOUND);
+    //check xem đã check header hay chưa
+    if (!datasetInformationOptional.get().isHeaderChecked()) {
+        return ResponseEntity.badRequest().body(new ApiResponse(false, "The dataset hasn't been checked for headers.", null));
+    }
+    //check xem có thuộc về provider đó không
+    if (datasetInformationOptional.get().getProvider().getId() != tokenService.getUserIdFromRequest(request)) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+    long provider_id = tokenService.getUserIdFromRequest(request);
+
+
+    if (!Validator.isValidLocalDate(providerUploadDatasetRequest.getDataset_time())) {
+        throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.LOCAL_DATE_INVALID);
+    }
+    DatasetInformation datasetInformation = datasetInformationOptional.get();
+    //call truoc de fetch day du thong tin
+    datasetInformation.getDatasetType().getName();
+    datasetInformation.getDatasetType().getDatasetTypeColumnList().get(0);
+    datasetInformation.setUpdateAt(LocalDateTime.now());
+//        CompletableFuture<Map<String, Object>> future =
+//                asyncDatasetService.readAndUploadDataset(providerUploadDatasetRequest,provider_id,datasetInformation.getDatasetType());
+//        future.thenAccept(result -> {
+//            // callback khi async xong
+//            // them socket de gui thong bao den user
+//            System.out.println("Kết quả async: " + result);
+//        }).exceptionally(ex -> {
+//            System.err.println("Async bị lỗi: " + ex.getMessage());
+//            return null;
+//        });
+    Optional<Commune> addressOptional = communeRepository.findById(providerUploadDatasetRequest.getCommune_id());
+    if (!addressOptional.isPresent()) {
+        throw new CustomException(HttpStatus.NOT_FOUND,ErrorCode.Location_NOT_FOUND);
+    }
+    datasetInformation.setCommune(addressOptional.get());
+    Map<String, Object> result =
+            fileService.moderate(datasetInformation);
+        if(datasetInformation.getStatus()!= DatasetInforStatus.CONTENT_APPROVED){
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "The dataset hasn't been checked for headers.", result));
         }
 
-        //check xem đã check header hay chưa
-        if(!datasetInformationOptional.get().isHeaderChecked()){
-            return ResponseEntity.badRequest().body(new ApiResponse(false,"The dataset hasn't been checked for headers.",null));
-        }
-        //check xem có thuộc về provider đó không
-        if(datasetInformationOptional.get().getProvider().getId()!= tokenService.getUserIdFromRequest(request)){
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        long provider_id = tokenService.getUserIdFromRequest(request);
+    datasetService.checkExitsAndCreateDatasetGroupAndDateset(providerUploadDatasetRequest, provider_id);
 
+    return ResponseEntity.ok(new ApiResponse(true, "Success in check content progress wait for moderator", datasetInformation.getId()));
+}catch (IllegalArgumentException e) {
+    throw new RuntimeException(e);
+}finally {
+    try {
 
-        if(!Validator.isValidLocalDate(providerUploadDatasetRequest.getDataset_time())){
-            throw new CustomException(ErrorCode.LOCAL_DATE_INVALID);
-        }
-        DatasetInformation datasetInformation = datasetInformationOptional.get();
-        //call truoc de fetch day du thong tin
-        datasetInformation.getDatasetType().getName();
-        datasetInformation.getDatasetType().getDatasetTypeColumnList().get(0);
-        datasetInformation.setUpdateAt(LocalDateTime.now());
-        CompletableFuture<Map<String, Object>> future =
-                asyncDatasetService.readAndUploadDataset(providerUploadDatasetRequest,provider_id,datasetInformation.getDatasetType());
-        future.thenAccept(result -> {
-            // callback khi async xong
-            // them socket de gui thong bao den user
-            System.out.println("Kết quả async: " + result);
-        }).exceptionally(ex -> {
-            System.err.println("Async bị lỗi: " + ex.getMessage());
-            return null;
-        });
+        System.out.println("-----------------------------------------\n" +
+                "Deleted dataset\n" +
+                "-----------------------------------------");
+        Files.deleteIfExists(Paths.get(datasetInforRepository.findById(providerUploadDatasetRequest.getDataset_Information_Id()).get().getFile_url()));
+    } catch (IOException e) {
+        System.err.println("Can not delete current file: " + e.getMessage());
+    }
+}
 
-        return ResponseEntity.ok(new ApiResponse(true,"Success in check content progress wait for moderator",datasetInformation.getId()));
     }
     @Override
-    public ResponseEntity<?> uploadAndHeaderCheckCSVFile(MultipartFile file,long datasetTypeId, HttpServletRequest request) {
-        try {
+    public ResponseEntity<?> uploadAndHeaderCheckCSVFile(MultipartFile file,long datasetTypeId, HttpServletRequest request, ProviderUploadDatasetRequest providerUploadDatasetRequest) {
+
             //lay id tu request
             long provider_id = tokenService.getUserIdFromRequest(request);
             //lay provider de gan cho dataset
@@ -119,13 +153,9 @@ public class DatasetValidateServiceImpl implements DatasetValidateService {
             if(!isChecked){
                 return ResponseEntity.badRequest().body(new ApiResponse(false,"dataset header checked and false",datasetMapper.toUploadHeaderResponseDto(ds)));
             }
-            //neu check thanh cong thi khoi tao dataset cho provider
+            //neu check thanh cong thi chuyen sang check content dataset cho provider
+            return updateInforOfDatasetCheckContentUploadToCloud(providerUploadDatasetRequest,request);
 
-            return ResponseEntity.ok().body(new ApiResponse(true,"check success",datasetMapper.toUploadHeaderResponseDto(ds)));
-
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException(e);
-        }
     }
     @Override
     public ResponseEntity<?> getAllDatasetErrorWithDatasetInfor() {

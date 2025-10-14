@@ -9,7 +9,7 @@ public interface DatasetValidateService {
 
     ResponseEntity<?> updateInforOfDatasetCheckContentUploadToCloud(ProviderUploadDatasetRequest providerUploadDatasetRequest, HttpServletRequest request);
 
-    public ResponseEntity<?> uploadAndHeaderCheckCSVFile(MultipartFile file,long datasetTypeId, HttpServletRequest request);
+    public ResponseEntity<?> uploadAndHeaderCheckCSVFile(MultipartFile file,long datasetTypeId, HttpServletRequest request,ProviderUploadDatasetRequest providerUploadDatasetRequest);
 
     ResponseEntity<?> getAllDatasetErrorWithDatasetInfor();
 }

@@ -162,7 +162,7 @@ private CommuneRepository communeRepository;
     private void setDatasetPack(Dataset dataset, DatasetInformation datasetInformation) {
         long dataset_row = datasetInformation.getRowCount();
         if(dataset_row<1000){
-            throw new CustomException(ErrorCode.DATASET_ROW_MIN_INVALID);
+            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.DATASET_ROW_MIN_INVALID);
         }
         if(dataset_row >1000 && dataset_row <= 10000){
             dataset.setDatasetPack(DatasetPack.SMALL);
@@ -182,15 +182,15 @@ private CommuneRepository communeRepository;
         long moderator_id = tokenService.getUserIdFromRequest(request);
 
         if(datasetInformationOptional.isEmpty()){
-            throw new CustomException(ErrorCode.DATASET_NOT_FOUND);
+            throw new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND);
         }
 
         if(!datasetInformationOptional.get().getDataset().getDatasetStatus().equals(DatasetStatus.PENDING)){
-            throw new CustomException(ErrorCode.DATASET_NOT_PENDING);
+            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.DATASET_NOT_PENDING);
         }
 
         if(!datasetInformationOptional.get().getStatus().equals(DatasetInforStatus.CONTENT_APPROVED)){
-            throw new CustomException(ErrorCode.DATASET_INFO_NOT_APPROVED);
+            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.DATASET_INFO_NOT_APPROVED);
         }
 
         Dataset dataset = datasetInformationOptional.get().getDataset();
@@ -218,14 +218,14 @@ private CommuneRepository communeRepository;
         Optional<DatasetInformation> datasetInformation = datasetInforRepository.findById(datasetInforId);
 
         if(datasetInformation.isEmpty()){
-            throw new CustomException(ErrorCode.DATASET_NOT_FOUND);
+            throw new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND);
         }
 
         if(!datasetInformation.get().getDataset().getDatasetStatus().equals(DatasetStatus.PENDING)){
-            throw new CustomException(ErrorCode.DATASET_NOT_PENDING);
+            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.DATASET_NOT_PENDING);
         }
         if(!datasetInformation.get().getStatus().equals(DatasetInforStatus.CONTENT_APPROVED)){
-            throw new CustomException(ErrorCode.DATASET_INFO_NOT_APPROVED);
+            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.DATASET_INFO_NOT_APPROVED);
         }
 
         ReviewHistory reviewHistory = new ReviewHistory();

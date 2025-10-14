@@ -17,6 +17,7 @@ import com.example.datasetapi.service.user.TokenService;
 import com.example.datasetapi.util.JwtUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -38,12 +39,12 @@ public class SurveyServiceImpl implements SurveyService {
     public ResponseEntity<ApiResponse> getOptionsForSurvey() {
             String token = tokenService.resolveToken(request);
             if(token == null) {
-                throw new CustomException(ErrorCode.UNAUTHORIZED);
+                throw new CustomException(HttpStatus.UNAUTHORIZED,ErrorCode.UNAUTHORIZED);
             }
 
             Long userId = jwtUtil.getUserIdFromToken(token);
             if (userId == null) {
-                throw new CustomException(ErrorCode.INVALID_TOKEN);
+                throw new CustomException(HttpStatus.UNAUTHORIZED,ErrorCode.INVALID_TOKEN);
             }
 
             Consumer consumer = consumerRepository.findById(userId).orElse(null);
@@ -61,12 +62,12 @@ public class SurveyServiceImpl implements SurveyService {
     public ResponseEntity<ApiResponse> submitSurveyResponses(ConsumerRequest consumerRequest) {
             String token = tokenService.resolveToken(request);
             if(token == null) {
-                throw new CustomException(ErrorCode.UNAUTHORIZED);
+                throw new CustomException(HttpStatus.UNAUTHORIZED,ErrorCode.UNAUTHORIZED);
             }
 
             Long userId = jwtUtil.getUserIdFromToken(token);
             if (userId == null) {
-                throw new CustomException(ErrorCode.INVALID_TOKEN);
+                throw new CustomException(HttpStatus.UNAUTHORIZED,ErrorCode.INVALID_TOKEN);
             }
 
 
@@ -93,7 +94,7 @@ public class SurveyServiceImpl implements SurveyService {
 
             List<ConsumerType> types = typeIds.isEmpty() ? List.of() : consumerTypeRepository.findAllById(typeIds);
             if (types.size() != typeIds.size()) {
-                throw new CustomException(ErrorCode.INVALID_TYPE_ID);
+                throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.INVALID_TYPE_ID);
             }
 
             consumer.getConsumerTypes().clear();

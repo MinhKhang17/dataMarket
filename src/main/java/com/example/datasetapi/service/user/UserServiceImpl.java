@@ -93,14 +93,14 @@ public class UserServiceImpl implements UserService {
             userOptional = userRepository.findByUsername(loginRequest.getUsername());
         }
         if (!userOptional.isPresent()) {
-            throw new CustomException(ErrorCode.USER_NOT_FOUND);
+            throw new CustomException(HttpStatus.NOT_FOUND,ErrorCode.USER_NOT_FOUND);
         }
 
             User user = userOptional.get();
 
             boolean isValidPassword = PasswordUtil.matches(loginRequest.getPassword(), user.getPassword());
             if (!isValidPassword) {
-                throw new CustomException(ErrorCode.USER_NOT_FOUND);
+                throw new CustomException(HttpStatus.NOT_FOUND,ErrorCode.USER_NOT_FOUND);
             }
 
             //tao token
@@ -145,23 +145,23 @@ public class UserServiceImpl implements UserService {
     public ResponseEntity<ApiResponse> register(RegisterRequest registerRequest) {
         // check username
         if (userRepository.findByUsername(registerRequest.getUsername()).isPresent()) {
-            throw new CustomException(ErrorCode.USERNAME_ALREADY_EXISTS);
+            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.USERNAME_ALREADY_EXISTS);
         }
 
         // check password
         if (registerRequest.getPassword().length() < 8) {
-        throw new CustomException(ErrorCode.PASSWORD_TOO_SHORT);
+        throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.PASSWORD_TOO_SHORT);
         }
         if (!Validator.isValidPassword(registerRequest.getPassword())) {
-        throw new CustomException(ErrorCode.PASSWORD_TOO_WEAK);
+        throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.PASSWORD_TOO_WEAK);
         }
 
         // check email
         if (!Validator.isValidEmail(registerRequest.getEmail())) {
-            throw new CustomException(ErrorCode.EMAIL_INVALID);
+            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.EMAIL_INVALID);
         }
         if (userRepository.existsByEmail(registerRequest.getEmail())) {
-            throw new CustomException(ErrorCode.EMAIL_ALREADY_EXISTS);
+            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
         // tạo user
@@ -174,7 +174,7 @@ public class UserServiceImpl implements UserService {
         // gán role
         Optional<Role> roleOptional = roleRepository.findByName("CONSUMER");
         if (roleOptional.isEmpty()) {
-            throw new CustomException(ErrorCode.INVALID_ROLE);
+            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.INVALID_ROLE);
         }
 
         user.setRole(roleOptional.get());
@@ -196,16 +196,16 @@ public class UserServiceImpl implements UserService {
             // check input
             if (request == null || request.getNewPassword() == null ||
                     request.getOldPassword() == null || request.getConfirmPassword() == null) {
-                throw new CustomException(ErrorCode.MISSING_REQUIRED_FIELD);
+                throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.MISSING_REQUIRED_FIELD);
             }
             if (!request.getNewPassword().equals(request.getConfirmPassword())) {
-                throw new CustomException(ErrorCode.PASSWORD_MISMATCH);
+                throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.PASSWORD_MISMATCH);
             }
             if (request.getNewPassword().length() < 8) {
-                throw new CustomException(ErrorCode.PASSWORD_TOO_SHORT);
+                throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.PASSWORD_TOO_SHORT);
             }
             if (!Validator.isValidPassword(request.getNewPassword())) {
-                throw new CustomException(ErrorCode.PASSWORD_TOO_WEAK);
+                throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.PASSWORD_TOO_WEAK);
             }
 
 
@@ -218,7 +218,7 @@ public class UserServiceImpl implements UserService {
 
             // check old password
             if (!PasswordUtil.matches(request.getOldPassword(), userOptional.get().getPassword())) {
-                throw new CustomException(ErrorCode.OLD_PASSWORD_INCORRECT);
+                throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.OLD_PASSWORD_INCORRECT);
             }
 
             //update password
@@ -311,25 +311,25 @@ public class UserServiceImpl implements UserService {
             System.out.println(providerRegistrationDTO.getFullName());
             // Validate input
             if (providerRegistrationDTO == null) {
-                throw new CustomException(ErrorCode.MISSING_REQUIRED_FIELD);
+                throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.MISSING_REQUIRED_FIELD);
             }
 
             // Validate basic fields
             if (providerRegistrationDTO.getFullName() == null || providerRegistrationDTO.getFullName().trim().isEmpty()) {
-                throw new CustomException(ErrorCode.MISSING_REQUIRED_FIELD);
+                throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.MISSING_REQUIRED_FIELD);
             }
 
             if (providerRegistrationDTO.getEmail() == null || providerRegistrationDTO.getEmail().trim().isEmpty()) {
-                throw new CustomException(ErrorCode.MISSING_REQUIRED_FIELD);
+                throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.MISSING_REQUIRED_FIELD);
             }
 
             if (providerRegistrationDTO.getPhoneNumber() == null || providerRegistrationDTO.getPhoneNumber().trim().isEmpty()) {
-                throw new CustomException(ErrorCode.MISSING_REQUIRED_FIELD);
+                throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.MISSING_REQUIRED_FIELD);
             }
 
             // Check if email already exists
             if (providerRegistrationRepository.existsByEmail(providerRegistrationDTO.getEmail())) {
-                throw new CustomException(ErrorCode.EMAIL_ALREADY_EXISTS);
+                throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.EMAIL_ALREADY_EXISTS);
             }
 
             // Process registration using the existing registerProvider method
