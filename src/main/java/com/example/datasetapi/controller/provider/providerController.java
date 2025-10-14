@@ -20,9 +20,9 @@ public class providerController {
                                                  @ModelAttribute ProviderUploadDatasetRequest providerUploadDatasetRequest) {
         return datasetValidateService.uploadAndHeaderCheckCSVFile(file,datasetTypeId,request,providerUploadDatasetRequest);
     }
-    @PostMapping("/validate-content-upload")
-    public ResponseEntity<?> validateContentUpload(ProviderUploadDatasetRequest providerUploadDatasetRequest, HttpServletRequest request) {
-        return datasetValidateService.updateInforOfDatasetCheckContentUploadToCloud(providerUploadDatasetRequest,request);
-    }
+//    @PostMapping("/validate-content-upload")
+//    public ResponseEntity<?> validateContentUpload(ProviderUploadDatasetRequest providerUploadDatasetRequest, HttpServletRequest request) {
+//        return datasetValidateService.updateInforOfDatasetCheckContentUploadToCloud(providerUploadDatasetRequest,request);
+//    }
 
 }

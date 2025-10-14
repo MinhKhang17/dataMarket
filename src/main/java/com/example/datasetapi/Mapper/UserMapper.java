@@ -1,11 +1,11 @@
 package com.example.datasetapi.Mapper;
 
-import com.example.datasetapi.dto.response.DatasetValidationErrorDTO;
-import com.example.datasetapi.dto.response.ModeratorDatasetInforResponseDto;
-import com.example.datasetapi.dto.response.UserInformationResponseForAuthMe;
+import com.example.datasetapi.dto.response.*;
 import com.example.datasetapi.model.Dataset.DatasetInformation;
 import com.example.datasetapi.model.Dataset.DatasetValidationError;
 import com.example.datasetapi.model.UserManager.User;
+import com.example.datasetapi.model.location.Commune;
+import com.example.datasetapi.model.location.Province;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,7 +31,7 @@ public class UserMapper implements UserResponseDTOMapper {
         moderatorDatasetInforResponseDto.setFile_name(datasetInformation.getName());
         moderatorDatasetInforResponseDto.setRow_count(datasetInformation.getRowCount());
         moderatorDatasetInforResponseDto.setProvider_id(datasetInformation.getProvider().getId());
-        moderatorDatasetInforResponseDto.setCommune(datasetInformation.getCommune());
+        moderatorDatasetInforResponseDto.setCommuneDTO(toComuneDTO(datasetInformation.getCommune()));
         moderatorDatasetInforResponseDto.setCreatedAt(datasetInformation.getCreateAt());
         moderatorDatasetInforResponseDto.setCheckContentAt(datasetInformation.getUpdateAt());
         List<DatasetValidationErrorDTO> datasetValidationErrorDTOList =
@@ -44,5 +44,20 @@ public class UserMapper implements UserResponseDTOMapper {
 
         return moderatorDatasetInforResponseDto;
 
+    }
+
+    private CommuneDTO toComuneDTO(Commune commune) {
+        CommuneDTO communeDTO = new CommuneDTO();
+        communeDTO.setCommuneID(commune.getIdCommune());
+        communeDTO.setCommuneName(commune.getName());
+        communeDTO.setProvince(toProvineDTO(commune.getProvince()));
+        return communeDTO;
+    }
+
+    private ProvinceDTO toProvineDTO(Province province) {
+            ProvinceDTO provinceDTO = new ProvinceDTO();
+            provinceDTO.setProvinceName(province.getName());
+            provinceDTO.setProvinceId(province.getIdProvince());
+            return provinceDTO;
     }
 }

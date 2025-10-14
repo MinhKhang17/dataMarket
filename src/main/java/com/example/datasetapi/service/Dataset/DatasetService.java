@@ -28,4 +28,6 @@ public interface DatasetService {
     ResponseEntity<?> getAllAllDataset();
 
     ResponseEntity<?> rejectDataset(long datasetInforId, HttpServletRequest request,String reason);
+
+    ResponseEntity<?> getAllDatasetParent();
 }

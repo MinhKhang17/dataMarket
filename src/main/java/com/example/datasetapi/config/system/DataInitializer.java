@@ -558,7 +558,6 @@ private  DatasetInforRepository datasetInforRepository;
 
         // 2️⃣ Tạo document1
         ProviderIdentityDocument doc1 = new ProviderIdentityDocument();
-        doc1.setProvider(registration);
         doc1.setImage_url("https://res.cloudinary.com/dofuoy88z/image/upload/v1758869860/seridykcpf1ospeni0zs.jpg");
         doc1.setUploadedAt(Instant.now());
         doc1.setIdCardVerificationStatus(VerificationStatus.PENDING);
@@ -568,7 +567,6 @@ private  DatasetInforRepository datasetInforRepository;
 
         // 3️⃣ Tạo document2
         ProviderIdentityDocument doc2 = new ProviderIdentityDocument();
-        doc2.setProvider(registration);
         doc2.setImage_url("https://res.cloudinary.com/dofuoy88z/image/upload/v1758869861/oegnzrkytqhvfexxfdrf.jpg");
         doc2.setUploadedAt(Instant.now());
         doc2.setIdCardVerificationStatus(VerificationStatus.PENDING);
@@ -591,14 +589,16 @@ private  DatasetInforRepository datasetInforRepository;
         Commune commune = communeRepository.findById("00008") // Phường Ngọc Hà
                 .orElseThrow(() -> new RuntimeException("Commune not found"));
 
-
+        Commune commune1 = communeRepository.findById("00118") // Phường Ngọc Hà
+                .orElseThrow(() -> new RuntimeException("Commune not found"));
 
         // 7️⃣ Tạo Provider, gán Registration, User và Location
         Provider provider = new Provider();
         provider.setProviderRegistration(registration);
         provider.setUser(user);
+        provider.setProviderRegistration(registration);
         provider.setBankAccount("123456789");
-            provider.setCommunes(new ArrayList<>(List.of(commune))); // Use mutable list
+            provider.setCommunes(new ArrayList<>(List.of(commune,commune1))); // Use mutable list
 
         providerRepository.save(provider);
 

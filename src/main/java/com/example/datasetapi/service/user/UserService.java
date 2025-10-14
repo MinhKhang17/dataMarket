@@ -38,4 +38,5 @@ public interface UserService {
 
     Provider findProviderById(long providerId);
 
+    boolean isExitsProvider(long providerId);
 }

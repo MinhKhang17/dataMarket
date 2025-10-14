@@ -15,9 +15,7 @@ public class ProviderIdentityDocument {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "provider_id")
-    private ProviderRegistration provider;
+
 
 //    private String identityNumber;  // số CCCD/CMND
 

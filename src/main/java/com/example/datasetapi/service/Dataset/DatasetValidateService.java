@@ -7,7 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface DatasetValidateService {
 
-    ResponseEntity<?> updateInforOfDatasetCheckContentUploadToCloud(ProviderUploadDatasetRequest providerUploadDatasetRequest, HttpServletRequest request);
+//    ResponseEntity<?> updateInforOfDatasetCheckContentUploadToCloud(ProviderUploadDatasetRequest providerUploadDatasetRequest, HttpServletRequest request);
 
     public ResponseEntity<?> uploadAndHeaderCheckCSVFile(MultipartFile file,long datasetTypeId, HttpServletRequest request,ProviderUploadDatasetRequest providerUploadDatasetRequest);
 

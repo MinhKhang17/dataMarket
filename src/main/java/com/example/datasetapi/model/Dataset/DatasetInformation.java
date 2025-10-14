@@ -6,6 +6,7 @@ import com.example.datasetapi.enums.Datasets.FileExtension;
 //import com.example.datasetapi.model.userManager.Address;
 import com.example.datasetapi.model.UserManager.Provider;
 import com.example.datasetapi.model.location.Commune;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -45,14 +46,17 @@ private List<ValidationErrorDto> validationErrors;
 @OneToMany(mappedBy = "datasetInformation", cascade = CascadeType.ALL, orphanRemoval = true)
 private List<DatasetValidationError> datasetValidationErrorList;
 
-@ManyToOne(fetch = FetchType.LAZY)
+@JsonIgnore
+@ManyToOne()
 @JoinColumn(name = "dataset_type_id")
 private DatasetType datasetType;
 
+@JsonIgnore
 @ManyToOne
     @JoinColumn(name = "provider_id")
     private Provider provider;
-@ManyToOne()
+@ManyToOne
+@JsonIgnore
     @JoinColumn(name = "commune_id")
     private Commune commune;
 
