@@ -402,13 +402,8 @@ public class UserServiceImpl implements UserService {
         providerRegistration.setOrganizationName(dto.getOrganizationName());
         providerRegistration.setTaxId(dto.getTaxId());
 
-        Province province = new Province();
-        province.setIdProvince(dto.getProvinceId()); // chỉ set id để liên kết
-        providerRegistration.setProvince(province);
-
-        Commune commune = new Commune();
-        commune.setIdCommune(dto.getCommuneId());
-        providerRegistration.setCommune(commune);
+        providerRegistration.setProvinceId(dto.getProvinceId());
+        providerRegistration.setCommuneId(dto.getCommuneId());
 
         providerRegistration.setRegistrationStatus(RegistrationStatus.PENDING);
         providerRegistration.setCreatedAt(Instant.now());

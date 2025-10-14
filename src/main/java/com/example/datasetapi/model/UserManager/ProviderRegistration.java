@@ -26,19 +26,13 @@ public class ProviderRegistration {
     private String organizationName;
     private String taxId;
 
-    @ManyToOne
-    @JoinColumn(name = "id_province")
-    private Province province;
+    @Column(name = "id_province", nullable = false)
+    private String provinceId;
 
-    @ManyToOne
-    @JoinColumn(name = "id_commune")
-    private Commune commune;
-
+    @Column(name = "id_commune", nullable = false)
+    private String communeId;
 
     private String addressLine;
-    private String city;
-    private String district;
-    private String ward;
 
     @Enumerated(EnumType.STRING)
     private RegistrationStatus registrationStatus; // PENDING / APPROVED / REJECTED
