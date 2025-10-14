@@ -182,7 +182,7 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public Map<String, Object> moderate(DatasetInformation ds, DatasetType datasetType) {
+    public Map<String, Object> moderate(DatasetInformation ds) {
 
         try {
 
@@ -193,7 +193,7 @@ public class FileServiceImpl implements FileService {
 
 
 
-            List<String> headers = datasetType.getDatasetTypeColumnList()
+            List<String> headers = ds.getDatasetType().getDatasetTypeColumnList()
                     .stream().map(DatasetTypeColumn::getColumnName).toList();
 
             // open CSV file
@@ -314,6 +314,7 @@ public class FileServiceImpl implements FileService {
                 // save and result
                 double rate = totalCells == 0 ? 0 : (100.0 * totalErrors / totalCells);
                 boolean pass = rate <= THRE_HOLD_PERCENT;
+
                 if (!pass) {
                     datasetInforRepository.deleteById(ds.getId());
                 }
@@ -349,16 +350,6 @@ public class FileServiceImpl implements FileService {
 
         } catch (Exception e) {
             return Map.of("success", false, "message", e.getMessage());
-        }finally {
-            try {
-
-                System.out.println("-----------------------------------------\n" +
-                        "Deleted dataset\n" +
-                        "-----------------------------------------");
-                Files.deleteIfExists(Paths.get(ds.getFile_url()));
-            } catch (IOException e) {
-                System.err.println("Can not delete current file: " + e.getMessage());
-            }
         }
     }
 

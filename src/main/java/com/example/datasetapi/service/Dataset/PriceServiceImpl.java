@@ -9,6 +9,7 @@ import com.example.datasetapi.model.Dataset.*;
 import com.example.datasetapi.repository.DatasetPlanRepo;
 import com.example.datasetapi.repository.PricingRuleRepo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -36,7 +37,7 @@ public class PriceServiceImpl implements  PriceService {
                 createPricing(dataset,datasetInformation,DatasetPack.LARGE);
             }
             case UNDETERMINED -> {
-                throw new CustomException(ErrorCode.DATASET_PACK_INVALID);
+                throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.DATASET_PACK_INVALID);
             }
         }
     }

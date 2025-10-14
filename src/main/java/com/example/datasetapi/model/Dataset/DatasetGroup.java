@@ -2,6 +2,7 @@ package com.example.datasetapi.model.Dataset;
 
 import com.example.datasetapi.model.UserManager.Provider;
 import com.example.datasetapi.model.location.Commune;
+import com.example.datasetapi.model.location.Province;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -16,9 +17,7 @@ public class DatasetGroup {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "comune_id")
-    private Commune commune;
+
 
     @Column
     private int version = 0;
@@ -34,4 +33,14 @@ public class DatasetGroup {
 
     @OneToMany(cascade = CascadeType.ALL)
     private List<Dataset> datasets = new ArrayList<Dataset>();
+    @OneToMany(cascade = CascadeType.ALL)
+    private List<DatasetGroup> datasetGroups = new ArrayList<DatasetGroup>();
+
+    //sẽ null khi là dataset group con
+    @ManyToOne
+    private Province province;
+    //sẽ null khi là dataset group cha
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "comune_id")
+    private Commune commune;
 }

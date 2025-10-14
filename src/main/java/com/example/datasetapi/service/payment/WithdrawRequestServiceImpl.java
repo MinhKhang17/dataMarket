@@ -13,6 +13,7 @@ import com.example.datasetapi.service.user.TokenService;
 import com.example.datasetapi.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -29,24 +30,24 @@ public class WithdrawRequestServiceImpl implements WithdrawRequestService {
     public ResponseEntity<ApiResponse> withdrawRequest(WithdrawRequest withdrawRequest) {
             String token = tokenService.resolveToken(request);
             if(token == null) {
-                throw new CustomException(ErrorCode.UNAUTHORIZED);
+                throw new CustomException(HttpStatus.UNAUTHORIZED,ErrorCode.UNAUTHORIZED);
             }
             Long userId = jwtUtil.getUserIdFromToken(token);
             if (userId == null) {
-                throw new CustomException(ErrorCode.INVALID_TOKEN);
+                throw new CustomException(HttpStatus.UNAUTHORIZED,ErrorCode.INVALID_TOKEN);
             }
 
             if (withdrawRequest.getAmount() == null || withdrawRequest.getAmount() <= 0) {
-                throw new CustomException(ErrorCode.INVALID_WITHDRAW_AMOUNT);
+                throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.INVALID_WITHDRAW_AMOUNT);
             }
             Wallet wallet = walletRepository.findById(withdrawRequest.getWalletId())
-                    .orElseThrow(() -> new CustomException(ErrorCode.WALLET_NOT_FOUND));
+                    .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.WALLET_NOT_FOUND));
 
             if (wallet == null || !wallet.getUser().getId().equals(userId)) {
-                throw new CustomException(ErrorCode.WALLET_NOT_FOUND);
+                throw new CustomException(HttpStatus.NOT_FOUND,ErrorCode.WALLET_NOT_FOUND);
             }
             if (wallet.getAmount() < withdrawRequest.getAmount()) {
-                throw new CustomException(ErrorCode.INSUFFICIENT_FUNDS);
+                throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.INSUFFICIENT_FUNDS);
             }
 
             Withdraw withdraw = new Withdraw();

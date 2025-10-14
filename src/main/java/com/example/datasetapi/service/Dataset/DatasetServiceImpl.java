@@ -107,38 +107,59 @@ private CommuneRepository communeRepository;
 
     @Transactional
     @Override
-    public void checkExitsAndCreateDatasetGroupAndDateset(ProviderUploadDatasetRequest providerUploadDatasetRequest,long provider_id) {
+    public void checkExitsAndCreateDatasetGroupAndDateset(ProviderUploadDatasetRequest providerUploadDatasetRequest, long provider_id, DatasetInformation datasetInformation) {
         try {
             logger.info("Check Exit and Create Dataset Group and Dateset");
 
             Optional<DatasetInformation> datasetInformationOptional = datasetInforRepository.findById(providerUploadDatasetRequest.getDataset_Information_Id());
 
-            if(!datasetInformationOptional.isPresent()){
-                return;
-            }
-            DatasetInformation datasetInformation = datasetInformationOptional.get();
             // một user có nhiều địa chỉ upload tìm theo địa chỉ và dataset type
-            Commune commune =communeRepository.findById(providerUploadDatasetRequest.getCommune_id()).get();
-            //check xem đã tồn tại một dataset group chưa nếu chưa thì mặc định nó là lần đầu
-            DatasetGroup datasetGroup = datasetGroupRepository.findByCommuneAndDatasetType(commune, datasetInformation.getDatasetType());
-
-            Dataset dataset = new Dataset();
+            Commune commune = communeRepository.findById(providerUploadDatasetRequest.getCommune_id())
+                    .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.COMMUNE_NOT_FOUND));
+            //tim kiếm provider để tìm kiếm theo dataset group
             Provider provider = userService.findProviderById(provider_id);
-            //nếu là lần tạo đầu tiên thì tạo group để chứa các phiên bản
-            if (datasetGroup == null) {
-                logger.info("First time create dataset group");
-                datasetGroup = new DatasetGroup();
-                datasetGroup.setDatasetType(datasetInformation.getDatasetType());
-                datasetGroup.setCommune(commune);
-                datasetGroup.setProvider(provider);
-                datasetGroup.getDatasets().add(dataset);
+
+            //check xem đã tồn tại một dataset group chưa nếu chưa thì mặc định nó là lần đầu
+            Optional<DatasetGroup> datasetGroupParentOptionnal = datasetGroupRepository.findByProviderAndProvinceAndDatasetType(provider,commune.getProvince(),datasetInformation.getDatasetType());
+            DatasetGroup datasetGroupParent = new DatasetGroup();
+            if(datasetGroupParentOptionnal.isEmpty()){
+                  datasetGroupParent = new DatasetGroup();
+                 datasetGroupParent.setDatasetType(datasetInformation.getDatasetType());
+                 datasetGroupParent.setProvider(provider);
+                 datasetGroupParent.setProvince(commune.getProvince());
             }
             else {
-                //nếu là lần tạo thứ 2 tăng version của dataset group
+                 datasetGroupParent = datasetGroupParentOptionnal.get();
+            }
+
+            List<DatasetGroup> datasetGroupsChild = datasetGroupParent.getDatasetGroups();
+            DatasetGroup datasetGroupFollowCommune = new DatasetGroup();
+            boolean haveDatasetGroup = false;
+            for( DatasetGroup datasetGroupChild : datasetGroupsChild ){
+                if(datasetGroupChild.getCommune().equals(commune)){
+                    datasetGroupFollowCommune = datasetGroupChild;
+                    haveDatasetGroup = true;
+                    break;
+                }
+            }
+
+            Dataset dataset = new Dataset();
+            //nếu là lần tạo đầu tiên thì tạo group để chứa các phiên bản
+            if (!haveDatasetGroup) {
+                logger.info("First time create dataset group");
+                datasetGroupFollowCommune = new DatasetGroup();
+                datasetGroupFollowCommune.setDatasetType(datasetInformation.getDatasetType());
+                datasetGroupFollowCommune.setCommune(commune);
+                datasetGroupFollowCommune.setProvider(provider);
+                datasetGroupFollowCommune.getDatasets().add(dataset);
+                datasetGroupParent.getDatasetGroups().add(datasetGroupFollowCommune);
+            }
+            else {
+                //nếu là lần tạo thứ 2 thì chỉ cần gán dataset mới vào
                 logger.info("Dataset group is existed do not create new one");
                 dataset.setDatasetStatus(DatasetStatus.PENDING);
-                dataset.setDatasetGroup(datasetGroup);
-                datasetGroup.getDatasets().add(dataset);
+                dataset.setDatasetGroup(datasetGroupFollowCommune);
+                datasetGroupFollowCommune.getDatasets().add(dataset);
             }
 
             setDatasetPack(dataset,datasetInformation);
@@ -151,7 +172,8 @@ private CommuneRepository communeRepository;
             datasetInformation.setDataset_time(DateUtil.parseToLocalDate(providerUploadDatasetRequest.getDataset_time()));
             datasetInforRepository.save(datasetInformation);
             datasetRepository.save(dataset);
-            datasetGroupRepository.save(datasetGroup);
+            datasetGroupRepository.save(datasetGroupFollowCommune);
+            datasetGroupRepository.save(datasetGroupParent);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -162,7 +184,7 @@ private CommuneRepository communeRepository;
     private void setDatasetPack(Dataset dataset, DatasetInformation datasetInformation) {
         long dataset_row = datasetInformation.getRowCount();
         if(dataset_row<1000){
-            throw new CustomException(ErrorCode.DATASET_ROW_MIN_INVALID);
+            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.DATASET_ROW_MIN_INVALID);
         }
         if(dataset_row >1000 && dataset_row <= 10000){
             dataset.setDatasetPack(DatasetPack.SMALL);
@@ -182,15 +204,15 @@ private CommuneRepository communeRepository;
         long moderator_id = tokenService.getUserIdFromRequest(request);
 
         if(datasetInformationOptional.isEmpty()){
-            throw new CustomException(ErrorCode.DATASET_NOT_FOUND);
+            throw new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND);
         }
 
         if(!datasetInformationOptional.get().getDataset().getDatasetStatus().equals(DatasetStatus.PENDING)){
-            throw new CustomException(ErrorCode.DATASET_NOT_PENDING);
+            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.DATASET_NOT_PENDING);
         }
 
         if(!datasetInformationOptional.get().getStatus().equals(DatasetInforStatus.CONTENT_APPROVED)){
-            throw new CustomException(ErrorCode.DATASET_INFO_NOT_APPROVED);
+            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.DATASET_INFO_NOT_APPROVED);
         }
 
         Dataset dataset = datasetInformationOptional.get().getDataset();
@@ -218,14 +240,14 @@ private CommuneRepository communeRepository;
         Optional<DatasetInformation> datasetInformation = datasetInforRepository.findById(datasetInforId);
 
         if(datasetInformation.isEmpty()){
-            throw new CustomException(ErrorCode.DATASET_NOT_FOUND);
+            throw new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND);
         }
 
         if(!datasetInformation.get().getDataset().getDatasetStatus().equals(DatasetStatus.PENDING)){
-            throw new CustomException(ErrorCode.DATASET_NOT_PENDING);
+            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.DATASET_NOT_PENDING);
         }
         if(!datasetInformation.get().getStatus().equals(DatasetInforStatus.CONTENT_APPROVED)){
-            throw new CustomException(ErrorCode.DATASET_INFO_NOT_APPROVED);
+            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.DATASET_INFO_NOT_APPROVED);
         }
 
         ReviewHistory reviewHistory = new ReviewHistory();

@@ -63,11 +63,11 @@ public class TokenServiceImpl implements TokenService {
 
                 return ResponseEntity.ok().body(new ApiResponse(true, "Token refreshed successfully", accessToken));
             } else {
-                throw new CustomException(ErrorCode.TOKEN_NOT_FOUND);
+                throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.TOKEN_NOT_FOUND);
             }
 
         }
-        throw new CustomException(ErrorCode.REFRESH_TOKEN_INVALID);
+        throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.REFRESH_TOKEN_INVALID);
     }
 
 

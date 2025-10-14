@@ -12,6 +12,7 @@ import com.example.datasetapi.service.user.UserServiceImpl;
 import com.example.datasetapi.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -41,16 +42,16 @@ public class PaymentServiceImpl implements PaymentService{
 
         String token = tokenServiceImpl.resolveToken(request);
         if(token == null) {
-            throw new CustomException(ErrorCode.UNAUTHORIZED);
+            throw new CustomException(HttpStatus.UNAUTHORIZED,ErrorCode.UNAUTHORIZED);
         }
         Long userId = jwtUtil.getUserIdFromToken(token);
         if (userId == null) {
-            throw new CustomException(ErrorCode.INVALID_TOKEN);
+            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.INVALID_TOKEN);
         }
         Optional<User> user = userService.findUserById(userId);
 
         if(!user.isPresent()){
-            throw new CustomException(ErrorCode.USER_NOT_FOUND);
+            throw new CustomException(HttpStatus.NOT_FOUND,ErrorCode.USER_NOT_FOUND);
         }
 
         wallet.setUser(user.get());
