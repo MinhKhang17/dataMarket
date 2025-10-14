@@ -69,7 +69,7 @@ public class DatasetValidateServiceImpl implements DatasetValidateService {
 
        //check xem dataset có tồn tại hay không
         if(!datasetInformationOptional.isPresent()){
-           return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+           throw new CustomException(ErrorCode.DATASET_NOT_FOUND);
         }
 
         //check xem đã check header hay chưa

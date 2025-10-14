@@ -9,7 +9,6 @@ import com.example.datasetapi.enums.Datasets.FileExtension;
 import com.example.datasetapi.enums.Datasets.DatasetInforStatus;
 import com.example.datasetapi.model.Dataset.*;
 import com.example.datasetapi.model.location.Commune;
-import com.example.datasetapi.model.location.Location;
 import com.example.datasetapi.model.location.Province;
 import com.example.datasetapi.model.UserManager.*;
 import com.example.datasetapi.repository.*;
@@ -286,20 +285,14 @@ private  DatasetInforRepository datasetInforRepository;
         ds1.setProvider(provider);
 
         // ✅ Tạo Location mới (thay Address)
-        Location location = new Location();
 
-        // Lấy dữ liệu từ bảng province & commune có sẵn
-        Province province = provinceRepository.findById("01") // Hà Nội
-                .orElseThrow(() -> new RuntimeException("Province not found: 01"));
-        Commune commune = communeRepository.findById("00008") // Phường Ngọc Hà
-                .orElseThrow(() -> new RuntimeException("Commune not found: 00008"));
 
-        // Gán dữ liệu
-        location.setProvince(province);
-        location.setCommune(commune);
+        Commune commune = communeRepository.findById("00091")
+                .orElseThrow(() -> new RuntimeException("Commune not found"));
+        ds1.setCommune(commune);
 
         // Gán location cho dataset
-        ds1.setLocation(location);
+        ds1.setCommune(commune);
 
         datasetList.add(ds1);
 
@@ -594,27 +587,21 @@ private  DatasetInforRepository datasetInforRepository;
         user.setRole(roleRepository.getRolesByName("PROVIDER"));
         user.setPassword(passwordEncoder.encode("password"));
 
-        // 5️⃣ Lấy province & commune thật từ DB
-        Province province = provinceRepository.findById("01") // Hà Nội
-                .orElseThrow(() -> new RuntimeException("Province not found"));
+
         Commune commune = communeRepository.findById("00008") // Phường Ngọc Hà
                 .orElseThrow(() -> new RuntimeException("Commune not found"));
 
-        // 6️⃣ Tạo Location gán cho Provider
-        Location location = new Location();
-        location.setProvince(province);
-        location.setCommune(commune);
+
 
         // 7️⃣ Tạo Provider, gán Registration, User và Location
         Provider provider = new Provider();
         provider.setProviderRegistration(registration);
         provider.setUser(user);
         provider.setBankAccount("123456789");
-        provider.setLocation(List.of(location));
+            provider.setCommunes(new ArrayList<>(List.of(commune))); // Use mutable list
 
         providerRepository.save(provider);
 
-        System.out.println("✅ Khởi tạo provider với Location: " + location.getFullLocation());
     }
 
 

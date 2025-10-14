@@ -1,7 +1,7 @@
 package com.example.datasetapi.dto.response;
 
 //import com.example.datasetapi.model.userManager.Address;
-import com.example.datasetapi.model.location.Location;
+import com.example.datasetapi.model.location.Commune;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -12,7 +12,7 @@ public class DatasetReposonseDto {
 
     private long datasetGroupId;
 
-    private Location location;
+    private Commune commune;
 
     private int lasted_version;
 

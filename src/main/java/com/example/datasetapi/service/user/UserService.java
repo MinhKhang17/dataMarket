@@ -6,7 +6,6 @@ import com.example.datasetapi.dto.request.RegisterRequest;
 import com.example.datasetapi.dto.request.UpdatePasswordRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
 //import com.example.datasetapi.model.userManager.Address;
-import com.example.datasetapi.model.location.Location;
 import com.example.datasetapi.model.UserManager.Provider;
 import com.example.datasetapi.model.UserManager.User;
 import jakarta.servlet.http.HttpServletRequest;
@@ -39,5 +38,4 @@ public interface UserService {
 
     Provider findProviderById(long providerId);
 
-    Location findProviderLocationByProviderIdAndLocationId(long providerId, long locationId);
 }

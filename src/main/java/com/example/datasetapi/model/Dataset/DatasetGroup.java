@@ -1,7 +1,7 @@
 package com.example.datasetapi.model.Dataset;
 
-import com.example.datasetapi.model.location.Location;
 import com.example.datasetapi.model.UserManager.Provider;
+import com.example.datasetapi.model.location.Commune;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -17,8 +17,8 @@ public class DatasetGroup {
     private long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "location_id")
-    private Location location;
+    @JoinColumn(name = "comune_id")
+    private Commune commune;
 
     @Column
     private int version = 0;

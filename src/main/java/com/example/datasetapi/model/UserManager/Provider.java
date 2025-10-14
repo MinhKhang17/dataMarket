@@ -1,6 +1,6 @@
 package com.example.datasetapi.model.UserManager;
 
-import com.example.datasetapi.model.location.Location;
+import com.example.datasetapi.model.location.Commune;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -26,7 +26,11 @@ public class Provider {
     @JoinColumn(name = "provider_registration_id") // FK tới ProviderRegistration
     private ProviderRegistration providerRegistration;
 
-    @OneToMany(cascade =  CascadeType.ALL)
-    @JoinColumn(name = "location")
-    private List<Location> Location;
+    @ManyToMany()
+    @JoinTable(
+            name = "provider_commune",
+            joinColumns = @JoinColumn(name = "provider_id"),
+            inverseJoinColumns = @JoinColumn(name = "commune_id")
+    )
+    private List<Commune> communes;
 }

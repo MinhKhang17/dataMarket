@@ -31,7 +31,7 @@ public class UserMapper implements UserResponseDTOMapper {
         moderatorDatasetInforResponseDto.setFile_name(datasetInformation.getName());
         moderatorDatasetInforResponseDto.setRow_count(datasetInformation.getRowCount());
         moderatorDatasetInforResponseDto.setProvider_id(datasetInformation.getProvider().getId());
-        moderatorDatasetInforResponseDto.setFullAddress(datasetInformation.getLocation().getFullLocation());
+        moderatorDatasetInforResponseDto.setCommune(datasetInformation.getCommune());
         moderatorDatasetInforResponseDto.setCreatedAt(datasetInformation.getCreateAt());
         moderatorDatasetInforResponseDto.setCheckContentAt(datasetInformation.getUpdateAt());
         List<DatasetValidationErrorDTO> datasetValidationErrorDTOList =

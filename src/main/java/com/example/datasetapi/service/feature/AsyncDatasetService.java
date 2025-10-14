@@ -6,8 +6,8 @@ import com.example.datasetapi.exception.ErrorCode;
 import com.example.datasetapi.model.Dataset.DatasetInformation;
 import com.example.datasetapi.model.Dataset.DatasetType;
 //import com.example.datasetapi.model.userManager.Address;
-import com.example.datasetapi.model.location.Location;
-import com.example.datasetapi.repository.LocationRepository;
+import com.example.datasetapi.model.location.Commune;
+import com.example.datasetapi.repository.CommuneRepository;
 import com.example.datasetapi.repository.DatasetInforRepository;
 import com.example.datasetapi.service.Dataset.DatasetService;
 import com.example.datasetapi.service.Dataset.PriceService;
@@ -26,12 +26,13 @@ public class AsyncDatasetService {
 
     @Autowired
     private FileService fileService;
-    @Autowired
-    private LocationRepository  locationRepository;
+
     @Autowired
     private DatasetService datasetService;
     @Autowired
     private PriceService priceService;
+    @Autowired
+    private CommuneRepository communeRepository;
     @Async
     public CompletableFuture<Map<String, Object>> readAndUploadDataset(ProviderUploadDatasetRequest providerUploadDatasetRequest, long provider_id, DatasetType datasetType) {
         try {
@@ -41,11 +42,11 @@ public class AsyncDatasetService {
                     datasetInforRepository.findById(providerUploadDatasetRequest.getDataset_Information_Id())
                             .orElseThrow(() -> new CustomException(ErrorCode.DATASET_NOT_FOUND));
 
-            Optional<Location> addressOptional = locationRepository.findById(providerUploadDatasetRequest.getProvider_location_id());
+            Optional<Commune> addressOptional = communeRepository.findById(providerUploadDatasetRequest.getCommune_id());
             if(!addressOptional.isPresent()) {
                 return  CompletableFuture.completedFuture(null);
             }
-            datasetInformation.setLocation(addressOptional.get());
+            datasetInformation.setCommune(addressOptional.get());
 
 
 

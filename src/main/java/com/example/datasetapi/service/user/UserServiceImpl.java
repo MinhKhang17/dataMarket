@@ -12,7 +12,6 @@ import com.example.datasetapi.enums.VerificationStatus.RegistrationStatus;
 import com.example.datasetapi.enums.VerificationStatus.VerificationStatus;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
-import com.example.datasetapi.model.location.Location;
 import com.example.datasetapi.model.UserManager.*;
 import com.example.datasetapi.repository.*;
 import com.example.datasetapi.dto.response.ApiResponse;
@@ -77,17 +76,6 @@ public class UserServiceImpl implements UserService {
     public Provider findProviderById(long providerId) {
         return providerRepository.findById(providerId)
                 .orElseThrow(() -> new IllegalArgumentException("Provider not exits with id: " + providerId));
-    }
-
-    @Override
-    public Location findProviderLocationByProviderIdAndLocationId(long providerId, long locationId) {
-    Optional<Provider> providerOptional = providerRepository.findById(providerId);
-    for(Location address : providerOptional.get().getLocation()) {
-        if(address.getId() == locationId) {
-            return address;
-        }
-    }
-return null;
     }
 
 
