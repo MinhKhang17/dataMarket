@@ -53,7 +53,8 @@ public enum ErrorCode {
   DATASET_ROW_MIN_INVALID("DATASET_ROW_MIN_INVALID","Gói quá nhỏ" ),
     DATASET_PACK_INVALID("DATASET_PACK_INVALID","Gói dataset chưa được phân loại package" ),
     PRICING_RULE_INVALID("PRICING_RULE_INVALID","Không tìm thấy pricing rule" ),
-    Location_NOT_FOUND("Location_NOT_FOUND","Không tìm thấy location");
+    Location_NOT_FOUND("Location_NOT_FOUND","Không tìm thấy location"),
+    COMMUNE_NOT_FOUND("COMMUNE_NOT_FOUND","Không tìm thấy commmune" );
 
 
     private final String code;

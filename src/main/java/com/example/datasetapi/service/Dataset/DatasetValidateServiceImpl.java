@@ -120,7 +120,7 @@ try {
             return ResponseEntity.badRequest().body(new ApiResponse(false, "The dataset hasn't been checked for headers.", result));
         }
 
-    datasetService.checkExitsAndCreateDatasetGroupAndDateset(providerUploadDatasetRequest, provider_id);
+    datasetService.checkExitsAndCreateDatasetGroupAndDateset(providerUploadDatasetRequest, provider_id,datasetInformation);
 
     return ResponseEntity.ok(new ApiResponse(true, "Success in check content progress wait for moderator", datasetInformation.getId()));
 }catch (IllegalArgumentException e) {
