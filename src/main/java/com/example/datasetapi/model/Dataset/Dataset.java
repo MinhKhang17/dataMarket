@@ -3,6 +3,7 @@ package com.example.datasetapi.model.Dataset;
 import com.example.datasetapi.enums.Datasets.DatasetPack;
 import com.example.datasetapi.enums.Datasets.DatasetStatus;
 import com.example.datasetapi.model.UserManager.Provider;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -41,10 +42,11 @@ private LocalDateTime updated_at=LocalDateTime.now();
 private String title;
 
 @ManyToOne(cascade = CascadeType.ALL)
+@JsonIgnore
 @JoinColumn(name = "dataset_group_id")
 private DatasetGroup datasetGroup;
 
-@ManyToOne
+@ManyToOne(cascade = CascadeType.ALL)
     private Provider provider;
 @Column
     @Enumerated(EnumType.STRING)

@@ -70,22 +70,17 @@ public class DatasetValidateServiceImpl implements DatasetValidateService {
     private CommuneRepository communeRepository;
     @Autowired
     private DatasetService datasetService;
-    @Override
-    public ResponseEntity<?> updateInforOfDatasetCheckContentUploadToCloud(ProviderUploadDatasetRequest providerUploadDatasetRequest,HttpServletRequest request) {
-try {
-    Optional<DatasetInformation> datasetInformationOptional = datasetInforRepository.findById(providerUploadDatasetRequest.getDataset_Information_Id());
 
-    //check xem dataset có tồn tại hay không
-    if (!datasetInformationOptional.isPresent()) {
-        throw new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND);
-    }
+    private ResponseEntity<?> updateInforOfDatasetCheckContentUploadToCloud(ProviderUploadDatasetRequest providerUploadDatasetRequest,HttpServletRequest request,DatasetInformation ds) {
+try {
+
 
     //check xem đã check header hay chưa
-    if (!datasetInformationOptional.get().isHeaderChecked()) {
+    if (!ds.isHeaderChecked()) {
         return ResponseEntity.badRequest().body(new ApiResponse(false, "The dataset hasn't been checked for headers.", null));
     }
     //check xem có thuộc về provider đó không
-    if (datasetInformationOptional.get().getProvider().getId() != tokenService.getUserIdFromRequest(request)) {
+    if (ds.getProvider().getId() != tokenService.getUserIdFromRequest(request)) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
     long provider_id = tokenService.getUserIdFromRequest(request);
@@ -94,35 +89,25 @@ try {
     if (!Validator.isValidLocalDate(providerUploadDatasetRequest.getDataset_time())) {
         throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.LOCAL_DATE_INVALID);
     }
-    DatasetInformation datasetInformation = datasetInformationOptional.get();
     //call truoc de fetch day du thong tin
-    datasetInformation.getDatasetType().getName();
-    datasetInformation.getDatasetType().getDatasetTypeColumnList().get(0);
-    datasetInformation.setUpdateAt(LocalDateTime.now());
-//        CompletableFuture<Map<String, Object>> future =
-//                asyncDatasetService.readAndUploadDataset(providerUploadDatasetRequest,provider_id,datasetInformation.getDatasetType());
-//        future.thenAccept(result -> {
-//            // callback khi async xong
-//            // them socket de gui thong bao den user
-//            System.out.println("Kết quả async: " + result);
-//        }).exceptionally(ex -> {
-//            System.err.println("Async bị lỗi: " + ex.getMessage());
-//            return null;
-//        });
+    ds.getDatasetType().getName();
+    ds.getDatasetType().getDatasetTypeColumnList().get(0);
+    ds.setUpdateAt(LocalDateTime.now());
+
     Optional<Commune> addressOptional = communeRepository.findById(providerUploadDatasetRequest.getCommune_id());
     if (!addressOptional.isPresent()) {
         throw new CustomException(HttpStatus.NOT_FOUND,ErrorCode.Location_NOT_FOUND);
     }
-    datasetInformation.setCommune(addressOptional.get());
+    ds.setCommune(addressOptional.get());
     Map<String, Object> result =
-            fileService.moderate(datasetInformation);
-        if(datasetInformation.getStatus()!= DatasetInforStatus.CONTENT_APPROVED){
+            fileService.moderate(ds);
+        if(ds.getStatus()!= DatasetInforStatus.CONTENT_APPROVED){
             return ResponseEntity.badRequest().body(new ApiResponse(false, "The dataset hasn't been checked for headers.", result));
         }
 
-    datasetService.checkExitsAndCreateDatasetGroupAndDateset(providerUploadDatasetRequest, provider_id,datasetInformation);
+    datasetService.checkExitsAndCreateDatasetGroupAndDateset(providerUploadDatasetRequest, provider_id,ds);
 
-    return ResponseEntity.ok(new ApiResponse(true, "Success in check content progress wait for moderator", datasetInformation.getId()));
+    return ResponseEntity.ok(new ApiResponse(true, "Success in check content progress wait for moderator", ds.getId()));
 }catch (IllegalArgumentException e) {
     throw new RuntimeException(e);
 }finally {
@@ -131,7 +116,7 @@ try {
         System.out.println("-----------------------------------------\n" +
                 "Deleted dataset\n" +
                 "-----------------------------------------");
-        Files.deleteIfExists(Paths.get(datasetInforRepository.findById(providerUploadDatasetRequest.getDataset_Information_Id()).get().getFile_url()));
+        Files.deleteIfExists(Paths.get(ds.getFile_url()));
     } catch (IOException e) {
         System.err.println("Can not delete current file: " + e.getMessage());
     }
@@ -154,13 +139,18 @@ try {
                 return ResponseEntity.badRequest().body(new ApiResponse(false,"dataset header checked and false",datasetMapper.toUploadHeaderResponseDto(ds)));
             }
             //neu check thanh cong thi chuyen sang check content dataset cho provider
-            return updateInforOfDatasetCheckContentUploadToCloud(providerUploadDatasetRequest,request);
+            return updateInforOfDatasetCheckContentUploadToCloud(providerUploadDatasetRequest,request,ds);
 
     }
     @Override
     public ResponseEntity<?> getAllDatasetErrorWithDatasetInfor() {
-
-        return ResponseEntity.ok().body(new ApiResponse(true,"Load success",datasetInforRepository.findAll()
+        List<DatasetInformation> datasetInformationList = datasetInforRepository.findAll();
+        datasetInformationList.forEach(datasetInformation -> {
+            datasetInformation.getDatasetType().getName();
+            datasetInformation.getProvider().getId();
+            datasetInformation.getCommune().getName();
+        });
+        return ResponseEntity.ok().body(new ApiResponse(true,"Load success",datasetInformationList
                 .stream()
                 .map(userResponseDTOMapper :: toModeratorDatasetInforResponseDto )
                 .collect(Collectors.toList())

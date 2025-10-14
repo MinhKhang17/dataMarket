@@ -1,6 +1,7 @@
 package com.example.datasetapi.dto.response;
 
 //import com.example.datasetapi.model.userManager.Address;
+import com.example.datasetapi.model.Dataset.DatasetGroup;
 import com.example.datasetapi.model.location.Commune;
 import lombok.Data;
 
@@ -8,11 +9,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
-public class DatasetReposonseDto {
+public class DatasetParentReposonseDto {
 
     private long datasetGroupId;
 
-    private Commune commune;
+    private ProvinceDTO provinceDTO;
+
 
     private int lasted_version;
 
@@ -20,7 +22,8 @@ public class DatasetReposonseDto {
 
     private DatasetTypeDto datasetTypeDto;
 
-    private List<DatasetDTO> datasetDTOS;
+    List<DatasetChildGroupDTO> datasetChildGroups;
+
 
 
 }

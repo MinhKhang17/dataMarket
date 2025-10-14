@@ -1,13 +1,16 @@
 package com.example.datasetapi.model.Dataset;
 
+import com.example.datasetapi.enums.Datasets.DatasetGroupType;
 import com.example.datasetapi.model.UserManager.Provider;
 import com.example.datasetapi.model.location.Commune;
 import com.example.datasetapi.model.location.Province;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 @Entity
 @Table
@@ -22,6 +25,8 @@ public class DatasetGroup {
     @Column
     private int version = 0;
 
+    @Enumerated(EnumType.STRING)
+    private DatasetGroupType datasetGroupType;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "dataset_type_id")
@@ -33,6 +38,7 @@ public class DatasetGroup {
 
     @OneToMany(cascade = CascadeType.ALL)
     private List<Dataset> datasets = new ArrayList<Dataset>();
+
     @OneToMany(cascade = CascadeType.ALL)
     private List<DatasetGroup> datasetGroups = new ArrayList<DatasetGroup>();
 
@@ -43,4 +49,7 @@ public class DatasetGroup {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "comune_id")
     private Commune commune;
+
+    @Column
+    private LocalDateTime updateAt = LocalDateTime.now();
 }

@@ -1,11 +1,12 @@
 package com.example.datasetapi.service.Dataset;
 
+import com.example.datasetapi.dto.response.DatasetParentReposonseDto;
+import com.example.datasetapi.enums.Datasets.DatasetGroupType;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
 import com.example.datasetapi.Mapper.DatasetMapper;
 import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
-import com.example.datasetapi.dto.response.DatasetReposonseDto;
 import com.example.datasetapi.dto.response.ReviewHistoryDto;
 import com.example.datasetapi.enums.Datasets.DatasetInforStatus;
 import com.example.datasetapi.enums.Datasets.DatasetPack;
@@ -14,6 +15,7 @@ import com.example.datasetapi.model.Dataset.*;
 //import com.example.datasetapi.model.userManager.Address;
 import com.example.datasetapi.model.UserManager.Provider;
 import com.example.datasetapi.model.location.Commune;
+import com.example.datasetapi.model.location.Province;
 import com.example.datasetapi.repository.*;
 import com.example.datasetapi.service.user.TokenService;
 import com.example.datasetapi.service.user.UserService;
@@ -31,6 +33,7 @@ import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.s3.S3Client;
 
 import java.io.File;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -45,9 +48,9 @@ public class DatasetServiceImpl implements DatasetService {
 
     @Override
     public ResponseEntity<?> getAllAllDataset() {
-            List<DatasetReposonseDto> datasetReposonseDtoList = datasetGroupRepository.findAll()
+            List<DatasetParentReposonseDto> datasetReposonseDtoList = datasetGroupRepository.findAll()
                     .stream()
-                    .map(datasetMapper::toDatasetReposonseDto)
+                    .map(datasetMapper::toDatasetParentReposonseDto)
                     .collect(Collectors.toList());
             return ResponseEntity.ok().body(new ApiResponse(true,"load dataset success",datasetReposonseDtoList));
     }
@@ -111,25 +114,27 @@ private CommuneRepository communeRepository;
         try {
             logger.info("Check Exit and Create Dataset Group and Dateset");
 
-            Optional<DatasetInformation> datasetInformationOptional = datasetInforRepository.findById(providerUploadDatasetRequest.getDataset_Information_Id());
 
             // một user có nhiều địa chỉ upload tìm theo địa chỉ và dataset type
             Commune commune = communeRepository.findById(providerUploadDatasetRequest.getCommune_id())
                     .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.COMMUNE_NOT_FOUND));
-            //tim kiếm provider để tìm kiếm theo dataset group
+
             Provider provider = userService.findProviderById(provider_id);
 
             //check xem đã tồn tại một dataset group chưa nếu chưa thì mặc định nó là lần đầu
-            Optional<DatasetGroup> datasetGroupParentOptionnal = datasetGroupRepository.findByProviderAndProvinceAndDatasetType(provider,commune.getProvince(),datasetInformation.getDatasetType());
+            Optional<DatasetGroup> datasetGroupParentOptionnal = datasetGroupRepository.findByProviderAndDatasetGroupTypeAndProvinceAndDatasetType(provider,DatasetGroupType.PARENT, commune.getProvince(),datasetInformation.getDatasetType());
             DatasetGroup datasetGroupParent = new DatasetGroup();
             if(datasetGroupParentOptionnal.isEmpty()){
                   datasetGroupParent = new DatasetGroup();
+                  datasetGroupParent.setDatasetGroupType(DatasetGroupType.PARENT);
                  datasetGroupParent.setDatasetType(datasetInformation.getDatasetType());
                  datasetGroupParent.setProvider(provider);
                  datasetGroupParent.setProvince(commune.getProvince());
+                 datasetGroupParent.setUpdateAt(LocalDateTime.now());
             }
             else {
                  datasetGroupParent = datasetGroupParentOptionnal.get();
+                datasetGroupParent.setUpdateAt(LocalDateTime.now());
             }
 
             List<DatasetGroup> datasetGroupsChild = datasetGroupParent.getDatasetGroups();
@@ -148,6 +153,7 @@ private CommuneRepository communeRepository;
             if (!haveDatasetGroup) {
                 logger.info("First time create dataset group");
                 datasetGroupFollowCommune = new DatasetGroup();
+                datasetGroupFollowCommune.setDatasetGroupType(DatasetGroupType.CHILD);
                 datasetGroupFollowCommune.setDatasetType(datasetInformation.getDatasetType());
                 datasetGroupFollowCommune.setCommune(commune);
                 datasetGroupFollowCommune.setProvider(provider);
@@ -258,6 +264,15 @@ private CommuneRepository communeRepository;
         datasetInformation.get().getDataset().setDatasetStatus(DatasetStatus.REJECT);
         datasetInformation.get().setStatus(DatasetInforStatus.CONTENT_REJECTED);
         return ResponseEntity.ok().body(new ApiResponse(true,"Dataset Reject Successfully",datasetMapper.toReviewHistoryDto(reviewHistoryRepository.save(reviewHistory))));
+    }
+
+    @Override
+    public ResponseEntity<?> getAllDatasetParent() {
+        List<DatasetParentReposonseDto> datasetReposonseDtoList = datasetGroupRepository.findByDatasetGroupType(DatasetGroupType.PARENT)
+                .stream()
+                .map(datasetMapper::toDatasetParentReposonseDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok().body(new ApiResponse(true,"load dataset success",datasetReposonseDtoList));
     }
 
 

@@ -23,8 +23,8 @@ public class DatasetController {
         return datasetService.getAllDatasetType();
     }
 
-    @GetMapping("/getAll")
-    public ResponseEntity<?> getAlllDataset(){
-        return datasetService.getAllAllDataset();
+    @GetMapping("/getAllParent")
+    public ResponseEntity<?> getAllDatasetParent(){
+        return datasetService.getAllDatasetParent();
     }
 }

@@ -22,7 +22,7 @@ public class ModeratorDatasetInforResponseDto {
 
     private long provider_id;
 
-    private Commune commune;
+    private CommuneDTO communeDTO;
 
     private LocalDateTime createdAt;
     private LocalDateTime checkContentAt;

@@ -1,6 +1,7 @@
 package com.example.datasetapi.model.UserManager;
 
 import com.example.datasetapi.model.location.Commune;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -23,10 +24,12 @@ public class Provider {
     private String bankAccount;
 
     @OneToOne(cascade = CascadeType.ALL)
+    @JsonIgnore
     @JoinColumn(name = "provider_registration_id") // FK tới ProviderRegistration
     private ProviderRegistration providerRegistration;
 
     @ManyToMany()
+    @JsonIgnore
     @JoinTable(
             name = "provider_commune",
             joinColumns = @JoinColumn(name = "provider_id"),

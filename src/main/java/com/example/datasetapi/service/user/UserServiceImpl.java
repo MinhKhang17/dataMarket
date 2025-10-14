@@ -78,6 +78,11 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new IllegalArgumentException("Provider not exits with id: " + providerId));
     }
 
+    @Override
+    public boolean isExitsProvider(long providerId) {
+        return providerRepository.existsById(providerId);
+    }
+
 
     @Override
     @Transactional
@@ -426,7 +431,6 @@ public class UserServiceImpl implements UserService {
             }
             // Tạo ProviderIdentityDocument từ DTO
             ProviderIdentityDocument providerIdentityDocument = new ProviderIdentityDocument();
-            providerIdentityDocument.setProvider(providerRegistration);
             providerIdentityDocument.setUploadedAt(Instant.now());
             providerIdentityDocument.setIdCardVerificationStatus(VerificationStatus.PENDING);
 

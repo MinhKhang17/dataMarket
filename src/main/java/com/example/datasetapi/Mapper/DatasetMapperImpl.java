@@ -6,6 +6,10 @@ import com.example.datasetapi.enums.Datasets.DatasetStatus;
 import com.example.datasetapi.model.Dataset.*;
 import com.example.datasetapi.model.UserManager.Provider;
 import com.example.datasetapi.model.UserManager.User;
+import com.example.datasetapi.model.location.Commune;
+import com.example.datasetapi.model.location.Province;
+import org.apache.catalina.mapper.Mapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -60,17 +64,38 @@ public class DatasetMapperImpl implements DatasetMapper {
     }
 
     @Override
-    public DatasetReposonseDto toDatasetReposonseDto(DatasetGroup group) {
-        DatasetReposonseDto datasetReposonseDto = new DatasetReposonseDto();
-        datasetReposonseDto.setDatasetGroupId(group.getId());
-        datasetReposonseDto.setCommune(group.getCommune());
-        datasetReposonseDto.setLasted_version(group.getVersion());
-        datasetReposonseDto.setDatasetTypeDto(toDatasetTypeDto(group.getDatasetType()));
-        datasetReposonseDto.setDatasetDTOS(group.getDatasets().stream().
-                filter(dataset -> dataset.getDatasetStatus() == DatasetStatus.APPROVE)
-                .map(this::toDatasetDto)
-                .collect(Collectors.toList()));
-        return datasetReposonseDto;
+    public DatasetParentReposonseDto toDatasetParentReposonseDto(DatasetGroup group) {
+    DatasetParentReposonseDto dto = new DatasetParentReposonseDto();
+    dto.setDatasetGroupId(group.getId());
+    dto.setProvinceDTO(toProvineDTO(group.getProvince()));
+    dto.setLasted_upload(group.getUpdateAt());
+        dto.setDatasetTypeDto(toDatasetTypeDto(group.getDatasetType()));
+        if(group.getDatasetGroups()!= null){
+            dto.setDatasetChildGroups(group.getDatasetGroups().stream().map(this::toDatasetChildGroupDTO).collect(Collectors.toList()));
+        }
+        return dto;
+    }
+private DatasetChildGroupDTO toDatasetChildGroupDTO(DatasetGroup datasetGroup){
+        DatasetChildGroupDTO dto = new DatasetChildGroupDTO();
+        dto.setCommuneDto(toComuneDTO(datasetGroup.getCommune()));
+        if(datasetGroup.getDatasets()!= null){
+            dto.setDatasetDtoList(datasetGroup.getDatasets().stream().map(this::toDatasetDto).collect(Collectors.toList()));
+        }
+        return dto;
+}
+    private CommuneDTO toComuneDTO(Commune commune) {
+        CommuneDTO communeDTO = new CommuneDTO();
+        communeDTO.setCommuneID(commune.getIdCommune());
+        communeDTO.setCommuneName(commune.getName());
+        communeDTO.setProvince(toProvineDTO(commune.getProvince()));
+        return communeDTO;
+    }
+
+    private ProvinceDTO toProvineDTO(Province province) {
+        ProvinceDTO provinceDTO = new ProvinceDTO();
+        provinceDTO.setProvinceName(province.getName());
+        provinceDTO.setProvinceId(province.getIdProvince());
+        return provinceDTO;
     }
 
     private DatasetDTO toDatasetDto(Dataset dataset) {
