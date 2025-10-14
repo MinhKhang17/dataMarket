@@ -542,68 +542,78 @@ private  DatasetInforRepository datasetInforRepository;
     }
 
 
-        private void createProviderRegistration() {
+    private void createProviderRegistration() {
         // 1️⃣ Tạo ProviderRegistration
         ProviderRegistration registration = new ProviderRegistration();
         registration.setFullName("Nguyen Van A");
         registration.setEmail("nguyenvana@example.com");
         registration.setPhoneNumber("0123456789");
-        registration.setAddressLine("123 Le Loi");
-        registration.setCity("Binh Duong");
-        registration.setDistrict("Thu Dau Mot");
-        registration.setWard("Ward 1");
+        registration.setOrganizationName("Cong ty TNHH EV Data");
+        registration.setTaxId("0319999999");
+
+        // Gán location (chỉ cần id, vì entity đã có provinceId / communeId)
+        registration.setProvinceId("01");   // ví dụ: Hà Nội
+        registration.setCommuneId("00008"); // ví dụ: Phường Phúc Xá
+
+        // Trạng thái + thời gian
         registration.setRegistrationStatus(RegistrationStatus.PENDING);
         registration.setCreatedAt(Instant.now());
         registration.setUpdatedAt(Instant.now());
 
-        // 2️⃣ Tạo document1
-        ProviderIdentityDocument doc1 = new ProviderIdentityDocument();
-        doc1.setImage_url("https://res.cloudinary.com/dofuoy88z/image/upload/v1758869860/seridykcpf1ospeni0zs.jpg");
-        doc1.setUploadedAt(Instant.now());
-        doc1.setIdCardVerificationStatus(VerificationStatus.PENDING);
-        doc1.setManager_id(0L);
-        doc1.setIdCardRetentionExpiry(Instant.now().plusSeconds(60*60*24*365));
-        doc1.setDocumentType(DocumentType.CCCD_FRONT);
+        // 2️⃣ Tạo các giấy tờ định danh (3 loại)
+        ProviderIdentityDocument docFront = new ProviderIdentityDocument();
+        docFront.setDocumentType(DocumentType.CCCD_FRONT);
+        docFront.setImage_url("https://res.cloudinary.com/dofuoy88z/image/upload/v1758869860/seridykcpf1ospeni0zs.jpg");
+        docFront.setUploadedAt(Instant.now());
+        docFront.setIdCardVerificationStatus(VerificationStatus.PENDING);
+        docFront.setManager_id(0L);
+        docFront.setIdCardRetentionExpiry(Instant.now().plusSeconds(60L * 60 * 24 * 365));
 
-        // 3️⃣ Tạo document2
-        ProviderIdentityDocument doc2 = new ProviderIdentityDocument();
-        doc2.setImage_url("https://res.cloudinary.com/dofuoy88z/image/upload/v1758869861/oegnzrkytqhvfexxfdrf.jpg");
-        doc2.setUploadedAt(Instant.now());
-        doc2.setIdCardVerificationStatus(VerificationStatus.PENDING);
-        doc2.setManager_id(0L);
-        doc2.setIdCardRetentionExpiry(Instant.now().plusSeconds(60L * 60 * 24 * 365));
-        doc2.setDocumentType(DocumentType.CCCD_BACK);
+        ProviderIdentityDocument docBack = new ProviderIdentityDocument();
+        docBack.setDocumentType(DocumentType.CCCD_BACK);
+        docBack.setImage_url("https://res.cloudinary.com/dofuoy88z/image/upload/v1758869861/oegnzrkytqhvfexxfdrf.jpg");
+        docBack.setUploadedAt(Instant.now());
+        docBack.setIdCardVerificationStatus(VerificationStatus.PENDING);
+        docBack.setManager_id(0L);
+        docBack.setIdCardRetentionExpiry(Instant.now().plusSeconds(60L * 60 * 24 * 365));
 
-        registration.setIdentityDocuments(List.of(doc1, doc2));
+        ProviderIdentityDocument docOwnership = new ProviderIdentityDocument();
+        docOwnership.setDocumentType(DocumentType.OWNER_DOC);
+        docOwnership.setImage_url("https://res.cloudinary.com/dofuoy88z/image/upload/v1758869862/oegnzrkytqhvfexxfdrf.png");
+        docOwnership.setUploadedAt(Instant.now());
+        docOwnership.setIdCardVerificationStatus(VerificationStatus.PENDING);
+        docOwnership.setManager_id(0L);
+        docOwnership.setIdCardRetentionExpiry(Instant.now().plusSeconds(60L * 60 * 24 * 365));
 
-        // 4️⃣ Tạo User cho Provider
+        // Gắn vào registration
+        registration.setIdentityDocuments(List.of(docFront, docBack, docOwnership));
+
+        // 3️⃣ Tạo User cho Provider
         User user = new User();
+        user.setUsername("provider");
+        user.setEmail("provider@gmail.com");
+        user.setPassword(passwordEncoder.encode("password"));
         user.setUserStatus(UserStatus.ACTIVE);
         user.setRole(roleRepository.getRolesByName("PROVIDER"));
-        user.setEmail("provider@gmail.com");
-        user.setUsername("provider");
-        user.setRole(roleRepository.getRolesByName("PROVIDER"));
-        user.setPassword(passwordEncoder.encode("password"));
 
-
-        Commune commune = communeRepository.findById("00008") // Phường Ngọc Hà
-                .orElseThrow(() -> new RuntimeException("Commune not found"));
-
-        Commune commune1 = communeRepository.findById("00118") // Phường Ngọc Hà
-                .orElseThrow(() -> new RuntimeException("Commune not found"));
-
-        // 7️⃣ Tạo Provider, gán Registration, User và Location
+        // 4️⃣ Tạo Provider entity
         Provider provider = new Provider();
-        provider.setProviderRegistration(registration);
         provider.setUser(user);
         provider.setProviderRegistration(registration);
         provider.setBankAccount("123456789");
-            provider.setCommunes(new ArrayList<>(List.of(commune,commune1))); // Use mutable list
 
+        // Liên kết location (tùy model Provider của bạn)
+        Commune commune = communeRepository.findById("00008")
+                .orElseThrow(() -> new RuntimeException("Commune not found"));
+        Commune commune2 = communeRepository.findById("00118")
+                .orElseThrow(() -> new RuntimeException("Commune not found"));
+        provider.setCommunes(new ArrayList<>(List.of(commune, commune2)));
+
+        // 5️⃣ Lưu xuống database
         providerRepository.save(provider);
 
+        System.out.println("✅ ProviderRegistration + Provider + User created successfully!");
     }
-
 
 
     private void createAdminRole() {
