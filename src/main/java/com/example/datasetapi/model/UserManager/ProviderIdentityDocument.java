@@ -15,8 +15,6 @@ public class ProviderIdentityDocument {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-
-
 //    private String identityNumber;  // số CCCD/CMND
 
     // Chỉ lưu link ảnh

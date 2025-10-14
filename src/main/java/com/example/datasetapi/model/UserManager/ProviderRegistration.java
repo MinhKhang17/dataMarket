@@ -1,6 +1,8 @@
 package com.example.datasetapi.model.UserManager;
 
 import com.example.datasetapi.enums.VerificationStatus.RegistrationStatus;
+import com.example.datasetapi.model.location.Commune;
+import com.example.datasetapi.model.location.Province;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -15,9 +17,23 @@ public class ProviderRegistration {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // ===== Thông tin cơ bản =====
     private String fullName;
     private String email;
     private String phoneNumber;
+
+    // ===== Thông tin tổ chức =====
+    private String organizationName;
+    private String taxId;
+
+    @ManyToOne
+    @JoinColumn(name = "id_province")
+    private Province province;
+
+    @ManyToOne
+    @JoinColumn(name = "id_commune")
+    private Commune commune;
+
 
     private String addressLine;
     private String city;
@@ -30,7 +46,6 @@ public class ProviderRegistration {
     private Instant createdAt;
     private Instant updatedAt;
 
-    // Liên kết sang giấy tờ định danh
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProviderIdentityDocument> identityDocuments;
 }

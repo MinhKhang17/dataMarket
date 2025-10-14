@@ -1,5 +1,5 @@
 package com.example.datasetapi.enums;
 
 public enum DocumentType {
-    CCCD_FRONT,CCCD_BACK
+    CCCD_FRONT,CCCD_BACK, OWNER_DOC
 }

@@ -13,6 +13,8 @@ import com.example.datasetapi.enums.VerificationStatus.VerificationStatus;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
 import com.example.datasetapi.model.UserManager.*;
+import com.example.datasetapi.model.location.Commune;
+import com.example.datasetapi.model.location.Province;
 import com.example.datasetapi.repository.*;
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.dto.response.LoginResponse;
@@ -332,6 +334,14 @@ public class UserServiceImpl implements UserService {
                 throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.MISSING_REQUIRED_FIELD);
             }
 
+            if (providerRegistrationDTO.getProvinceId() == null || providerRegistrationDTO.getProvinceId().trim().isEmpty()) {
+                throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
+            }
+
+            if (providerRegistrationDTO.getCommuneId() == null || providerRegistrationDTO.getCommuneId().trim().isEmpty()) {
+                throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
+            }
+
             // Check if email already exists
             if (providerRegistrationRepository.existsByEmail(providerRegistrationDTO.getEmail())) {
                 throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.EMAIL_ALREADY_EXISTS);
@@ -383,15 +393,23 @@ public class UserServiceImpl implements UserService {
         return providerRegistrationRepository.save(providerRegistration);
     }
 
-    private ProviderRegistration createProviderRegistrationFromDTO(ProviderRegistrationRequestDTO providerRegistrationDTO) {
+    private ProviderRegistration createProviderRegistrationFromDTO(ProviderRegistrationRequestDTO dto) {
         ProviderRegistration providerRegistration = new ProviderRegistration();
 
-        // Set thông tin cơ bản
-        providerRegistration.setFullName(providerRegistrationDTO.getFullName());
-        providerRegistration.setEmail(providerRegistrationDTO.getEmail());
-        providerRegistration.setPhoneNumber(providerRegistrationDTO.getPhoneNumber());
+        providerRegistration.setFullName(dto.getFullName());
+        providerRegistration.setEmail(dto.getEmail());
+        providerRegistration.setPhoneNumber(dto.getPhoneNumber());
+        providerRegistration.setOrganizationName(dto.getOrganizationName());
+        providerRegistration.setTaxId(dto.getTaxId());
 
-        // Set trạng thái và thời gian
+        Province province = new Province();
+        province.setIdProvince(dto.getProvinceId()); // chỉ set id để liên kết
+        providerRegistration.setProvince(province);
+
+        Commune commune = new Commune();
+        commune.setIdCommune(dto.getCommuneId());
+        providerRegistration.setCommune(commune);
+
         providerRegistration.setRegistrationStatus(RegistrationStatus.PENDING);
         providerRegistration.setCreatedAt(Instant.now());
         providerRegistration.setUpdatedAt(Instant.now());
