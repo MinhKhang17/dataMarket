@@ -7,6 +7,7 @@ import com.example.datasetapi.model.location.Province;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.sql.Time;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -57,4 +58,6 @@ public class DatasetGroup {
     @Column
     private LocalDateTime updateAt = LocalDateTime.now();
     private boolean isHaveData =false;
+    @OneToMany(mappedBy = "datasetGroupChild", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TimeGroup> timeGroups = new ArrayList<>();
 }

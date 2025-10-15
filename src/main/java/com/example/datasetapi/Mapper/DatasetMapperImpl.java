@@ -8,6 +8,7 @@ import com.example.datasetapi.model.UserManager.Provider;
 import com.example.datasetapi.model.UserManager.User;
 import com.example.datasetapi.model.location.Commune;
 import com.example.datasetapi.model.location.Province;
+import com.example.datasetapi.repository.DatasetPlanRepo;
 import org.apache.catalina.mapper.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,9 @@ import java.util.stream.Collectors;
 
 @Component
 public class DatasetMapperImpl implements DatasetMapper {
+    @Autowired
+    private DatasetPlanRepo datasetPlanRepo;
+
     public DatasetMapperImpl() {
     }
 
@@ -30,6 +34,46 @@ public class DatasetMapperImpl implements DatasetMapper {
         }
         return uploadHeaderResponseDto;
     }
+
+    @Override
+    public DatasetDTO toDatasetDTO(Dataset dataset) {
+        DatasetDTO datasetDTO = new DatasetDTO();
+        datasetDTO.setDatasetId(dataset.getId());
+        datasetDTO.setVersion(dataset.getVersion());
+
+            datasetDTO.setDatasetPLanWithPricingDTO(datasetPlanRepo.findALlByDatasetId(dataset.getId())
+                    .stream()
+                    .map(this::toDatasetPlanWithPricingDTO)
+                    .collect(Collectors.toList()));
+
+        System.out.println("empty roi");
+        if(dataset.getTimeGroup()!=null){
+            datasetDTO.setDatasetTime(TimeGroup.toDate(dataset.getTimeGroup()));
+        }
+        System.out.println("time group bi null");
+        datasetDTO.setProvider(toProviderDto(dataset.getProvider()));
+        datasetDTO.setTitle(dataset.getTitle());
+        datasetDTO.setTitle(dataset.getDescription());
+        return datasetDTO;
+        }
+
+    private DatasetPLanWithPricingDTO toDatasetPlanWithPricingDTO(DatasetPlan datasetPlan) {
+    DatasetPLanWithPricingDTO datasetPLanWithPricingDTO = new DatasetPLanWithPricingDTO();
+    datasetPLanWithPricingDTO.setPricingMethod(datasetPlan.getPricingMethod());
+    datasetPLanWithPricingDTO.setDatasetPricingDTOList(datasetPlan.getDatasetPricingList()
+            .stream()
+            .map(this::toDatasetPricingDTO)
+            .collect(Collectors.toList()));
+    return datasetPLanWithPricingDTO;
+    }
+
+    private DatasetPricingDTO toDatasetPricingDTO(DatasetPricing datasetPricing) {
+        DatasetPricingDTO datasetPricingDTO = new DatasetPricingDTO();
+        datasetPricingDTO.setPrice(datasetPricing.getPrice());
+        datasetPricingDTO.setPricingMethod(datasetPricing.getPricingRule().getMethod());
+        return datasetPricingDTO;
+    }
+
 
     @Override
     public ReviewHistoryDto toReviewHistoryDto(ReviewHistory save) {
@@ -59,7 +103,6 @@ public class DatasetMapperImpl implements DatasetMapper {
         ProviderDto providerDto = new ProviderDto();
         providerDto.setId(provider.getId());
         providerDto.setName(provider.getUser().getUsername());
-        providerDto.setEmail(provider.getUser().getEmail());
         return providerDto;
     }
 
@@ -73,6 +116,7 @@ public class DatasetMapperImpl implements DatasetMapper {
         if(group.getDatasetGroups()!= null){
             dto.setDatasetChildGroups(group.getDatasetGroups().stream().map(this::toDatasetChildGroupDTO).collect(Collectors.toList()));
         }
+        dto.setProviderDTO(toProviderDto(group.getProvider()));
         return dto;
     }
 private DatasetChildGroupDTO toDatasetChildGroupDTO(DatasetGroup datasetGroup){
@@ -112,8 +156,10 @@ private DatasetChildGroupDTO toDatasetChildGroupDTO(DatasetGroup datasetGroup){
             DatasetDTO datasetDTO = new DatasetDTO();
             datasetDTO.setDatasetId(dataset.getId());
             datasetDTO.setVersion(dataset.getVersion());
-            datasetDTO.setCreated_at(dataset.getCreated_at());
-            datasetDTO.setUpdated_at(dataset.getUpdated_at());
+            datasetDTO.setTitle(dataset.getTitle());
+            datasetDTO.setDescription(dataset.getDescription());
+            datasetDTO.setDatasetTime(TimeGroup.toDate(dataset.getTimeGroup()));
+            datasetDTO.setProvider(toProviderDto(dataset.getProvider()));
             return datasetDTO;
     }
 

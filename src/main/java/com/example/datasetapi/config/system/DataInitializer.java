@@ -93,7 +93,7 @@ private  DatasetInforRepository datasetInforRepository;
 
         assignColumnAndCategoryToDatasetType();
 
-        createDatasetDemo();
+//        createDatasetDemo();
         createModerationTestData();
         createPricingRule();
 

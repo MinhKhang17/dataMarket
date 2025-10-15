@@ -15,6 +15,7 @@ public class DatasetParentReposonseDto {
 
     private ProvinceDTO provinceDTO;
 
+    private ProviderDto providerDTO;
 
     private int lasted_version;
 

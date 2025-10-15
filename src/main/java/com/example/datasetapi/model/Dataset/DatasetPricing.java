@@ -1,5 +1,8 @@
 package com.example.datasetapi.model.Dataset;
 
+import com.example.datasetapi.enums.Datasets.DatasetPack;
+import com.example.datasetapi.enums.Datasets.PricingMethod;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -17,8 +20,10 @@ public class DatasetPricing {
 //    @Enumerated(EnumType.STRING)
 //    private PricingType pricingType = PricingType.UNDETERMINED;
 
-    @ManyToOne(cascade = CascadeType.ALL)
-    private DatasetPlan datasetPlan;
     @ManyToOne (cascade = CascadeType.ALL)
     private PricingRule pricingRule;
+
+    @Enumerated(EnumType.STRING)
+    private DatasetPack datasetPack =DatasetPack.UNDETERMINED;
+
 }

@@ -1,9 +1,6 @@
 package com.example.datasetapi.Mapper;
 
-import com.example.datasetapi.dto.response.DatasetParentReposonseDto;
-import com.example.datasetapi.dto.response.DatasetValidationErrorDTO;
-import com.example.datasetapi.dto.response.ReviewHistoryDto;
-import com.example.datasetapi.dto.response.UploadHeaderResponseDto;
+import com.example.datasetapi.dto.response.*;
 import com.example.datasetapi.model.Dataset.*;
 
 public interface DatasetMapper {
@@ -14,4 +11,6 @@ public interface DatasetMapper {
     ReviewHistoryDto toReviewHistoryDto(ReviewHistory save);
 
     UploadHeaderResponseDto toUploadHeaderResponseDto(DatasetInformation ds);
+
+    DatasetDTO toDatasetDTO(Dataset dataset);
 }

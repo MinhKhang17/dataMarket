@@ -33,6 +33,7 @@ import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.s3.S3Client;
 
 import java.io.File;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -79,7 +80,8 @@ public class DatasetServiceImpl implements DatasetService {
 private PriceService priceService;
 @Autowired
 private CommuneRepository communeRepository;
-
+@Autowired
+TimeGroupRepository timeGroupRepository;
 
     @Value("${aws.bucket.name}")
     private String BUCKET_NAME;
@@ -131,6 +133,7 @@ private CommuneRepository communeRepository;
                  datasetGroupParent.setProvider(provider);
                  datasetGroupParent.setProvince(commune.getProvince());
                  datasetGroupParent.setUpdateAt(LocalDateTime.now());
+                 datasetGroupParent = datasetGroupRepository.save(datasetGroupParent);
             }
             else {
                  datasetGroupParent = datasetGroupParentOptionnal.get();
@@ -160,6 +163,7 @@ private CommuneRepository communeRepository;
                 datasetGroupFollowCommune.getDatasets().add(dataset);
                 datasetGroupParent.getDatasetGroups().add(datasetGroupFollowCommune);
                 dataset.setDatasetChildGroup(datasetGroupFollowCommune);
+                datasetGroupFollowCommune = datasetGroupRepository.save(datasetGroupFollowCommune);
             }
             else {
                 //nếu là lần tạo thứ 2 thì chỉ cần gán dataset mới vào
@@ -168,18 +172,49 @@ private CommuneRepository communeRepository;
                 datasetGroupFollowCommune.getDatasets().add(dataset);
             }
 
+            //thêm thời gian để truy xuất
+            LocalDate datasetDate = DateUtil.parseToLocalDate(providerUploadDatasetRequest.getDataset_time());
+            Optional<TimeGroup> timeGroupOptional = timeGroupRepository
+                    .findByYearAndMonthAndDayAndDatasetGroupChildAndProvider(
+                            datasetDate.getYear(),
+                            datasetDate.getMonthValue(),
+                            datasetDate.getDayOfMonth(),
+                            datasetGroupFollowCommune,
+                            provider
+                    );
+
+            TimeGroup timeGroup;
+            if (timeGroupOptional.isPresent()) {
+                timeGroup = timeGroupOptional.get();
+            } else {
+                timeGroup = TimeGroup.fromDate(datasetDate);
+                timeGroup.setDatasetGroupChild(datasetGroupFollowCommune);
+                timeGroup.setProvider(provider);
+            }
+
+
+            dataset.setProvider(provider);
+            dataset.setTimeGroup(timeGroup);
+            dataset.setDescription(providerUploadDatasetRequest.getDescription());
+            dataset.setTitle(providerUploadDatasetRequest.getTitle());
             setDatasetPack(dataset,datasetInformation);
                 logger.info("Đã chạy xong method check tồn tại vào datasetgroup");
+
+            datasetGroupRepository.save(datasetGroupFollowCommune);
+            datasetGroupRepository.save(datasetGroupParent);
+
+
 //            //luu tam de test
             File file = new File(datasetInformation.getFile_url());
                 uploadCSVFileToPendingFolder(file, dataset);
+
             System.out.println("Upload success!");
             datasetInformation.setDataset(dataset);
             datasetInformation.setDataset_time(DateUtil.parseToLocalDate(providerUploadDatasetRequest.getDataset_time()));
             datasetInforRepository.save(datasetInformation);
             datasetRepository.save(dataset);
-            datasetGroupRepository.save(datasetGroupFollowCommune);
-            datasetGroupRepository.save(datasetGroupParent);
+            timeGroupRepository.save(timeGroup);
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
