@@ -3,6 +3,7 @@ package com.example.datasetapi.Mapper;
 import com.example.datasetapi.config.ModelMapper;
 import com.example.datasetapi.dto.response.*;
 import com.example.datasetapi.enums.Datasets.DatasetStatus;
+import com.example.datasetapi.enums.Datasets.PricingMethod;
 import com.example.datasetapi.model.Dataset.*;
 import com.example.datasetapi.model.UserManager.Provider;
 import com.example.datasetapi.model.UserManager.User;
@@ -69,6 +70,11 @@ public class DatasetMapperImpl implements DatasetMapper {
 
     private DatasetPricingDTO toDatasetPricingDTO(DatasetPricing datasetPricing) {
         DatasetPricingDTO datasetPricingDTO = new DatasetPricingDTO();
+        if(datasetPricing.getPricingRule().getMethod()== PricingMethod.API){
+            datasetPricingDTO.setPrice(datasetPricing.getPricePerRequest());
+            datasetPricingDTO.setPricingMethod(datasetPricing.getPricingRule().getMethod());
+            return datasetPricingDTO;
+        }
         datasetPricingDTO.setPrice(datasetPricing.getPrice());
         datasetPricingDTO.setPricingMethod(datasetPricing.getPricingRule().getMethod());
         return datasetPricingDTO;

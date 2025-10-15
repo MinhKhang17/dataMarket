@@ -150,6 +150,7 @@ try {
         });
         return ResponseEntity.ok().body(new ApiResponse(true,"Load success",datasetInformationList
                 .stream()
+                .filter(datasetInformation -> datasetInformation.getStatus()== DatasetInforStatus.CONTENT_APPROVED)
                 .map(userResponseDTOMapper :: toModeratorDatasetInforResponseDto )
                 .collect(Collectors.toList())
 ));

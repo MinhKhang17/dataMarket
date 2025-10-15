@@ -20,7 +20,7 @@ public class DatasetSpecification {
             Join<Dataset, DatasetGroup> datasetGroupJoin = root.join("datasetChildGroup", JoinType.LEFT);
 
             // Join với TimeGroup
-            Join<DatasetGroup, TimeGroup> timeGroupJoin = datasetGroupJoin.join("timeGroups", JoinType.LEFT);
+            Join<Dataset, TimeGroup> timeGroupJoin = root.join("timeGroup", JoinType.LEFT);
 
 
             // Join với DatasetGroup parent (province)
@@ -140,7 +140,7 @@ public class DatasetSpecification {
      */
     private static Predicate createDateComparisonPredicate(
             CriteriaBuilder cb,
-            Join<DatasetGroup, TimeGroup> timeGroupJoin,
+            Join<Dataset, TimeGroup> timeGroupJoin,
             Integer year,
             Integer month,
             Integer day,

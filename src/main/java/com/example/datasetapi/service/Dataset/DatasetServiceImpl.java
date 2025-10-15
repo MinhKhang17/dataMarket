@@ -213,7 +213,6 @@ TimeGroupRepository timeGroupRepository;
             datasetInformation.setDataset_time(DateUtil.parseToLocalDate(providerUploadDatasetRequest.getDataset_time()));
             datasetInforRepository.save(datasetInformation);
             datasetRepository.save(dataset);
-            timeGroupRepository.save(timeGroup);
 
         } catch (Exception e) {
             throw new RuntimeException(e);
