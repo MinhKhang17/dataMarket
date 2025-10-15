@@ -130,7 +130,7 @@ private DatasetChildGroupDTO toDatasetChildGroupDTO(DatasetGroup datasetGroup){
         }
         return dto;
 }
-    private CommuneDTO toCommuneDTO(Commune commune) {
+    public CommuneDTO toCommuneDTO(Commune commune) {
         if (commune == null) return null;
 
         CommuneDTO dto = new CommuneDTO();
