@@ -1,5 +1,6 @@
 package com.example.datasetapi.service.user;
 
+import com.example.datasetapi.Mapper.DatasetMapper;
 import com.example.datasetapi.Mapper.UserMapper;
 import com.example.datasetapi.dto.request.LoginRequest;
 import com.example.datasetapi.dto.request.ProviderRegistrationRequestDTO;
@@ -44,6 +45,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -59,6 +61,8 @@ public class UserServiceImpl implements UserService {
     private final ProviderRegistrationRepository providerRegistrationRepository;
     private final ProviderRepository providerRepository;
 
+    @Autowired
+    private  DatasetMapper datasetMapper;
 
     @Autowired
     public UserServiceImpl(ProviderRepository providerRepository,UserRepository userRepository, JwtUtil jwtUtil, TokenServiceImpl tokenService, RoleRepository roleRepository, ImageServiceImpl imageService, ProviderIndentityDocumentRepository providerIdentityDocumentRepository, ProviderRegistrationRepository providerRegistrationRepository, WalletRepository walletRepository) {
@@ -83,6 +87,20 @@ public class UserServiceImpl implements UserService {
     @Override
     public boolean isExitsProvider(long providerId) {
         return providerRepository.existsById(providerId);
+    }
+
+    @Override
+    public ResponseEntity<?> getProviderCommune(HttpServletRequest request) {
+        Provider provider = findProviderById(tokenService.getUserIdFromRequest(request));
+
+        if(provider==null){
+            throw new CustomException(HttpStatus.NOT_FOUND, ErrorCode.USER_NOT_FOUND);
+        }
+        if(provider.getCommunes() == null || provider.getCommunes().isEmpty()){
+            throw new CustomException(HttpStatus.NOT_FOUND, ErrorCode.COMMUNE_NOT_FOUND);
+        }
+        List<Commune> communes = provider.getCommunes();
+        return ResponseEntity.ok().body(new ApiResponse(true,"Load Communes Success",communes.stream().map(datasetMapper::toCommuneDTO).collect(Collectors.toList())));
     }
 
 
