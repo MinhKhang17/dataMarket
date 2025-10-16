@@ -48,13 +48,9 @@ public class PaymentServiceImpl implements PaymentService{
         if (userId == null) {
             throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.INVALID_TOKEN);
         }
-        Optional<User> user = userService.findUserById(userId);
+        User user = userService.findUserById(userId);
 
-        if(!user.isPresent()){
-            throw new CustomException(HttpStatus.NOT_FOUND,ErrorCode.USER_NOT_FOUND);
-        }
-
-        wallet.setUser(user.get());
+        wallet.setUser(user);
 
         walletRepository.save(wallet);
 return ResponseEntity.ok().body(new ApiResponse(true,"created wallet for" + userId,null));

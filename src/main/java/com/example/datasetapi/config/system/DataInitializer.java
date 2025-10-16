@@ -553,7 +553,7 @@ private  DatasetInforRepository datasetInforRepository;
 
         // Gán location (chỉ cần id, vì entity đã có provinceId / communeId)
         registration.setProvinceId("01");   // ví dụ: Hà Nội
-        registration.setCommuneId("00008"); // ví dụ: Phường Phúc Xá
+        registration.setCommune(communeRepository.findById("00008").get()); // ví dụ: Phường Phúc Xá
 
         // Trạng thái + thời gian
         registration.setRegistrationStatus(RegistrationStatus.PENDING);

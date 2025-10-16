@@ -15,13 +15,13 @@ public class ReviewHistory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long reviewId;
 
-    @ManyToOne
+    @OneToOne
     private Provider provider;
 
     @OneToOne(cascade = CascadeType.ALL)
     private Dataset dataset;
 
-    @ManyToOne
+    @OneToOne
     private User moderator;
     @ManyToOne
     private User admin;

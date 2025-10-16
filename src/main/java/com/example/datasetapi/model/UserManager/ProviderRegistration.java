@@ -30,8 +30,8 @@ public class ProviderRegistration {
     @Column(name = "id_province", nullable = false)
     private String provinceId;
 
-    @Column(name = "id_commune", nullable = false)
-    private String communeId;
+    @ManyToOne
+    private Commune commune;
 
     private String addressLine;
 
@@ -43,4 +43,7 @@ public class ProviderRegistration {
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProviderIdentityDocument> identityDocuments;
+
+    @OneToOne
+    private Provider provider;
 }

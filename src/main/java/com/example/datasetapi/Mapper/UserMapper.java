@@ -3,9 +3,7 @@ package com.example.datasetapi.Mapper;
 import com.example.datasetapi.dto.response.*;
 import com.example.datasetapi.model.Dataset.DatasetInformation;
 import com.example.datasetapi.model.Dataset.DatasetValidationError;
-import com.example.datasetapi.model.UserManager.ProviderIdentityDocument;
-import com.example.datasetapi.model.UserManager.ProviderRegistration;
-import com.example.datasetapi.model.UserManager.User;
+import com.example.datasetapi.model.UserManager.*;
 import com.example.datasetapi.model.location.Commune;
 import com.example.datasetapi.model.location.Province;
 import org.springframework.context.annotation.Bean;
@@ -87,4 +85,26 @@ public class UserMapper implements UserResponseDTOMapper {
             dto.setImage_url(providerIdentityDocument.getImage_url());
             return dto;
     }
+
+    public ProviderRegisReviewHistoryDTO toProviderRegisReviewHistory(ProviderRegisReviewHistory providerRegisReviewHistory) {
+            ProviderRegisReviewHistoryDTO dto = new ProviderRegisReviewHistoryDTO();
+            if(providerRegisReviewHistory.getProvider()!= null){
+                dto.setProvider(toUserDto(providerRegisReviewHistory.getProvider().getUser()));
+            }
+                dto.setAdmin(toUserDto(providerRegisReviewHistory.getAdmin()));
+            if(providerRegisReviewHistory.getReason()!= null){
+                dto.setReason(providerRegisReviewHistory.getReason());
+            }
+            dto.setAccept(providerRegisReviewHistory.isAccept());
+            return dto;
+    }
+
+    private UserDto toUserDto(User admin) {
+        UserDto dto = new UserDto();
+        dto.setId(admin.getId());
+        dto.setUsername(admin.getUsername());
+        return dto;
+    }
+
+
 }

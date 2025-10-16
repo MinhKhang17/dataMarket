@@ -15,7 +15,7 @@ public class Provider {
     @Id
     private long id; // id dùng chung với User
 
-    @OneToOne
+    @OneToOne(cascade = CascadeType.ALL)
     @MapsId // dùng cùng primary key với User
     @JoinColumn(name = "id") // tên cột khóa ngoại trùng với PK
     private User user;

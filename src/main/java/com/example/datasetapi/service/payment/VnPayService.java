@@ -137,8 +137,7 @@ public class VnPayService {
             if (uid != null) {
                 Wallet wallet = walletRepository.findByUserId(uid).orElseGet(() -> {
                     Wallet w = new Wallet();
-                    User u = userService.findUserById(uid)
-                            .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.USER_NOT_FOUND));
+                    User u = userService.findUserById(uid);
                     w.setUser(u);
                     w.setAmount(0L);
                     return walletRepository.save(w);

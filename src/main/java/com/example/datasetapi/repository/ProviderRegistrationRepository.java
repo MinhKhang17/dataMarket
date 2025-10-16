@@ -12,4 +12,5 @@ public interface ProviderRegistrationRepository extends JpaRepository<ProviderRe
 
     List<ProviderRegistration> findByRegistrationStatus(RegistrationStatus registrationStatus);
 
+    boolean existsByPhoneNumber(String phoneNumber);
 }

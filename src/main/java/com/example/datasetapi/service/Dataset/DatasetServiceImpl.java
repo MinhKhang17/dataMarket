@@ -272,7 +272,7 @@ TimeGroupRepository timeGroupRepository;
 
         ReviewHistory reviewHistory = new ReviewHistory();
         reviewHistory.setDataset(dataset);
-        reviewHistory.setModerator(userService.findUserById(moderator_id).get());
+        reviewHistory.setModerator(userService.findUserById(moderator_id));
         reviewHistory.setProvider(datasetInformationOptional.get().getProvider());
         reviewHistoryRepository.save(reviewHistory);
         ReviewHistoryDto reviewHistoryDto = datasetMapper.toReviewHistoryDto(reviewHistoryRepository.save(reviewHistory));
@@ -303,7 +303,7 @@ TimeGroupRepository timeGroupRepository;
         ReviewHistory reviewHistory = new ReviewHistory();
         reviewHistory.setProvider(userService.findProviderById(datasetInformation.get().getProvider().getId()));
         reviewHistory.setDataset(datasetInformation.get().getDataset());
-        reviewHistory.setModerator(userService.findUserById(moderator_id).get());
+        reviewHistory.setModerator(userService.findUserById(moderator_id));
         reviewHistory.setReason(reason);
         datasetInformation.get().getDataset().setDatasetStatus(DatasetStatus.REJECT);
         datasetInformation.get().setStatus(DatasetInforStatus.CONTENT_REJECTED);

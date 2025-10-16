@@ -15,7 +15,6 @@ import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
 import com.example.datasetapi.model.UserManager.*;
 import com.example.datasetapi.model.location.Commune;
-import com.example.datasetapi.model.location.Province;
 import com.example.datasetapi.repository.*;
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.dto.response.LoginResponse;
@@ -63,7 +62,8 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private  DatasetMapper datasetMapper;
-
+    @Autowired
+    private CommuneRepository communeRepository;
     @Autowired
     public UserServiceImpl(ProviderRepository providerRepository,UserRepository userRepository, JwtUtil jwtUtil, TokenServiceImpl tokenService, RoleRepository roleRepository, ImageServiceImpl imageService, ProviderIndentityDocumentRepository providerIdentityDocumentRepository, ProviderRegistrationRepository providerRegistrationRepository, WalletRepository walletRepository) {
         this.userRepository = userRepository;
@@ -300,8 +300,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Optional<User> findUserById(long userId) {
-        return userRepository.findById(userId);
+    public User findUserById(long userId) {
+        return userRepository.findById(userId).orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.USER_NOT_FOUND));
+
     }
 
     @Override
@@ -332,7 +333,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ResponseEntity<ApiResponse> ProviderRegistrationProcess(ProviderRegistrationRequestDTO providerRegistrationDTO) {
-        try {
+
             System.out.println(providerRegistrationDTO.getFullName());
             // Validate input
             if (providerRegistrationDTO == null) {
@@ -364,6 +365,9 @@ public class UserServiceImpl implements UserService {
             if (providerRegistrationRepository.existsByEmail(providerRegistrationDTO.getEmail())) {
                 throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.EMAIL_ALREADY_EXISTS);
             }
+            if(providerRegistrationRepository.existsByPhoneNumber(providerRegistrationDTO.getPhoneNumber())) {
+                throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.PHONE_EXISTS);
+            }
 
             // Process registration using the existing registerProvider method
             ProviderRegistration savedRegistration = registerProvider(providerRegistrationDTO);
@@ -381,20 +385,11 @@ public class UserServiceImpl implements UserService {
                     "Provider registration submitted successfully. Your application is under review.",
                     responseDTO));
 
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest()
-                    .body(new ApiResponse(false, e.getMessage(), null));
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse(false, "Error uploading documents: " + e.getMessage(), null));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse(false, "An unexpected error occurred during registration", null));
-        }
+
     }
 
     @Transactional
-    protected ProviderRegistration registerProvider(ProviderRegistrationRequestDTO providerRegistrationDTO) throws IOException {
+    protected ProviderRegistration registerProvider(ProviderRegistrationRequestDTO providerRegistrationDTO) {
         // Tạo ProviderRegistration từ DTO
         ProviderRegistration providerRegistration = createProviderRegistrationFromDTO(providerRegistrationDTO);
 
@@ -421,7 +416,7 @@ public class UserServiceImpl implements UserService {
         providerRegistration.setTaxId(dto.getTaxId());
 
         providerRegistration.setProvinceId(dto.getProvinceId());
-        providerRegistration.setCommuneId(dto.getCommuneId());
+        providerRegistration.setCommune(communeRepository.findById(dto.getCommuneId()).orElse(null));
 
         providerRegistration.setRegistrationStatus(RegistrationStatus.PENDING);
 
@@ -431,53 +426,65 @@ public class UserServiceImpl implements UserService {
 
     private List<ProviderIdentityDocument> handleProviderDocument(
             ProviderRegistrationRequestDTO providerRegistrationDTO,
-            ProviderRegistration providerRegistration) throws IOException {
+            ProviderRegistration providerRegistration) {
 
         List<ProviderIdentityDocument> providerIdentityDocuments = new ArrayList<>();
         List<ProvierIdentityDocumentDTO> providerDocumentDTOs = providerRegistrationDTO.getIdentityDocuments();
 
         // Kiểm tra danh sách document có tồn tại không
         if (providerDocumentDTOs == null || providerDocumentDTOs.isEmpty()) {
-            throw new IllegalArgumentException("The provider must submit all required identification documents");
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
         }
 
         // Xử lý từng document
         for (ProvierIdentityDocumentDTO dto : providerDocumentDTOs) {
             // Kiểm tra file có tồn tại không
             if (dto.getFile() == null || dto.getFile().isEmpty()) {
-                throw new IllegalArgumentException("Each identification document must include a valid image file");
+                throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
             }
 
 
             // Validate file type (optional)
             String contentType = dto.getFile().getContentType();
             if (contentType == null || (!contentType.startsWith("image/"))) {
-                throw new IllegalArgumentException("Only image files are allowed for identification documents");
+                throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
             }
 
             // Validate file size (optional - 5MB limit)
             if (dto.getFile().getSize() > 5 * 1024 * 1024) {
-                throw new IllegalArgumentException("File size must not exceed 5MB");
+                throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.FILE_TOO_BIG);
             }
-            // Tạo ProviderIdentityDocument từ DTO
-            ProviderIdentityDocument providerIdentityDocument = new ProviderIdentityDocument();
-            providerIdentityDocument.setUploadedAt(Instant.now());
-            providerIdentityDocument.setIdCardVerificationStatus(VerificationStatus.PENDING);
 
-            // Upload image và set URL
+        // Tạo ProviderIdentityDocument từ DTO
+        ProviderIdentityDocument providerIdentityDocument = new ProviderIdentityDocument();
+        providerIdentityDocument.setUploadedAt(Instant.now());
+        providerIdentityDocument.setIdCardVerificationStatus(VerificationStatus.PENDING);
+
+        // Upload image và set URL
 //            String imageUrl = imageService.uploadImage(dto.getFile());
 //            providerIdentityDocument.setImage_url(imageUrl);
 
-            // Set document type if available in DTO
-             providerIdentityDocument.setDocumentType(DocumentType.valueOf(dto.getType()));
+        // Set document type if available in DTO
+        providerIdentityDocument.setDocumentType(DocumentType.valueOf(dto.getType()));
 
-            // Thêm vào danh sách và lưu vào database
-            providerIdentityDocuments.add(providerIdentityDocument);
+        // Thêm vào danh sách và lưu vào database
+        providerIdentityDocuments.add(providerIdentityDocument);
 
-            providerIdentityDocumentRepository.save(providerIdentityDocument);
-        }
+        providerIdentityDocumentRepository.save(providerIdentityDocument);
+    }
 
         return providerIdentityDocuments;
+
+}
+
+    @Override
+    public Role findRoleByName(String provider) {
+        return roleRepository.findByName(provider).orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.ROLE_NOT_FOUND));
+    }
+
+    @Override
+    public Provider saveProvider(Provider provider) {
+        return providerRepository.save(provider);
     }
 
 

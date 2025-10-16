@@ -54,7 +54,11 @@ public enum ErrorCode {
     DATASET_PACK_INVALID("DATASET_PACK_INVALID","Gói dataset chưa được phân loại package" ),
     PRICING_RULE_INVALID("PRICING_RULE_INVALID","Không tìm thấy pricing rule" ),
     Location_NOT_FOUND("Location_NOT_FOUND","Không tìm thấy location"),
-    COMMUNE_NOT_FOUND("COMMUNE_NOT_FOUND","Không tìm thấy commmune" );
+    COMMUNE_NOT_FOUND("COMMUNE_NOT_FOUND","Không tìm thấy commmune" ),
+    ProviderRegistrationNotFound("ProviderRegistrationNotFound","Không tìm thấy hồ sơ provider" ),
+    ROLE_NOT_FOUND("ROLE_NOT_FOUND","Không tìm thấy role" ),
+    FILE_TOO_BIG("FILE_TOO_BIG","File quá lớn" ),
+    PHONE_EXISTS("PHONE_EXISTS","Số điện thoại đã tồn tại" );
 
 
     private final String code;

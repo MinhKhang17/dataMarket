@@ -1,12 +1,12 @@
 package com.example.datasetapi.controller.adminController;
 
 import com.example.datasetapi.dto.response.ApiResponse;
+import com.example.datasetapi.enums.VerificationStatus.RegistrationStatus;
 import com.example.datasetapi.service.user.AdminService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("api/admin")
@@ -14,9 +14,27 @@ public class AdminController {
 
     @Autowired
     private AdminService adminService;
+
+    @GetMapping("providerRegis/getPending")
+    public ResponseEntity<?> getProviderRegisPending() {
+        return ResponseEntity.ok().body(new ApiResponse(true, "Provider Pending status load success", adminService.getProviderRegisPending(RegistrationStatus.PENDING)));
+    }
+
+    @PostMapping("poviderRegis/accept")
+    public ResponseEntity<?> acceptProviderRegis(@RequestParam("providerRegistrationId") long providerRegistrationId, HttpServletRequest request) {
+        return adminService.acceptProviderRegis(providerRegistrationId, request);
+    }
+
+    @PostMapping("poviderRegis/reject")
+    public ResponseEntity<?> rejectProviderRegis(@RequestParam("providerRegistrationId") long providerRegistrationId, @RequestParam("reason") String reason, HttpServletRequest request) {
+    return adminService.rejectProviderRegis(providerRegistrationId,reason,request);
+    }
+    @GetMapping("poviderRegis/getReview")
+    public ResponseEntity<?> getProviderReview() {
+        return adminService.getReviewProviderHistory();
+    }
     @GetMapping("providerRegis/get")
-    public ResponseEntity<?> getProviderRegis()
-    {
-            return ResponseEntity.ok().body(new ApiResponse(true,"Provider Pending status load success",adminService.getProviderRegisPending()));
+    public ResponseEntity<?> getProviderRegisAcc() {
+        return ResponseEntity.ok().body(new ApiResponse(true, "Provider Pending status load success", adminService.getProviderRegisPending(RegistrationStatus.APPROVED)));
     }
 }
