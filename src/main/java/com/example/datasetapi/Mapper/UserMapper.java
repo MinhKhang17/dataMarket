@@ -3,13 +3,17 @@ package com.example.datasetapi.Mapper;
 import com.example.datasetapi.dto.response.*;
 import com.example.datasetapi.model.Dataset.DatasetInformation;
 import com.example.datasetapi.model.Dataset.DatasetValidationError;
+import com.example.datasetapi.model.UserManager.ProviderIdentityDocument;
+import com.example.datasetapi.model.UserManager.ProviderRegistration;
 import com.example.datasetapi.model.UserManager.User;
 import com.example.datasetapi.model.location.Commune;
 import com.example.datasetapi.model.location.Province;
+import org.springframework.context.annotation.Bean;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.stream.Collectors;
-
+@Component
 public class UserMapper implements UserResponseDTOMapper {
     private DatasetMapper datasetMapper = new  DatasetMapperImpl();
     public static UserInformationResponseForAuthMe toUserInformationResponseForAuthMeDTO(User user) {
@@ -63,5 +67,24 @@ public class UserMapper implements UserResponseDTOMapper {
             provinceDTO.setProvinceName(province.getName());
             provinceDTO.setProvinceId(province.getIdProvince());
             return provinceDTO;
+    }
+
+    public ProviderRegistrationResponseDTO toProviderRegisRepsonseDTO(ProviderRegistration providerRegistration) {
+        ProviderRegistrationResponseDTO dto = new ProviderRegistrationResponseDTO();
+        dto.setEmail(providerRegistration.getEmail());
+        dto.setId(providerRegistration.getId());
+        dto.setFullName(providerRegistration.getFullName());
+        dto.setPhoneNumber(providerRegistration.getPhoneNumber());
+        dto.setRegistrationStatus(providerRegistration.getRegistrationStatus().toString());
+        dto.setCreatedAt(providerRegistration.getCreatedAt());
+        dto.setProviderIndentityDocumentDTOList(providerRegistration.getIdentityDocuments().stream().map(this::toProviderIdentityDocument).collect(Collectors.toList()));
+        return dto;
+    }
+
+    private ProviderIndentityDocumentDTO toProviderIdentityDocument(ProviderIdentityDocument providerIdentityDocument) {
+            ProviderIndentityDocumentDTO dto = new ProviderIndentityDocumentDTO();
+            dto.setDocTypeName(providerIdentityDocument.getDocumentType().toString());
+            dto.setImage_url(providerIdentityDocument.getImage_url());
+            return dto;
     }
 }

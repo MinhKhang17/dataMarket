@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -37,8 +38,8 @@ public class ProviderRegistration {
     @Enumerated(EnumType.STRING)
     private RegistrationStatus registrationStatus; // PENDING / APPROVED / REJECTED
 
-    private Instant createdAt;
-    private Instant updatedAt;
+    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime updatedAt =  LocalDateTime.now();
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProviderIdentityDocument> identityDocuments;

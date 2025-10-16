@@ -424,8 +424,7 @@ public class UserServiceImpl implements UserService {
         providerRegistration.setCommuneId(dto.getCommuneId());
 
         providerRegistration.setRegistrationStatus(RegistrationStatus.PENDING);
-        providerRegistration.setCreatedAt(Instant.now());
-        providerRegistration.setUpdatedAt(Instant.now());
+
 
         return providerRegistration;
     }

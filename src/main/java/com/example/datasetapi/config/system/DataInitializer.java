@@ -557,8 +557,7 @@ private  DatasetInforRepository datasetInforRepository;
 
         // Trạng thái + thời gian
         registration.setRegistrationStatus(RegistrationStatus.PENDING);
-        registration.setCreatedAt(Instant.now());
-        registration.setUpdatedAt(Instant.now());
+
 
         // 2️⃣ Tạo các giấy tờ định danh (3 loại)
         ProviderIdentityDocument docFront = new ProviderIdentityDocument();
