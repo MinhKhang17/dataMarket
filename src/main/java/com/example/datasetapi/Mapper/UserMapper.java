@@ -72,6 +72,9 @@ public class UserMapper implements UserResponseDTOMapper {
         dto.setEmail(providerRegistration.getEmail());
         dto.setId(providerRegistration.getId());
         dto.setFullName(providerRegistration.getFullName());
+        dto.setOrganizationName(providerRegistration.getOrganizationName());
+        dto.setTaxId(providerRegistration.getTaxId());
+        dto.setLocation(Commune.getFullLocation(providerRegistration.getCommune()));
         dto.setPhoneNumber(providerRegistration.getPhoneNumber());
         dto.setRegistrationStatus(providerRegistration.getRegistrationStatus().toString());
         dto.setCreatedAt(providerRegistration.getCreatedAt());

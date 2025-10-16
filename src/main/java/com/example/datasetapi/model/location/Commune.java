@@ -16,4 +16,8 @@ public class Commune {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_province", nullable = false)
     private Province province;
+
+    public static String getFullLocation(Commune commune){
+        return commune.getName()+" ,"+commune.getProvince().getName();
+    }
 }
