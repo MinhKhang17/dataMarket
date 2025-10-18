@@ -45,6 +45,8 @@ public class User {
     @Column(nullable = true)
     private UserStatus userStatus;
 
+    private boolean isActive=false;
+
     public void setToken(Token token) {
         this.token = token;
         if (token != null) token.setUser(this);

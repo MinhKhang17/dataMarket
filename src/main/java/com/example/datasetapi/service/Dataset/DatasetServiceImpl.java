@@ -15,7 +15,6 @@ import com.example.datasetapi.model.Dataset.*;
 //import com.example.datasetapi.model.userManager.Address;
 import com.example.datasetapi.model.UserManager.Provider;
 import com.example.datasetapi.model.location.Commune;
-import com.example.datasetapi.model.location.Province;
 import com.example.datasetapi.repository.*;
 import com.example.datasetapi.service.user.TokenService;
 import com.example.datasetapi.service.user.UserService;
@@ -318,6 +317,20 @@ TimeGroupRepository timeGroupRepository;
                 .map(datasetMapper::toDatasetParentReposonseDto)
                 .collect(Collectors.toList());
         return ResponseEntity.ok().body(new ApiResponse(true,"load dataset success",datasetReposonseDtoList));
+    }
+
+    @Override
+    public DatasetParentReposonseDto getDatasetParentWithId(long datasetGroupId) {
+
+        DatasetGroup temp =  datasetGroupRepository.findByIdAndDatasetGroupType(datasetGroupId,DatasetGroupType.PARENT).orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
+        return datasetMapper.toDatasetParentReposonseDto(temp);
+    }
+
+    @Override
+    public DatasetParentReposonseDto getDatasetParentDetailByDatasetId(long datasetId) {
+        Dataset temp = datasetRepository.findById(datasetId).orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
+        DatasetGroup datasetGroupOfDataset = temp.getDatasetChildGroup().getParent();
+        return datasetMapper.toDatasetParentReposonseDto(datasetGroupOfDataset);
     }
 
 

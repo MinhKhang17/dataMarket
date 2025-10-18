@@ -7,7 +7,7 @@ import com.example.datasetapi.model.location.Commune;
 public interface DatasetMapper {
     DatasetValidationErrorDTO toDatasetValidationDto(DatasetValidationError datasetValidationError);
 
-    public DatasetParentReposonseDto toDatasetParentReposonseDto(DatasetGroup group);
+     DatasetParentReposonseDto toDatasetParentReposonseDto(DatasetGroup group);
 
     ReviewHistoryDto toReviewHistoryDto(ReviewHistory save);
 

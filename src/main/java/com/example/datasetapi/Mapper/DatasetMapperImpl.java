@@ -166,6 +166,7 @@ private DatasetChildGroupDTO toDatasetChildGroupDTO(DatasetGroup datasetGroup){
             datasetDTO.setDescription(dataset.getDescription());
             datasetDTO.setDatasetTime(TimeGroup.toDate(dataset.getTimeGroup()));
             datasetDTO.setProvider(toProviderDto(dataset.getProvider()));
+            datasetDTO.setDatasetPLanWithPricingDTO(dataset.getDatasetPlans().stream().map(this::toDatasetPlanWithPricingDTO).collect(Collectors.toList()));
             return datasetDTO;
     }
 

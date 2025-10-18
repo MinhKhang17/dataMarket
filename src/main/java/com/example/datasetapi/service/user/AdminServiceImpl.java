@@ -120,6 +120,7 @@ public class AdminServiceImpl implements AdminService {
         user.setEmail(providerRegistration.getEmail());
         user.setUsername(user.getEmail());
         user.setRole(userService.findRoleByName("PROVIDER"));
+        user.setActive(true);
         String password = UUID.randomUUID().toString();
         user.setPassword(PasswordUtil.encode(password));
         Provider provider = new Provider();

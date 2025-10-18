@@ -2,6 +2,7 @@ package com.example.datasetapi.service.Dataset;
 
 import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
+import com.example.datasetapi.dto.response.DatasetParentReposonseDto;
 import com.example.datasetapi.model.Dataset.Dataset;
 import com.example.datasetapi.model.Dataset.DatasetInformation;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.util.List;
 
 @Service
 public interface DatasetService {
@@ -30,4 +32,8 @@ public interface DatasetService {
     ResponseEntity<?> rejectDataset(long datasetInforId, HttpServletRequest request,String reason);
 
     ResponseEntity<?> getAllDatasetParent();
+
+    DatasetParentReposonseDto getDatasetParentWithId(long datasetGroupId);
+
+    DatasetParentReposonseDto getDatasetParentDetailByDatasetId(long datasetId);
 }

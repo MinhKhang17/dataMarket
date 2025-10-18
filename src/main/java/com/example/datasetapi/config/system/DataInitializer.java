@@ -254,6 +254,7 @@ private  DatasetInforRepository datasetInforRepository;
     private void createModerator() {
         User user = new User();
         user.setUsername("moderator");
+        user.setActive(true);
         user.setPassword(passwordEncoder.encode("moderator"));
         user.setRole(roleRepository.findByName("MODERATOR").get());
         user.setEmail("moderator@gmail.com");
@@ -594,7 +595,7 @@ private  DatasetInforRepository datasetInforRepository;
         user.setPassword(passwordEncoder.encode("password"));
         user.setUserStatus(UserStatus.ACTIVE);
         user.setRole(roleRepository.getRolesByName("PROVIDER"));
-
+        user.setActive(true);
         // 4️⃣ Tạo Provider entity
         Provider provider = new Provider();
         provider.setUser(user);
@@ -618,6 +619,7 @@ private  DatasetInforRepository datasetInforRepository;
     private void createAdminRole() {
         User user = new User();
         user.setUsername("admin");
+        user.setActive(true);
         user.setEmail("admin@gmail.com");
         user.setPassword(passwordEncoder.encode("password"));
         user.setRole(roleRepository.findByName("ADMIN").get());
@@ -628,6 +630,7 @@ private  DatasetInforRepository datasetInforRepository;
     private void  createConsumerRole() {
         User user = new User();
         user.setUsername("user");
+        user.setActive(true);
         user.setPassword(passwordEncoder.encode("password"));
         user.setEmail("consumer@gmail.com");
         user.setRole(roleRepository.findByName("CONSUMER").get());

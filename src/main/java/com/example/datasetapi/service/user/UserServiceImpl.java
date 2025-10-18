@@ -123,6 +123,11 @@ public class UserServiceImpl implements UserService {
 
             User user = userOptional.get();
 
+        if(!user.isActive()){
+            throw new CustomException(HttpStatus.NOT_FOUND,ErrorCode.USER_NOT_FOUND);
+        }
+
+
             boolean isValidPassword = PasswordUtil.matches(loginRequest.getPassword(), user.getPassword());
             if (!isValidPassword) {
                 throw new CustomException(HttpStatus.NOT_FOUND,ErrorCode.USER_NOT_FOUND);
@@ -194,7 +199,7 @@ public class UserServiceImpl implements UserService {
         user.setUsername(registerRequest.getUsername());
         user.setPassword(PasswordUtil.encode(registerRequest.getPassword()));
         user.setEmail(registerRequest.getEmail());
-
+        user.setActive(true);
 
         // gán role
         Optional<Role> roleOptional = roleRepository.findByName("CONSUMER");

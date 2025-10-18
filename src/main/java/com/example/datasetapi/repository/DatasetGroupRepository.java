@@ -20,4 +20,6 @@ public interface DatasetGroupRepository extends JpaRepository<DatasetGroup,Long>
     Optional<DatasetGroup> findByProviderAndDatasetGroupTypeAndProvinceAndDatasetType(Provider provider, DatasetGroupType datasetGroupType, Province province, DatasetType datasetType);
 
     List<DatasetGroup> findByDatasetGroupType(DatasetGroupType datasetGroupType);
+
+    Optional<DatasetGroup> findByIdAndDatasetGroupType(long id, DatasetGroupType datasetGroupType);
 }

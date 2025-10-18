@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController()
-@RequestMapping("api/dataset")
+@RequestMapping("api/auth/dataset")
 public class DatasetController {
     @Autowired
     private DatasetService datasetService;

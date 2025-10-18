@@ -110,13 +110,14 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/api/auth/**",
+                                "/api/guest/**",
                                 "/api/public/**",
                                 "/api/test/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/api/moderation/**",
-                                "/api/location/**"
+                                "/api/location/**",
+                                "api/auth/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
