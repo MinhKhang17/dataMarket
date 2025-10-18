@@ -16,4 +16,8 @@ public interface DatasetMapper {
     CommuneDTO toCommuneDTO(Commune commune);
 
     DatasetDTO toDatasetDTO(Dataset dataset);
+
+    DatasetDTO toDatasetForCheckoutDTO(Dataset dataset);
+
+    DatasetPricingDTO toDatasetPricingDTO(DatasetPricing datasetPricing);
 }

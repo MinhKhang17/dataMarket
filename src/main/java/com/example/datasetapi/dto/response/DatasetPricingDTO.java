@@ -5,6 +5,7 @@ import lombok.Data;
 
 @Data
 public class DatasetPricingDTO {
+    private long pricingId;
     private PricingMethod pricingMethod;
     private double price;
 }

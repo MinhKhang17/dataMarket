@@ -10,7 +10,6 @@ import com.example.datasetapi.model.UserManager.User;
 import com.example.datasetapi.model.location.Commune;
 import com.example.datasetapi.model.location.Province;
 import com.example.datasetapi.repository.DatasetPlanRepo;
-import org.apache.catalina.mapper.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -58,6 +57,18 @@ public class DatasetMapperImpl implements DatasetMapper {
         return datasetDTO;
         }
 
+    @Override
+    public DatasetDTO toDatasetForCheckoutDTO(Dataset dataset) {
+            DatasetDTO datasetDTO = new DatasetDTO();
+            datasetDTO.setDatasetId(dataset.getId());
+            datasetDTO.setVersion(dataset.getVersion());
+            datasetDTO.setDescription(dataset.getDescription());
+            datasetDTO.setDatasetTime(TimeGroup.toDate(dataset.getTimeGroup()));
+            datasetDTO.setProvider(toProviderDto(dataset.getProvider()));
+            datasetDTO.setTitle(dataset.getTitle());
+            return datasetDTO;
+    }
+
     private DatasetPLanWithPricingDTO toDatasetPlanWithPricingDTO(DatasetPlan datasetPlan) {
     DatasetPLanWithPricingDTO datasetPLanWithPricingDTO = new DatasetPLanWithPricingDTO();
     datasetPLanWithPricingDTO.setPricingMethod(datasetPlan.getPricingMethod());
@@ -68,7 +79,7 @@ public class DatasetMapperImpl implements DatasetMapper {
     return datasetPLanWithPricingDTO;
     }
 
-    private DatasetPricingDTO toDatasetPricingDTO(DatasetPricing datasetPricing) {
+    public DatasetPricingDTO toDatasetPricingDTO(DatasetPricing datasetPricing) {
         DatasetPricingDTO datasetPricingDTO = new DatasetPricingDTO();
         if(datasetPricing.getPricingRule().getMethod()== PricingMethod.API){
             datasetPricingDTO.setPrice(datasetPricing.getPricePerRequest());
@@ -77,6 +88,7 @@ public class DatasetMapperImpl implements DatasetMapper {
         }
         datasetPricingDTO.setPrice(datasetPricing.getPrice());
         datasetPricingDTO.setPricingMethod(datasetPricing.getPricingRule().getMethod());
+        datasetPricingDTO.setPricingId(datasetPricing.getId());
         return datasetPricingDTO;
     }
 

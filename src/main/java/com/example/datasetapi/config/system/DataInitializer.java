@@ -11,6 +11,7 @@ import com.example.datasetapi.model.Dataset.*;
 import com.example.datasetapi.model.location.Commune;
 import com.example.datasetapi.model.location.Province;
 import com.example.datasetapi.model.UserManager.*;
+import com.example.datasetapi.model.paySystem.Wallet;
 import com.example.datasetapi.repository.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,7 +62,8 @@ private  DatasetInforRepository datasetInforRepository;
     private  ProvinceRepository provinceRepository;
     @Autowired
     private  CommuneRepository  communeRepository;
-
+@Autowired
+private WalletRepository walletRepository;
 
     @Override
     public void run(String... args) throws Exception {
@@ -629,12 +631,16 @@ private  DatasetInforRepository datasetInforRepository;
 
     private void  createConsumerRole() {
         User user = new User();
-        user.setUsername("user");
+        user.setUsername("consumer");
         user.setActive(true);
         user.setPassword(passwordEncoder.encode("password"));
         user.setEmail("consumer@gmail.com");
         user.setRole(roleRepository.findByName("CONSUMER").get());
+        Wallet wallet = new Wallet();
+        wallet.setUser(user);
+        wallet.setAmount(1);
         userRepository.save(user);
+        walletRepository.save(wallet);
         System.out.println("Khoi tao consumer");
     }
 

@@ -70,6 +70,18 @@ return ResponseEntity.ok().body(new ApiResponse(true,"created wallet for" + user
         return isUpdateSuccess;
     }
 
+    @Override
+    public double calRemainingAmount(double price, User consumer) {
+        Double remaining_amount = 0.0;
+
+        double consumer_amount = walletRepository.findByUserId(consumer.getId())
+                .orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.WALLET_NOT_FOUND))
+                .getAmount();
+
+        remaining_amount = consumer_amount - price;
+        return remaining_amount;
+    }
+
     private boolean updateWithdraw(long amount, long userId, TransferType type) {
         Optional<Wallet> wallet = walletRepository.findByUserId(userId);
 

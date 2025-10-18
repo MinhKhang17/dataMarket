@@ -1,21 +1,22 @@
 package com.example.datasetapi.service.Dataset;
 
-import com.example.datasetapi.dto.response.DatasetParentReposonseDto;
+import com.example.datasetapi.dto.request.CheckoutRequestDTO;
+import com.example.datasetapi.dto.response.*;
 import com.example.datasetapi.enums.Datasets.DatasetGroupType;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
 import com.example.datasetapi.Mapper.DatasetMapper;
 import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
-import com.example.datasetapi.dto.response.ApiResponse;
-import com.example.datasetapi.dto.response.ReviewHistoryDto;
 import com.example.datasetapi.enums.Datasets.DatasetInforStatus;
 import com.example.datasetapi.enums.Datasets.DatasetPack;
 import com.example.datasetapi.enums.Datasets.DatasetStatus;
 import com.example.datasetapi.model.Dataset.*;
 //import com.example.datasetapi.model.userManager.Address;
 import com.example.datasetapi.model.UserManager.Provider;
+import com.example.datasetapi.model.UserManager.User;
 import com.example.datasetapi.model.location.Commune;
 import com.example.datasetapi.repository.*;
+import com.example.datasetapi.service.payment.PaymentService;
 import com.example.datasetapi.service.user.TokenService;
 import com.example.datasetapi.service.user.UserService;
 import com.example.datasetapi.util.DateUtil;
@@ -81,7 +82,10 @@ private PriceService priceService;
 private CommuneRepository communeRepository;
 @Autowired
 TimeGroupRepository timeGroupRepository;
-
+@Autowired
+private PaymentService paymentService;
+@Autowired
+private  DatasetPricingRepository datasetPricingRepository;
     @Value("${aws.bucket.name}")
     private String BUCKET_NAME;
 
@@ -331,6 +335,36 @@ TimeGroupRepository timeGroupRepository;
         Dataset temp = datasetRepository.findById(datasetId).orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
         DatasetGroup datasetGroupOfDataset = temp.getDatasetChildGroup().getParent();
         return datasetMapper.toDatasetParentReposonseDto(datasetGroupOfDataset);
+    }
+
+    @Override
+    public CheckoutResponseDTO checkoutDatasetPayment(CheckoutRequestDTO checkoutRequestDTO, HttpServletRequest request) {
+
+
+        User consumer = userService.findUserById(tokenService.getUserIdFromRequest(request));
+
+        CheckoutResponseDTO checkoutResponseDTO = new CheckoutResponseDTO();
+
+        Dataset dataset = datasetRepository.findById(checkoutRequestDTO.getDatasetId()).orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
+        DatasetDTO datasetDTO = datasetMapper.toDatasetForCheckoutDTO(dataset);
+
+        DatasetPricing datasetPricing = datasetPricingRepository.findById(checkoutRequestDTO.getDatasetPricingId()).orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
+
+        DatasetPricingDTO datasetPricingDTO = datasetMapper.toDatasetPricingDTO(datasetPricing);
+
+        checkoutResponseDTO.setDatasetPricing(datasetPricingDTO);
+        checkoutResponseDTO.setDataset(datasetDTO);
+
+
+        double remaing_amount = paymentService.calRemainingAmount(datasetPricingDTO.getPrice(),consumer);
+
+        if(remaing_amount >= 0){
+            checkoutResponseDTO.setEnough(true);
+        }
+
+        checkoutResponseDTO.setRemaining_amount(remaing_amount);
+
+        return checkoutResponseDTO;
     }
 
 
