@@ -89,6 +89,7 @@ public class PriceServiceImpl implements  PriceService {
             datasetPricing.setPricingRule(pricingRuleRepo.findByMethodAndDatasetPack(pricingMethod, datasetPack));
             datasetPricing.setPrice(oneTimePricingCal(datasetPack,rowCount));
             datasetPricing.setDatasetPack(datasetPack);
+            datasetPricing.setPricingMethod(PricingMethod.ONE_TIME);
             list.add(datasetPricing);
             return list;
         }
@@ -98,19 +99,21 @@ public class PriceServiceImpl implements  PriceService {
             smallPackPrice.setPricingRule(pricingRule);
             smallPackPrice.setPrice(subPricingCal(rowCount,pricingRule));
            smallPackPrice.setDatasetPack(DatasetPack.SMALL);
-
+            smallPackPrice.setPricingMethod(pricingMethod);
             list.add(smallPackPrice);
            DatasetPricing mediumPackPrice = new DatasetPricing();
            pricingRule = pricingRuleRepo.findByMethodAndSubType(pricingMethod, SubType.MEDIUM);
            mediumPackPrice.setPricingRule(pricingRule);
            mediumPackPrice.setPrice(subPricingCal(rowCount,pricingRule));
            mediumPackPrice.setDatasetPack(DatasetPack.MEDIUM);
+           mediumPackPrice.setPricingMethod(pricingMethod);
            list.add(mediumPackPrice);
            DatasetPricing largePackPrice = new DatasetPricing();
            pricingRule = pricingRuleRepo.findByMethodAndSubType(pricingMethod, SubType.LARGE);
            largePackPrice.setPricingRule(pricingRule);
            largePackPrice.setPrice(subPricingCal(rowCount,pricingRule));
            largePackPrice.setDatasetPack(DatasetPack.LARGE);
+           largePackPrice.setPricingMethod(pricingMethod);
 
 
 
@@ -123,11 +126,13 @@ public class PriceServiceImpl implements  PriceService {
            smallApi.setPricingRule(pricingRule);
            smallApi.setPricePerRequest(apiPricingCal(pricingRule));
            smallApi.setDatasetPack(DatasetPack.SMALL);
+           smallApi.setPricingMethod(pricingMethod);
            list.add(smallApi);
 
            DatasetPricing mediumApi = new DatasetPricing();
            pricingRule = pricingRuleRepo.findByMethodAndSubType(pricingMethod, SubType.MEDIUM);
            mediumApi.setPricingRule(pricingRule);
+           mediumApi.setPricingMethod(pricingMethod);
            mediumApi.setPricePerRequest(apiPricingCal(pricingRule));
            mediumApi.setDatasetPack(DatasetPack.MEDIUM);
            list.add(mediumApi);
@@ -135,6 +140,7 @@ public class PriceServiceImpl implements  PriceService {
            DatasetPricing largeApi = new DatasetPricing();
            pricingRule= pricingRuleRepo.findByMethodAndSubType(pricingMethod, SubType.LARGE);
            largeApi.setPricingRule(pricingRule);
+           largeApi.setPricingMethod(pricingMethod);
            largeApi.setPricePerRequest(apiPricingCal(pricingRule));
            largeApi.setDatasetPack(DatasetPack.LARGE);
            list.add(largeApi);

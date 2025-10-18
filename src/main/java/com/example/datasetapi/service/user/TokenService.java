@@ -27,6 +27,6 @@ public interface TokenService {
 
    public DownloadToken findDownloadTokenById(UUID tokenId);
 
-    public ResponseEntity<ApiResponse> getDownloadToken(long datasetId, HttpServletRequest request);
+//    public ResponseEntity<ApiResponse> getDownloadToken(long datasetId, HttpServletRequest request);
 
 }

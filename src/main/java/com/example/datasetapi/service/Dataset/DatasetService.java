@@ -1,9 +1,11 @@
 package com.example.datasetapi.service.Dataset;
 
 import com.example.datasetapi.dto.request.CheckoutRequestDTO;
+import com.example.datasetapi.dto.request.ConsumerBuyRequestDTO;
 import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.dto.response.CheckoutResponseDTO;
+import com.example.datasetapi.dto.response.ConsumerBuyResponseDTO;
 import com.example.datasetapi.dto.response.DatasetParentReposonseDto;
 import com.example.datasetapi.model.Dataset.Dataset;
 import com.example.datasetapi.model.Dataset.DatasetInformation;
@@ -39,4 +41,6 @@ public interface DatasetService {
     DatasetParentReposonseDto getDatasetParentDetailByDatasetId(long datasetId);
 
     CheckoutResponseDTO checkoutDatasetPayment(CheckoutRequestDTO checkoutRequestDTO, HttpServletRequest request);
+
+    ConsumerBuyResponseDTO buyDatasetRequest(ConsumerBuyRequestDTO buyRequestDTO, HttpServletRequest request);
 }

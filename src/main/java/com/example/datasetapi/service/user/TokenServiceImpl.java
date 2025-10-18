@@ -117,28 +117,28 @@ public class TokenServiceImpl implements TokenService {
     }
 
 
-    @Override
-    public ResponseEntity<ApiResponse> getDownloadToken(long datasetId, HttpServletRequest request) {
-        try {
-            long userId = jwtUtil.getUserIdFromToken(resolveToken(request));
-
-            if (userId == -1) {
-                return ResponseEntity
-                        .status(HttpStatus.UNAUTHORIZED)
-                        .body(new ApiResponse(false, "Invalid or expired token", null));
-            }
-
-            DownloadToken downloadToken = jwtUtil.generateDowloadToken(userId, datasetId, Duration.ofMinutes(15));
-            return ResponseEntity.ok()
-                    .body(new ApiResponse(true, "Download token generated successfully", downloadToken));
-
-        } catch (Exception e) {
-            // Log the error (add appropriate logger)
-            // logger.error("Error generating download token for fileKey: " + fileKey, e);
-
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse(false, "Failed to generate download token: " + e.getMessage(), null));
-        }
-    }
+//    @Override
+//    public ResponseEntity<ApiResponse> getDownloadToken(long datasetId, HttpServletRequest request) {
+//        try {
+//            long userId = jwtUtil.getUserIdFromToken(resolveToken(request));
+//
+//            if (userId == -1) {
+//                return ResponseEntity
+//                        .status(HttpStatus.UNAUTHORIZED)
+//                        .body(new ApiResponse(false, "Invalid or expired token", null));
+//            }
+//
+//            DownloadToken downloadToken = jwtUtil.generateDowloadToken(userId, datasetId, 30);
+//            return ResponseEntity.ok()
+//                    .body(new ApiResponse(true, "Download token generated successfully", downloadToken));
+//
+//        } catch (Exception e) {
+//            // Log the error (add appropriate logger)
+//            // logger.error("Error generating download token for fileKey: " + fileKey, e);
+//
+//            return ResponseEntity
+//                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                    .body(new ApiResponse(false, "Failed to generate download token: " + e.getMessage(), null));
+//        }
+//    }
 }

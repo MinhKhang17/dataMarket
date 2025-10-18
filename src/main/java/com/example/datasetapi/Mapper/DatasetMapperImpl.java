@@ -2,6 +2,7 @@ package com.example.datasetapi.Mapper;
 
 import com.example.datasetapi.config.ModelMapper;
 import com.example.datasetapi.dto.response.*;
+import com.example.datasetapi.dto.service.BuyOnTimeInfoDTO;
 import com.example.datasetapi.enums.Datasets.DatasetStatus;
 import com.example.datasetapi.enums.Datasets.PricingMethod;
 import com.example.datasetapi.model.Dataset.*;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 
@@ -90,6 +92,25 @@ public class DatasetMapperImpl implements DatasetMapper {
         datasetPricingDTO.setPricingMethod(datasetPricing.getPricingRule().getMethod());
         datasetPricingDTO.setPricingId(datasetPricing.getId());
         return datasetPricingDTO;
+    }
+
+    @Override
+    public ConsumerBuyResponseDTO toConsumerBuyResponseDTO(PricingMethod pricingMethod,Object infor) {
+        switch (pricingMethod){
+            case ONE_TIME -> {
+                    ConsumerBuyResponseDTO consumerBuyResponseDTO = new ConsumerBuyResponseDTO();
+                    consumerBuyResponseDTO.setBuyOnTimeInfoDTO(toBuyOneTimeInfoDTO((UUID)infor));
+                    return consumerBuyResponseDTO;
+            }
+        }
+        return null;
+    }
+
+
+    private BuyOnTimeInfoDTO toBuyOneTimeInfoDTO(UUID infor) {
+        BuyOnTimeInfoDTO buyOnTimeInfoDTO = new BuyOnTimeInfoDTO();
+        buyOnTimeInfoDTO.setDowloadToken(infor.toString());
+        return buyOnTimeInfoDTO;
     }
 
 

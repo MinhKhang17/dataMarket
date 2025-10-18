@@ -1,11 +1,14 @@
 package com.example.datasetapi.model.Dataset;
 
+import com.example.datasetapi.model.UserManager.User;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -17,16 +20,18 @@ public class DownloadToken {
     @Id
     private UUID id;
 
-    @Column(nullable = false)
-    private long userId;
+    @ManyToOne
+    @NotNull
+    private User user;
+
+    @ManyToOne
+    @NotNull
+    private Dataset dataset;
+
+    private int use_amount = 5;
 
     @Column(nullable = false)
-    private long datasetId;
+    private LocalDateTime expiresAt;
 
-    private boolean used = false;
-
-    @Column(nullable = false)
-    private Instant expiresAt;
-
-    private Instant createdAt =Instant.now();
+    private LocalDateTime createdAt =LocalDateTime.now();
 }

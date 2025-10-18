@@ -12,7 +12,7 @@ public class Wallet {
 @GeneratedValue(strategy= GenerationType.IDENTITY)
 private int id;
 @Column
-private long amount;
+private double amount;
 @OneToOne
     private User user;
 

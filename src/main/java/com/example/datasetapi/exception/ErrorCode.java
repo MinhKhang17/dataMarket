@@ -58,9 +58,9 @@ public enum ErrorCode {
     ProviderRegistrationNotFound("ProviderRegistrationNotFound","Không tìm thấy hồ sơ provider" ),
     ROLE_NOT_FOUND("ROLE_NOT_FOUND","Không tìm thấy role" ),
     FILE_TOO_BIG("FILE_TOO_BIG","File quá lớn" ),
-    PHONE_EXISTS("PHONE_EXISTS","Số điện thoại đã tồn tại" );
-
-
+    PHONE_EXISTS("PHONE_EXISTS","Số điện thoại đã tồn tại" ),
+    DATASET_PRICING_NOT_FOUND("DATASET_PRICING_NOT_FOUND","Không tìm thấy pricing"),
+    AMOUNT_NOT_ENOUGH("AMOUNT_NOT_ENOUGH","Số dư không đủ" );
     private final String code;
     private final String message;
 

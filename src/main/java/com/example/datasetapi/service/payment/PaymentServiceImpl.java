@@ -1,6 +1,7 @@
 package com.example.datasetapi.service.payment;
 
 import com.example.datasetapi.dto.response.ApiResponse;
+import com.example.datasetapi.enums.Datasets.BuyType;
 import com.example.datasetapi.enums.TransferType;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
@@ -57,7 +58,7 @@ return ResponseEntity.ok().body(new ApiResponse(true,"created wallet for" + user
     }
 
     @Override
-    public boolean updateWallet(TransferType type, long amount, long user_id) {
+    public boolean updateWallet(TransferType type, double amount, long user_id, BuyType buyType) {
         boolean isUpdateSuccess = false;
         switch (type){
             case TOUP:
@@ -66,8 +67,33 @@ return ResponseEntity.ok().body(new ApiResponse(true,"created wallet for" + user
                 case WITHDRAW:
                  isUpdateSuccess = updateWithdraw(amount,user_id,type);
                 break;
+            case TODOWN:
+                isUpdateSuccess = updateToDown(amount,user_id,type,buyType);
+                break;
         }
         return isUpdateSuccess;
+    }
+
+    private boolean updateToDown(double amount, long userId, TransferType type, BuyType buyType) {
+        Optional<Wallet> wallet = walletRepository.findByUserId(userId);
+
+        if(!wallet.isPresent()){
+            throw new CustomException(HttpStatus.NOT_FOUND,ErrorCode.WALLET_NOT_FOUND);
+        }
+
+        if(amount<=0){
+            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.AMOUNT_NOT_ENOUGH);
+        }
+
+        //cap nhat wallet
+        if(wallet.get().getAmount() < amount){
+            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.AMOUNT_NOT_ENOUGH);
+        }
+
+        wallet.get().setAmount(wallet.get().getAmount()-amount);
+        transactionService.createTransaction(type,amount,userId,wallet.get(),buyType);
+        walletRepository.save(wallet.get());
+        return true;
     }
 
     @Override
@@ -82,28 +108,25 @@ return ResponseEntity.ok().body(new ApiResponse(true,"created wallet for" + user
         return remaining_amount;
     }
 
-    private boolean updateWithdraw(long amount, long userId, TransferType type) {
+    private boolean updateWithdraw(double amount, long userId, TransferType type) {
         Optional<Wallet> wallet = walletRepository.findByUserId(userId);
 
         if(!wallet.isPresent()){
-            System.out.println("wallet not found for user: " + userId);
-            return false;
+        throw new CustomException(HttpStatus.NOT_FOUND,ErrorCode.WALLET_NOT_FOUND);
         }
 
         if(amount<=0){
-            System.out.println("amount need greater than 0");
-            return false;
+            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.AMOUNT_NOT_ENOUGH);
         }
 
         //cap nhat wallet
         if(wallet.get().getAmount() < amount){
-            System.out.println("amount not enough. Current balance: " + wallet.get().getAmount() + ", requested: " + amount);
-            return false;
+            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.AMOUNT_NOT_ENOUGH);
         }
 
         wallet.get().setAmount(wallet.get().getAmount()-amount);
         //luu vao transaction
-         transactionService.createTransaction(type,amount,userId,wallet.get());
+         transactionService.createTransaction(type,amount,userId,wallet.get(), BuyType.OTHER);
         //save vao repo
         walletRepository.save(wallet.get());
 
@@ -111,20 +134,20 @@ return ResponseEntity.ok().body(new ApiResponse(true,"created wallet for" + user
         return true;
     }
 
-    private boolean updateToUp(long amount, long userId, TransferType type) {
+    private boolean updateToUp(double amount, long userId, TransferType type) {
         Optional<Wallet> wallet = walletRepository.findByUserId(userId);
         if(!wallet.isPresent()){
-            System.out.println("wallet not found for user: " + userId);
-            return false;
+            throw new CustomException(HttpStatus.NOT_FOUND,ErrorCode.WALLET_NOT_FOUND);
         }
         if(amount<=0){
-            System.out.println("amount need greater than 0");
-            return false;
+            throw new  CustomException(HttpStatus.BAD_REQUEST,ErrorCode.AMOUNT_NOT_ENOUGH);
         }
 
-        long oldAmount = wallet.get().getAmount();
+        double oldAmount = wallet.get().getAmount();
+
+
         wallet.get().setAmount(wallet.get().getAmount()+amount);
-        transactionService.createTransaction(type,amount,userId,wallet.get());
+        transactionService.createTransaction(type,amount,userId,wallet.get(), BuyType.OTHER);
         walletRepository.save(wallet.get());
 
         System.out.println("Successfully added " + amount + " to user " + userId + ". Old balance: " + oldAmount + ", New balance: " + wallet.get().getAmount());

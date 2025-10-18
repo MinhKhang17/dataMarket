@@ -1,15 +1,14 @@
 package com.example.datasetapi.service.Dataset;
 
 import com.example.datasetapi.dto.request.CheckoutRequestDTO;
+import com.example.datasetapi.dto.request.ConsumerBuyRequestDTO;
 import com.example.datasetapi.dto.response.*;
-import com.example.datasetapi.enums.Datasets.DatasetGroupType;
+import com.example.datasetapi.enums.Datasets.*;
+import com.example.datasetapi.enums.TransferType;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
 import com.example.datasetapi.Mapper.DatasetMapper;
 import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
-import com.example.datasetapi.enums.Datasets.DatasetInforStatus;
-import com.example.datasetapi.enums.Datasets.DatasetPack;
-import com.example.datasetapi.enums.Datasets.DatasetStatus;
 import com.example.datasetapi.model.Dataset.*;
 //import com.example.datasetapi.model.userManager.Address;
 import com.example.datasetapi.model.UserManager.Provider;
@@ -20,6 +19,7 @@ import com.example.datasetapi.service.payment.PaymentService;
 import com.example.datasetapi.service.user.TokenService;
 import com.example.datasetapi.service.user.UserService;
 import com.example.datasetapi.util.DateUtil;
+import com.example.datasetapi.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import com.example.datasetapi.repository.DatasetRepository;
 import jakarta.transaction.Transactional;
@@ -33,6 +33,7 @@ import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.s3.S3Client;
 
 import java.io.File;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -46,6 +47,9 @@ import org.slf4j.Logger;
 @Service
 public class DatasetServiceImpl implements DatasetService {
 
+
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @Override
     public ResponseEntity<?> getAllAllDataset() {
@@ -365,6 +369,34 @@ private  DatasetPricingRepository datasetPricingRepository;
         checkoutResponseDTO.setRemaining_amount(remaing_amount);
 
         return checkoutResponseDTO;
+    }
+
+    @Override
+    public ConsumerBuyResponseDTO buyDatasetRequest(ConsumerBuyRequestDTO buyRequestDTO, HttpServletRequest request) {
+        Dataset dataset = datasetRepository.findById(buyRequestDTO.getDatasetId()).orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
+        DatasetPricing datasetPricing = datasetPricingRepository.findById(buyRequestDTO.getDatasetPricingId()).orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_PRICING_NOT_FOUND));
+        User consumer = userService.findUserById(tokenService.getUserIdFromRequest(request));
+        switch (datasetPricing.getPricingMethod()){
+            case ONE_TIME -> {
+               ConsumerBuyResponseDTO consumerBuyResponseDTO = createOneTimePayment(dataset,datasetPricing,consumer);
+                paymentService.updateWallet(TransferType.TODOWN,datasetPricing.getPrice(),consumer.getId(),BuyType.BUY_ONE_TIME_DATASET);
+               return consumerBuyResponseDTO;
+            }
+            case SUBSCRIPTION -> {
+               ConsumerBuyResponseDTO consumerBuyResponseDTO =  createSubPayment(dataset,datasetPricing,consumer);
+            }
+        }
+        return null;
+    }
+
+    private ConsumerBuyResponseDTO createSubPayment(Dataset dataset, DatasetPricing datasetPricing, User consumer) {
+                return null;
+    }
+
+    private ConsumerBuyResponseDTO createOneTimePayment(Dataset dataset, DatasetPricing datasetPricing, User consumer) {
+        DownloadToken downloadToken = jwtUtil.generateDowloadToken(consumer,dataset,30);
+        ConsumerBuyResponseDTO consumerBuyResponseDTO = datasetMapper.toConsumerBuyResponseDTO(PricingMethod.ONE_TIME,downloadToken.getId());
+        return consumerBuyResponseDTO;
     }
 
 

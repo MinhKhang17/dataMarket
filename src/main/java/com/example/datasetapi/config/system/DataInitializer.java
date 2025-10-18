@@ -638,7 +638,7 @@ private WalletRepository walletRepository;
         user.setRole(roleRepository.findByName("CONSUMER").get());
         Wallet wallet = new Wallet();
         wallet.setUser(user);
-        wallet.setAmount(1);
+        wallet.setAmount(10000);
         userRepository.save(user);
         walletRepository.save(wallet);
         System.out.println("Khoi tao consumer");

@@ -1,6 +1,7 @@
 package com.example.datasetapi.Mapper;
 
 import com.example.datasetapi.dto.response.*;
+import com.example.datasetapi.enums.Datasets.PricingMethod;
 import com.example.datasetapi.model.Dataset.*;
 import com.example.datasetapi.model.location.Commune;
 
@@ -20,4 +21,6 @@ public interface DatasetMapper {
     DatasetDTO toDatasetForCheckoutDTO(Dataset dataset);
 
     DatasetPricingDTO toDatasetPricingDTO(DatasetPricing datasetPricing);
+
+    ConsumerBuyResponseDTO toConsumerBuyResponseDTO(PricingMethod pricingMethod,Object Infor);
 }

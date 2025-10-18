@@ -26,4 +26,6 @@ public class DatasetPricing {
     @Enumerated(EnumType.STRING)
     private DatasetPack datasetPack =DatasetPack.UNDETERMINED;
 
+    @Enumerated
+    private PricingMethod pricingMethod;
 }

@@ -20,14 +20,14 @@ public class DowloadController {
     @Autowired
     private DatasetService datasetService;
 
-    DowloadController(DatasetService datasetService) {
-        this.datasetService = datasetService;
-    }
-    @GetMapping("/getKey")
-    public ResponseEntity<ApiResponse> getKey(@RequestParam long datasetId,
-                                              HttpServletRequest request) {
-        return tokenService.getDownloadToken(datasetId,request);
-        }
+//    DowloadController(DatasetService datasetService) {
+//        this.datasetService = datasetService;
+//    }
+//    @GetMapping("/getKey")
+//    public ResponseEntity<ApiResponse> getKey(@RequestParam long datasetId,
+//                                              HttpServletRequest request) {
+//        return tokenService.getDownloadToken(datasetId,request);
+//        }
 
 //    @GetMapping("/download")
 //    public ResponseEntity<?> downloadFile(

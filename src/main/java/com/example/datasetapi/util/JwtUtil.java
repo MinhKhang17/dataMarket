@@ -1,5 +1,6 @@
     package com.example.datasetapi.util;
 
+    import com.example.datasetapi.model.Dataset.Dataset;
     import com.example.datasetapi.model.Dataset.DownloadToken;
     import com.example.datasetapi.model.UserManager.User;
     import com.example.datasetapi.repository.DownloadTokenRepository;
@@ -12,6 +13,7 @@
     import java.security.Key;
     import java.time.Duration;
     import java.time.Instant;
+    import java.time.LocalDateTime;
     import java.util.Date;
     import java.util.UUID;
 
@@ -52,13 +54,12 @@
                     .compact();
         }
 
-        public DownloadToken generateDowloadToken(long userId, long datasetId, Duration ttl) {
+        public DownloadToken generateDowloadToken(User user, Dataset dataset, long day) {
             DownloadToken token = new DownloadToken();
             token.setId(UUID.randomUUID());
-            token.setUserId(userId);
-            token.setDatasetId(datasetId);
-            token.setExpiresAt(Instant.now().plus(ttl));
-            token.setUsed(false);
+            token.setUser(user);
+            token.setUse_amount(5);
+            token.setExpiresAt(LocalDateTime.now().plusDays(day));
             return downloadTokenRepository.save(token);
         }
 

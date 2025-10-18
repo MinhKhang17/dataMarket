@@ -1,5 +1,6 @@
 package com.example.datasetapi.service.payment;
 
+import com.example.datasetapi.enums.Datasets.BuyType;
 import com.example.datasetapi.enums.TransferType;
 import com.example.datasetapi.model.paySystem.Transaction;
 import com.example.datasetapi.model.paySystem.Wallet;
@@ -18,12 +19,13 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    public Transaction createTransaction(TransferType transferType, long amount, long user_id, Wallet wallet) {
+    public Transaction createTransaction(TransferType transferType, double amount, long user_id, Wallet wallet, BuyType buyType) {
 
         Transaction transaction = new Transaction();
         transaction.setAmount(amount);
         transaction.setWallet(wallet);
         transaction.setType(transferType);
+        transaction.setBuyType(buyType);
         return transactionRepository.save(transaction);
     }
 }

@@ -1,5 +1,6 @@
 package com.example.datasetapi.model.paySystem;
 
+import com.example.datasetapi.enums.Datasets.BuyType;
 import com.example.datasetapi.enums.TransferType;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -35,4 +36,8 @@ public class Transaction {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
     }
+
+    @Enumerated(EnumType.STRING)
+    private BuyType buyType;
+
 }
