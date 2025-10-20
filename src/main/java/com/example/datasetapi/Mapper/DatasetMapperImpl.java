@@ -3,9 +3,11 @@ package com.example.datasetapi.Mapper;
 import com.example.datasetapi.config.ModelMapper;
 import com.example.datasetapi.dto.response.*;
 import com.example.datasetapi.dto.service.BuyOnTimeInfoDTO;
+import com.example.datasetapi.dto.service.BuySubInfoDTO;
 import com.example.datasetapi.enums.Datasets.DatasetStatus;
 import com.example.datasetapi.enums.Datasets.PricingMethod;
 import com.example.datasetapi.model.Dataset.*;
+import com.example.datasetapi.model.UserManager.ConsumerSubscription;
 import com.example.datasetapi.model.UserManager.Provider;
 import com.example.datasetapi.model.UserManager.User;
 import com.example.datasetapi.model.location.Commune;
@@ -102,8 +104,21 @@ public class DatasetMapperImpl implements DatasetMapper {
                     consumerBuyResponseDTO.setBuyOnTimeInfoDTO(toBuyOneTimeInfoDTO((UUID)infor));
                     return consumerBuyResponseDTO;
             }
+            case SUBSCRIPTION ->  {
+                    ConsumerBuyResponseDTO consumerBuyResponseDTO = new ConsumerBuyResponseDTO();
+                    consumerBuyResponseDTO.setBuySubInfoDTO(toBuySubInfoDTO((ConsumerSubscription)infor));
+                return consumerBuyResponseDTO;
+            }
         }
         return null;
+    }
+
+    private BuySubInfoDTO toBuySubInfoDTO(ConsumerSubscription infor) {
+        BuySubInfoDTO buySubInfoDTO = new BuySubInfoDTO();
+        buySubInfoDTO.setSubType(infor.getSubType());
+    buySubInfoDTO.setRowLimit(infor.getRow_amount());
+    buySubInfoDTO.setExpiredDay(infor.getExpiresAt());
+    return buySubInfoDTO;
     }
 
 

@@ -9,11 +9,14 @@ import com.example.datasetapi.dto.response.ConsumerBuyResponseDTO;
 import com.example.datasetapi.dto.response.DatasetParentReposonseDto;
 import com.example.datasetapi.model.Dataset.Dataset;
 import com.example.datasetapi.model.Dataset.DatasetInformation;
+import com.example.datasetapi.model.UserManager.ConsumerSubscription;
+import com.example.datasetapi.model.UserManager.User;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.util.List;
 
 @Service
 public interface DatasetService {
@@ -43,4 +46,10 @@ public interface DatasetService {
     CheckoutResponseDTO checkoutDatasetPayment(CheckoutRequestDTO checkoutRequestDTO, HttpServletRequest request);
 
     ConsumerBuyResponseDTO buyDatasetRequest(ConsumerBuyRequestDTO buyRequestDTO, HttpServletRequest request);
+
+    ConsumerBuyResponseDTO subRegister(long subType, HttpServletRequest request);
+
+    List<ConsumerSubscription> findConsumerSub(User consumer);
+
+    ConsumerBuyResponseDTO selectSubPack(long consumerSubId, HttpServletRequest request);
 }

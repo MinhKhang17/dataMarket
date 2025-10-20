@@ -49,6 +49,11 @@ public class PriceServiceImpl implements  PriceService {
         }
     }
 
+    @Override
+    public PricingRule findSubPricingRuleById(long pricingSubRuleId) {
+        return pricingRuleRepo.findByMethodAndId(PricingMethod.SUBSCRIPTION,pricingSubRuleId).orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.RuleNotFound));
+    }
+
 
     private void createPricing(Dataset dataset, DatasetInformation datasetInformation, DatasetPack datasetPack) {
         Set<DatasetPlan> datasetPlans = new HashSet<>() ;

@@ -68,4 +68,6 @@ private DatasetGroup datasetChildGroup;
     @JsonManagedReference  // Phía parent - sẽ serialize
     private List<DatasetPlan> datasetPlans = new ArrayList<>();
 
+    @OneToOne
+    private DatasetInformation datasetInformation;
 }

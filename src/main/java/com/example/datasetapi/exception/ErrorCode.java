@@ -60,7 +60,12 @@ public enum ErrorCode {
     FILE_TOO_BIG("FILE_TOO_BIG","File quá lớn" ),
     PHONE_EXISTS("PHONE_EXISTS","Số điện thoại đã tồn tại" ),
     DATASET_PRICING_NOT_FOUND("DATASET_PRICING_NOT_FOUND","Không tìm thấy pricing"),
-    AMOUNT_NOT_ENOUGH("AMOUNT_NOT_ENOUGH","Số dư không đủ" );
+    AMOUNT_NOT_ENOUGH("AMOUNT_NOT_ENOUGH","Số dư không đủ" ),
+    RuleNotFound("RuleNotFound","Không tìm thấy gói" )
+    , EXISTS_SUB("EXISTS_SUB","User đã mua gói không thể mua lại" ),
+    SUB_NOT_FOUND("SUB_NOT_FOUND","Không tìm thấy gói thuê bao" ),
+    SUB_ROW_NOT_ENOUGH("SUB_ROW_NOT_ENOUGH","Số row còn lại không đủ" ),
+    SUB_EXPIRED("SUB_EXPIRED","Gói thuê bao đã hết hạn" );
     private final String code;
     private final String message;
 

@@ -6,8 +6,12 @@ import com.example.datasetapi.enums.Datasets.SubType;
 import com.example.datasetapi.model.Dataset.PricingRule;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Optional;
+
 public interface PricingRuleRepo extends JpaRepository<PricingRule,Long> {
     PricingRule findByMethodAndDatasetPack(PricingMethod method, DatasetPack datasetPack);
 
     PricingRule findByMethodAndSubType(PricingMethod method, SubType subType);
+
+    Optional<PricingRule> findByMethodAndId(PricingMethod method, Long id);
 }
