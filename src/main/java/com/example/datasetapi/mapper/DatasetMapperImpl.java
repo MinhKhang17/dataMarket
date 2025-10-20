@@ -3,11 +3,13 @@ package com.example.datasetapi.mapper;
 import com.example.datasetapi.config.ModelMapper;
 import com.example.datasetapi.dto.response.*;
 import com.example.datasetapi.dto.service.BuyOnTimeInfoDTO;
+import com.example.datasetapi.dto.service.BuySubInfoDTO;
 import com.example.datasetapi.enums.Datasets.DatasetStatus;
 import com.example.datasetapi.enums.Datasets.PricingMethod;
 import com.example.datasetapi.model.dataset.*;
 import com.example.datasetapi.model.userManager.Provider;
 import com.example.datasetapi.model.userManager.User;
+import com.example.datasetapi.model.userManager.ConsumerSubscription;
 import com.example.datasetapi.model.location.Commune;
 import com.example.datasetapi.model.location.Province;
 import com.example.datasetapi.repository.DatasetPlanRepo;
@@ -102,8 +104,21 @@ public class DatasetMapperImpl implements DatasetMapper {
                     consumerBuyResponseDTO.setBuyOnTimeInfoDTO(toBuyOneTimeInfoDTO((UUID)infor));
                     return consumerBuyResponseDTO;
             }
+            case SUBSCRIPTION ->  {
+                    ConsumerBuyResponseDTO consumerBuyResponseDTO = new ConsumerBuyResponseDTO();
+                    consumerBuyResponseDTO.setBuySubInfoDTO(toBuySubInfoDTO((ConsumerSubscription)infor));
+                return consumerBuyResponseDTO;
+            }
         }
         return null;
+    }
+
+    private BuySubInfoDTO toBuySubInfoDTO(ConsumerSubscription infor) {
+        BuySubInfoDTO buySubInfoDTO = new BuySubInfoDTO();
+        buySubInfoDTO.setSubType(infor.getSubType());
+    buySubInfoDTO.setRowLimit(infor.getRow_amount());
+    buySubInfoDTO.setExpiredDay(infor.getExpiresAt());
+    return buySubInfoDTO;
     }
 
 

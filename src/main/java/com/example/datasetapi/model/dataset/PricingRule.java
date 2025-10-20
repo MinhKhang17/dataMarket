@@ -9,7 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "Pricing_Rule") // 👈 Tên bảng chính xác
+@Table(name = "Pricing_Rule")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

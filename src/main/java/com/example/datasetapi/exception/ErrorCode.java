@@ -58,7 +58,6 @@ public enum ErrorCode {
     // Survey errors
     INVALID_TYPE_ID("INVALID_TYPE_ID", "One or more provided type IDs are invalid"),
 
-
     DATASET_ROW_MIN_INVALID("DATASET_ROW_MIN_INVALID", "Dataset package too small"),
     DATASET_PACK_INVALID("DATASET_PACK_INVALID", "Dataset package not classified"),
     PRICING_RULE_INVALID("PRICING_RULE_INVALID", "Pricing rule not found"),
@@ -67,7 +66,13 @@ public enum ErrorCode {
     ProviderRegistrationNotFound("ProviderRegistrationNotFound", "Provider profile not found"),
     ROLE_NOT_FOUND("ROLE_NOT_FOUND", "Role not found"),
     FILE_TOO_BIG("FILE_TOO_BIG", "File size too large"),
-    DATASET_PRICING_NOT_FOUND("DATASET_PRICING_NOT_FOUND", "Dataset pricing not found");
+    DATASET_PRICING_NOT_FOUND("DATASET_PRICING_NOT_FOUND", "Dataset pricing not found"),
+
+    RuleNotFound("RuleNotFound","Không tìm thấy gói" )
+    , EXISTS_SUB("EXISTS_SUB","User đã mua gói không thể mua lại" ),
+    SUB_NOT_FOUND("SUB_NOT_FOUND","Không tìm thấy gói thuê bao" ),
+    SUB_ROW_NOT_ENOUGH("SUB_ROW_NOT_ENOUGH","Số row còn lại không đủ" ),
+    SUB_EXPIRED("SUB_EXPIRED","Gói thuê bao đã hết hạn" );
     private final String code;
     private final String message;
 

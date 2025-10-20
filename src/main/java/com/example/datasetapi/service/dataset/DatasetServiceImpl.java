@@ -12,6 +12,7 @@ import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
 import com.example.datasetapi.model.dataset.*;
 import com.example.datasetapi.model.userManager.Provider;
 import com.example.datasetapi.model.userManager.User;
+import com.example.datasetapi.model.userManager.ConsumerSubscription;
 import com.example.datasetapi.model.location.Commune;
 import com.example.datasetapi.repository.*;
 import com.example.datasetapi.service.payment.PaymentService;
@@ -88,6 +89,9 @@ TimeGroupRepository timeGroupRepository;
 private PaymentService paymentService;
 @Autowired
 private  DatasetPricingRepository datasetPricingRepository;
+@Autowired
+private ConsumerSubRepo consumerSubRepo;
+
     @Value("${aws.bucket.name}")
     private String BUCKET_NAME;
 
@@ -382,13 +386,82 @@ private  DatasetPricingRepository datasetPricingRepository;
             }
             case SUBSCRIPTION -> {
                ConsumerBuyResponseDTO consumerBuyResponseDTO =  createSubPayment(dataset,datasetPricing,consumer);
+                return consumerBuyResponseDTO;
             }
         }
         return null;
     }
 
+    @Override
+    public ConsumerBuyResponseDTO subRegister(long pricingSubRuleId, HttpServletRequest request) {
+
+        User consumer = userService.findUserById(tokenService.getUserIdFromRequest(request));
+
+        PricingRule pricingRule = priceService.findSubPricingRuleById(pricingSubRuleId);
+
+        if(consumerSubRepo.existsByPricingRuleAndConsumerAndIsActive(pricingRule,consumer,true)){
+            throw new  CustomException(HttpStatus.BAD_REQUEST,ErrorCode.EXISTS_SUB);
+        }
+        List<ConsumerSubscription> consumerSubscriptionList = consumerSubRepo.findAllByConsumerAndIsUsing(consumer,true);
+
+        for(ConsumerSubscription consumerSubscription : consumerSubscriptionList){
+            consumerSubscription.setUsing(false);
+        }
+        consumerSubRepo.saveAll(consumerSubscriptionList);
+
+        ConsumerSubscription consumerSubscription = new ConsumerSubscription();
+        consumerSubscription.setPricingRule(pricingRule);
+        consumerSubscription.setConsumer(consumer);
+        consumerSubscription.setExpiresAt(LocalDateTime.now().plusDays(pricingRule.getTimeLimitDay()));
+        consumerSubscription.setSubType(pricingRule.getSubType());
+        consumerSubscription.setRow_amount(pricingRule.getRowLimit());
+        consumerSubscription.setUsing(true);
+
+
+        return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.SUBSCRIPTION,consumerSubRepo.save(consumerSubscription));
+
+    }
+
+    @Override
+    public List<ConsumerSubscription> findConsumerSub(User consumer) {
+        return consumerSubRepo.findByConsumer(consumer);
+    }
+
+    @Override
+    public ConsumerBuyResponseDTO selectSubPack(long consumerSubId, HttpServletRequest request) {
+
+        User consumer = userService.findUserById(tokenService.getUserIdFromRequest(request));
+        ConsumerSubscription consumerSubscription = consumerSubRepo.findById(consumerSubId)
+                .orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.SUB_NOT_FOUND));
+
+        consumerSubscription.setUsing(true);
+        List<ConsumerSubscription> consumerSubscriptions = consumerSubRepo.findAllByConsumerAndIsUsing(consumer,true);
+        for(ConsumerSubscription consumerSubscription1 : consumerSubscriptions){
+            consumerSubscription1.setUsing(false);
+        }
+        consumerSubRepo.saveAll(consumerSubscriptions);
+        return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.SUBSCRIPTION,consumerSubRepo.save(consumerSubscription));
+    }
+
     private ConsumerBuyResponseDTO createSubPayment(Dataset dataset, DatasetPricing datasetPricing, User consumer) {
-                return null;
+                ConsumerSubscription consumerSubscription = consumerSubRepo.findByConsumerAndIsUsing(consumer,true)
+                        .orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.SUB_NOT_FOUND));
+            long dataset_row = dataset.getDatasetInformation().getRowCount();
+
+            if(consumerSubscription.getRow_amount()<dataset_row){
+                throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.SUB_ROW_NOT_ENOUGH);
+            }
+
+            if (consumerSubscription.getExpiresAt().isBefore(LocalDateTime.now())) {
+                throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.SUB_EXPIRED);
+            }
+
+            long newRow = consumerSubscription.getRow_amount() - dataset_row;
+
+            consumerSubscription.setRow_amount(newRow);
+
+            return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.SUBSCRIPTION,consumerSubRepo.save(consumerSubscription));
+
     }
 
     private ConsumerBuyResponseDTO createOneTimePayment(Dataset dataset, DatasetPricing datasetPricing, User consumer) {
