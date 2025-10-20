@@ -1,8 +1,8 @@
 package com.example.datasetapi.repository;
 
-import com.example.datasetapi.model.Dataset.DatasetGroup;
-import com.example.datasetapi.model.Dataset.TimeGroup;
-import com.example.datasetapi.model.UserManager.Provider;
+import com.example.datasetapi.model.dataset.DatasetGroup;
+import com.example.datasetapi.model.dataset.TimeGroup;
+import com.example.datasetapi.model.userManager.Provider;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

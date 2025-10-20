@@ -1,8 +1,8 @@
     package com.example.datasetapi.util;
 
-    import com.example.datasetapi.model.Dataset.Dataset;
-    import com.example.datasetapi.model.Dataset.DownloadToken;
-    import com.example.datasetapi.model.UserManager.User;
+    import com.example.datasetapi.model.dataset.Dataset;
+    import com.example.datasetapi.model.dataset.DownloadToken;
+    import com.example.datasetapi.model.userManager.User;
     import com.example.datasetapi.repository.DownloadTokenRepository;
     import io.jsonwebtoken.*;
     import io.jsonwebtoken.security.Keys;
@@ -11,8 +11,6 @@
     import org.springframework.stereotype.Component;
 
     import java.security.Key;
-    import java.time.Duration;
-    import java.time.Instant;
     import java.time.LocalDateTime;
     import java.util.Date;
     import java.util.UUID;

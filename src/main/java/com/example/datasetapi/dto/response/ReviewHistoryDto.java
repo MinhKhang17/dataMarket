@@ -1,6 +1,5 @@
 package com.example.datasetapi.dto.response;
 
-import com.example.datasetapi.model.Dataset.Dataset;
 import lombok.Data;
 
 import java.time.LocalDateTime;

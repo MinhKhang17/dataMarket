@@ -1,17 +1,13 @@
 package com.example.datasetapi.controller.datasetController;
-import com.example.datasetapi.Mapper.DatasetMapper;
+import com.example.datasetapi.mapper.DatasetMapper;
 import com.example.datasetapi.dto.request.DatasetFilterRequestDTO;
 import com.example.datasetapi.dto.response.DatasetDTO;
-import com.example.datasetapi.enums.Datasets.DatasetStatus;
-import com.example.datasetapi.model.Dataset.Dataset;
 import com.example.datasetapi.service.feature.DatasetFilterService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/auth/filter/datasets")

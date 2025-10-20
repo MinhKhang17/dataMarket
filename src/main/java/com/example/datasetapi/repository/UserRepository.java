@@ -1,6 +1,6 @@
 package com.example.datasetapi.repository;
 
-import com.example.datasetapi.model.UserManager.User;
+import com.example.datasetapi.model.userManager.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

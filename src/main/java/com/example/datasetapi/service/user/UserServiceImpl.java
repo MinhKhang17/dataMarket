@@ -1,7 +1,7 @@
 package com.example.datasetapi.service.user;
 
-import com.example.datasetapi.Mapper.DatasetMapper;
-import com.example.datasetapi.Mapper.UserMapper;
+import com.example.datasetapi.mapper.DatasetMapper;
+import com.example.datasetapi.mapper.UserMapper;
 import com.example.datasetapi.dto.request.LoginRequest;
 import com.example.datasetapi.dto.request.ProviderRegistrationRequestDTO;
 import com.example.datasetapi.dto.request.RegisterRequest;
@@ -13,7 +13,7 @@ import com.example.datasetapi.enums.VerificationStatus.RegistrationStatus;
 import com.example.datasetapi.enums.VerificationStatus.VerificationStatus;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
-import com.example.datasetapi.model.UserManager.*;
+import com.example.datasetapi.model.userManager.*;
 import com.example.datasetapi.model.location.Commune;
 import com.example.datasetapi.repository.*;
 import com.example.datasetapi.dto.response.ApiResponse;
@@ -40,7 +40,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;

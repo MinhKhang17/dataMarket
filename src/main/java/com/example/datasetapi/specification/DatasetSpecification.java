@@ -1,10 +1,10 @@
 package com.example.datasetapi.specification;
 
 
-import com.example.datasetapi.model.Dataset.Dataset;
+import com.example.datasetapi.model.dataset.Dataset;
 import com.example.datasetapi.dto.request.DatasetFilterRequestDTO;
-import com.example.datasetapi.model.Dataset.DatasetGroup;
-import com.example.datasetapi.model.Dataset.TimeGroup;
+import com.example.datasetapi.model.dataset.DatasetGroup;
+import com.example.datasetapi.model.dataset.TimeGroup;
 import jakarta.persistence.criteria.*;
 import org.springframework.data.jpa.domain.Specification;
 

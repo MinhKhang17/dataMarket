@@ -1,7 +1,7 @@
 package com.example.datasetapi.controller.datasetController;
 
 import com.example.datasetapi.dto.response.ApiResponse;
-import com.example.datasetapi.service.Dataset.DatasetService;
+import com.example.datasetapi.service.dataset.DatasetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

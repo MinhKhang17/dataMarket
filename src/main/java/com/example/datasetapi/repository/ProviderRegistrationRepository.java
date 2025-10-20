@@ -1,8 +1,7 @@
 package com.example.datasetapi.repository;
 
-import com.example.datasetapi.dto.response.ProviderRegistrationResponseDTO;
 import com.example.datasetapi.enums.VerificationStatus.RegistrationStatus;
-import com.example.datasetapi.model.UserManager.ProviderRegistration;
+import com.example.datasetapi.model.userManager.ProviderRegistration;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

@@ -1,0 +1,236 @@
+package com.example.datasetapi.mapper;
+
+import com.example.datasetapi.config.ModelMapper;
+import com.example.datasetapi.dto.response.*;
+import com.example.datasetapi.dto.service.BuyOnTimeInfoDTO;
+import com.example.datasetapi.enums.Datasets.DatasetStatus;
+import com.example.datasetapi.enums.Datasets.PricingMethod;
+import com.example.datasetapi.model.dataset.*;
+import com.example.datasetapi.model.userManager.Provider;
+import com.example.datasetapi.model.userManager.User;
+import com.example.datasetapi.model.location.Commune;
+import com.example.datasetapi.model.location.Province;
+import com.example.datasetapi.repository.DatasetPlanRepo;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+
+@Component
+public class DatasetMapperImpl implements DatasetMapper {
+    @Autowired
+    private DatasetPlanRepo datasetPlanRepo;
+
+    public DatasetMapperImpl() {
+    }
+
+    @Override
+    public UploadHeaderResponseDto toUploadHeaderResponseDto(DatasetInformation ds) {
+        UploadHeaderResponseDto uploadHeaderResponseDto = new UploadHeaderResponseDto();
+        uploadHeaderResponseDto.setDatasetInformationId(ds.getId());
+        if(ds.getValidationErrors()==null||!ds.getValidationErrors().isEmpty()){
+            uploadHeaderResponseDto.setValidationErrorDtos(ds.getValidationErrors());
+        }
+        return uploadHeaderResponseDto;
+    }
+
+    @Override
+    public DatasetDTO toDatasetDTO(Dataset dataset) {
+        DatasetDTO datasetDTO = new DatasetDTO();
+        datasetDTO.setDatasetId(dataset.getId());
+        datasetDTO.setVersion(dataset.getVersion());
+
+            datasetDTO.setDatasetPLanWithPricingDTO(datasetPlanRepo.findALlByDatasetId(dataset.getId())
+                    .stream()
+                    .map(this::toDatasetPlanWithPricingDTO)
+                    .collect(Collectors.toList()));
+
+        System.out.println("empty roi");
+        if(dataset.getTimeGroup()!=null){
+            datasetDTO.setDatasetTime(TimeGroup.toDate(dataset.getTimeGroup()));
+        }
+        System.out.println("time group bi null");
+        datasetDTO.setProvider(toProviderDto(dataset.getProvider()));
+        datasetDTO.setTitle(dataset.getTitle());
+        datasetDTO.setTitle(dataset.getDescription());
+        return datasetDTO;
+        }
+
+    @Override
+    public DatasetDTO toDatasetForCheckoutDTO(Dataset dataset) {
+            DatasetDTO datasetDTO = new DatasetDTO();
+            datasetDTO.setDatasetId(dataset.getId());
+            datasetDTO.setVersion(dataset.getVersion());
+            datasetDTO.setDescription(dataset.getDescription());
+            datasetDTO.setDatasetTime(TimeGroup.toDate(dataset.getTimeGroup()));
+            datasetDTO.setProvider(toProviderDto(dataset.getProvider()));
+            datasetDTO.setTitle(dataset.getTitle());
+            return datasetDTO;
+    }
+
+    private DatasetPLanWithPricingDTO toDatasetPlanWithPricingDTO(DatasetPlan datasetPlan) {
+    DatasetPLanWithPricingDTO datasetPLanWithPricingDTO = new DatasetPLanWithPricingDTO();
+    datasetPLanWithPricingDTO.setPricingMethod(datasetPlan.getPricingMethod());
+    datasetPLanWithPricingDTO.setDatasetPricingDTOList(datasetPlan.getDatasetPricingList()
+            .stream()
+            .map(this::toDatasetPricingDTO)
+            .collect(Collectors.toList()));
+    return datasetPLanWithPricingDTO;
+    }
+
+    public DatasetPricingDTO toDatasetPricingDTO(DatasetPricing datasetPricing) {
+        DatasetPricingDTO datasetPricingDTO = new DatasetPricingDTO();
+        if(datasetPricing.getPricingRule().getMethod()== PricingMethod.API){
+            datasetPricingDTO.setPrice(datasetPricing.getPricePerRequest());
+            datasetPricingDTO.setPricingMethod(datasetPricing.getPricingRule().getMethod());
+            return datasetPricingDTO;
+        }
+        datasetPricingDTO.setPrice(datasetPricing.getPrice());
+        datasetPricingDTO.setPricingMethod(datasetPricing.getPricingRule().getMethod());
+        datasetPricingDTO.setPricingId(datasetPricing.getId());
+        return datasetPricingDTO;
+    }
+
+    @Override
+    public ConsumerBuyResponseDTO toConsumerBuyResponseDTO(PricingMethod pricingMethod,Object infor) {
+        switch (pricingMethod){
+            case ONE_TIME -> {
+                    ConsumerBuyResponseDTO consumerBuyResponseDTO = new ConsumerBuyResponseDTO();
+                    consumerBuyResponseDTO.setBuyOnTimeInfoDTO(toBuyOneTimeInfoDTO((UUID)infor));
+                    return consumerBuyResponseDTO;
+            }
+        }
+        return null;
+    }
+
+
+    private BuyOnTimeInfoDTO toBuyOneTimeInfoDTO(UUID infor) {
+        BuyOnTimeInfoDTO buyOnTimeInfoDTO = new BuyOnTimeInfoDTO();
+        buyOnTimeInfoDTO.setDowloadToken(infor.toString());
+        return buyOnTimeInfoDTO;
+    }
+
+
+    @Override
+    public ReviewHistoryDto toReviewHistoryDto(ReviewHistory save) {
+        ReviewHistoryDto reviewHistoryDto = new ReviewHistoryDto();
+
+        reviewHistoryDto.setProviderDto(toProviderDto(save.getProvider()));
+        reviewHistoryDto.setDatasetDTO(toDatasetDto(save.getDataset()));
+        reviewHistoryDto.setReviewId(save.getReviewId());
+        if(save.getAdmin()==null){
+            reviewHistoryDto.setModerator(toUserDto(save.getModerator()));
+        }
+        else{
+            reviewHistoryDto.setAdmin(toUserDto(save.getAdmin()));
+        }
+        reviewHistoryDto.setReason(save.getReason());
+        return reviewHistoryDto;
+    }
+
+    private UserDto toUserDto(User user) {
+        UserDto userDto = new UserDto();
+        userDto.setId(user.getId());
+        userDto.setUsername(user.getUsername());
+        return userDto;
+    }
+
+    private ProviderDto toProviderDto(Provider provider) {
+        ProviderDto providerDto = new ProviderDto();
+        providerDto.setId(provider.getId());
+        providerDto.setName(provider.getUser().getUsername());
+        return providerDto;
+    }
+
+    @Override
+    public DatasetParentReposonseDto toDatasetParentReposonseDto(DatasetGroup group) {
+    DatasetParentReposonseDto dto = new DatasetParentReposonseDto();
+    dto.setDatasetGroupId(group.getId());
+    dto.setProvinceDTO(toProvineDTO(group.getProvince()));
+    dto.setLasted_upload(group.getUpdateAt());
+        dto.setDatasetTypeDto(toDatasetTypeDto(group.getDatasetType()));
+        if(group.getDatasetGroups()!= null){
+            dto.setDatasetChildGroups(group.getDatasetGroups().stream().map(this::toDatasetChildGroupDTO).collect(Collectors.toList()));
+        }
+        dto.setProviderDTO(toProviderDto(group.getProvider()));
+        return dto;
+    }
+private DatasetChildGroupDTO toDatasetChildGroupDTO(DatasetGroup datasetGroup){
+        DatasetChildGroupDTO dto = new DatasetChildGroupDTO();
+        dto.setCommuneDto(toCommuneDTO(datasetGroup.getCommune()));
+        if(datasetGroup.getDatasets()!= null){
+            dto.setDatasetDtoList(datasetGroup.getDatasets().stream()
+                            .filter(dataset -> dataset.getDatasetStatus()==DatasetStatus.APPROVE)
+                    .map(this::toDatasetDto)
+                    .collect(Collectors.toList()));
+        }
+        return dto;
+}
+    public CommuneDTO toCommuneDTO(Commune commune) {
+        if (commune == null) return null;
+
+        CommuneDTO dto = new CommuneDTO();
+        dto.setIdCommune(commune.getIdCommune());
+        dto.setName(commune.getName());
+
+        if (commune.getProvince() != null) {
+            dto.setProvinceId(commune.getProvince().getIdProvince());
+            dto.setProvinceName(commune.getProvince().getName());
+        }
+
+        return dto;
+    }
+
+    private ProvinceDTO toProvineDTO(Province province) {
+        ProvinceDTO provinceDTO = new ProvinceDTO();
+        provinceDTO.setProvinceName(province.getName());
+        provinceDTO.setProvinceId(province.getIdProvince());
+        return provinceDTO;
+    }
+
+    private DatasetDTO toDatasetDto(Dataset dataset) {
+            DatasetDTO datasetDTO = new DatasetDTO();
+            datasetDTO.setDatasetId(dataset.getId());
+            datasetDTO.setVersion(dataset.getVersion());
+            datasetDTO.setTitle(dataset.getTitle());
+            datasetDTO.setDescription(dataset.getDescription());
+            datasetDTO.setDatasetTime(TimeGroup.toDate(dataset.getTimeGroup()));
+            datasetDTO.setProvider(toProviderDto(dataset.getProvider()));
+            datasetDTO.setDatasetPLanWithPricingDTO(dataset.getDatasetPlans().stream().map(this::toDatasetPlanWithPricingDTO).collect(Collectors.toList()));
+            return datasetDTO;
+    }
+
+    private DatasetTypeDto toDatasetTypeDto(DatasetType datasetType) {
+        DatasetTypeDto datasetTypeDto = new DatasetTypeDto();
+        datasetTypeDto.setName(datasetType.getName());
+        datasetTypeDto.setId(datasetType.getId());
+        List<CategoryDto> categoryDtoList = datasetType.getCategories().
+                stream().
+                map(this::toCategoryDTO)
+                .collect(Collectors.toList());
+        datasetTypeDto.setCategoryDtoList(categoryDtoList);
+        return datasetTypeDto;
+    }
+
+    private ModelMapper modelMapper;
+
+    public CategoryDto toCategoryDTO(Category category) {
+        CategoryDto categoryDto = new CategoryDto();
+        categoryDto.setId(category.getId());
+        categoryDto.setName(category.getName());
+        return categoryDto;
+    }
+
+    @Override
+    public DatasetValidationErrorDTO toDatasetValidationDto(DatasetValidationError datasetValidationError) {
+        DatasetValidationErrorDTO datasetValidationErrorDTO = new DatasetValidationErrorDTO();
+        datasetValidationErrorDTO.setErrorCode(datasetValidationError.getErrorCode());
+        datasetValidationErrorDTO.setMessage(datasetValidationError.getMessage());
+    datasetValidationErrorDTO.setColumnName(datasetValidationError.getColumnName());
+    datasetValidationErrorDTO.setRowIndex(datasetValidationError.getRowIndex());
+    return datasetValidationErrorDTO;
+    }
+}

@@ -1,6 +1,6 @@
 package com.example.datasetapi.config;
 
-import com.example.datasetapi.model.UserManager.User;
+import com.example.datasetapi.model.userManager.User;
 import com.example.datasetapi.service.user.TokenServiceImpl;
 import com.example.datasetapi.service.user.UserServiceImpl;
 import com.example.datasetapi.util.JwtUtil;

@@ -1,8 +1,6 @@
 package com.example.datasetapi.dto.response;
 
 //import com.example.datasetapi.model.userManager.Address;
-import com.example.datasetapi.model.Dataset.DatasetGroup;
-import com.example.datasetapi.model.location.Commune;
 import lombok.Data;
 
 import java.time.LocalDateTime;

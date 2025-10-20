@@ -1,9 +1,8 @@
 package com.example.datasetapi.service.feature;
 
-import com.example.datasetapi.model.Dataset.DatasetInformation;
-import com.example.datasetapi.model.Dataset.DatasetType;
-import com.example.datasetapi.model.Dataset.DatasetValidationError;
-import com.example.datasetapi.model.UserManager.Provider;
+import com.example.datasetapi.model.dataset.DatasetInformation;
+import com.example.datasetapi.model.dataset.DatasetValidationError;
+import com.example.datasetapi.model.userManager.Provider;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;

@@ -16,5 +16,7 @@ public class WithdrawResponse {
     private Instant createdAt;
     private Instant updatedAt;
     private int walletId;
+    private String reason;
+    private String proofImageUrl;
 
 }

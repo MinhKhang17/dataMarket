@@ -1,13 +1,13 @@
 package com.example.datasetapi.service.user;
 
-import com.example.datasetapi.Mapper.UserMapper;
+import com.example.datasetapi.mapper.UserMapper;
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.dto.response.ProviderRegistrationResponseDTO;
 import com.example.datasetapi.enums.UserStatus;
 import com.example.datasetapi.enums.VerificationStatus.RegistrationStatus;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
-import com.example.datasetapi.model.UserManager.*;
+import com.example.datasetapi.model.userManager.*;
 import com.example.datasetapi.repository.ProviderRegisReviewHistoryRepo;
 import com.example.datasetapi.repository.ProviderRegistrationRepository;
 import com.example.datasetapi.util.PasswordUtil;

@@ -1,9 +1,7 @@
 package com.example.datasetapi.controller.moderatorController;
 
-import com.example.datasetapi.model.Dataset.Dataset;
-import com.example.datasetapi.model.Dataset.DatasetValidationError;
-import com.example.datasetapi.service.Dataset.DatasetService;
-import com.example.datasetapi.service.Dataset.DatasetValidateService;
+import com.example.datasetapi.service.dataset.DatasetService;
+import com.example.datasetapi.service.dataset.DatasetValidateService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

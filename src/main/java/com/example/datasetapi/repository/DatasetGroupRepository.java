@@ -1,10 +1,9 @@
 package com.example.datasetapi.repository;
 
-import com.example.datasetapi.dto.response.DatasetParentReposonseDto;
 import com.example.datasetapi.enums.Datasets.DatasetGroupType;
-import com.example.datasetapi.model.Dataset.DatasetGroup;
-import com.example.datasetapi.model.Dataset.DatasetType;
-import com.example.datasetapi.model.UserManager.Provider;
+import com.example.datasetapi.model.dataset.DatasetGroup;
+import com.example.datasetapi.model.dataset.DatasetType;
+import com.example.datasetapi.model.userManager.Provider;
 import com.example.datasetapi.model.location.Province;
 import org.springframework.data.jpa.repository.JpaRepository;
 

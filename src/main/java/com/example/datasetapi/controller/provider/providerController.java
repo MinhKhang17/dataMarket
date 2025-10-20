@@ -1,7 +1,7 @@
 package com.example.datasetapi.controller.provider;
 
 import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
-import com.example.datasetapi.service.Dataset.DatasetValidateService;
+import com.example.datasetapi.service.dataset.DatasetValidateService;
 import com.example.datasetapi.service.user.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;

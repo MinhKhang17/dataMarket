@@ -3,9 +3,9 @@ package com.example.datasetapi.service.user;
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
-import com.example.datasetapi.model.Dataset.DownloadToken;
-import com.example.datasetapi.model.UserManager.Token;
-import com.example.datasetapi.model.UserManager.User;
+import com.example.datasetapi.model.dataset.DownloadToken;
+import com.example.datasetapi.model.userManager.Token;
+import com.example.datasetapi.model.userManager.User;
 import com.example.datasetapi.repository.DownloadTokenRepository;
 import com.example.datasetapi.repository.TokenRepository;
 import com.example.datasetapi.util.JwtUtil;
@@ -19,7 +19,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
 import java.util.UUID;
 
 @Service
