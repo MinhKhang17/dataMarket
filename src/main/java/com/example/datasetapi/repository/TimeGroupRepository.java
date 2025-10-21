@@ -1,6 +1,7 @@
 package com.example.datasetapi.repository;
 
 import com.example.datasetapi.dto.response.TimeGroupDTO;
+import com.example.datasetapi.model.Dataset.Dataset;
 import com.example.datasetapi.model.Dataset.DatasetGroup;
 import com.example.datasetapi.model.Dataset.TimeGroup;
 import com.example.datasetapi.model.UserManager.Provider;
@@ -18,5 +19,6 @@ public interface TimeGroupRepository extends JpaRepository<TimeGroup, Long> {
     List<TimeGroup> findAllByDatasetGroupChild(DatasetGroup datasetGroupChild);
 
     List<TimeGroup> findAllByDatasetGroupChildId(long datasetGroupChildId);
+
 }
 

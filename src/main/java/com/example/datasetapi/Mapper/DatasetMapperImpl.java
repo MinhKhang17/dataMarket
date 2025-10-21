@@ -4,6 +4,7 @@ import com.example.datasetapi.config.ModelMapper;
 import com.example.datasetapi.dto.response.*;
 import com.example.datasetapi.dto.service.BuyOnTimeInfoDTO;
 import com.example.datasetapi.dto.service.BuySubInfoDTO;
+import com.example.datasetapi.dto.service.BuyWithGroupDTO;
 import com.example.datasetapi.dto.service.PricingRuleDTO;
 import com.example.datasetapi.enums.Datasets.DatasetStatus;
 import com.example.datasetapi.enums.Datasets.PricingMethod;
@@ -108,8 +109,19 @@ public class DatasetMapperImpl implements DatasetMapper {
                     consumerBuyResponseDTO.setBuySubInfoDTO(toBuySubInfoDTO((ConsumerSubscription)infor));
                 return consumerBuyResponseDTO;
             }
+            case BUY_WITH_TIME_GROUP -> {
+                    ConsumerBuyResponseDTO consumerBuyResponseDTO = new ConsumerBuyResponseDTO();
+                    consumerBuyResponseDTO.setBuyWithGroupDTO(toBuyWithGroupDTO((DownloadToken)infor));
+                    return consumerBuyResponseDTO;
+            }
         }
         return null;
+    }
+
+    public BuyWithGroupDTO toBuyWithGroupDTO(DownloadToken infor) {
+            BuyWithGroupDTO buyWithGroupDTO = new BuyWithGroupDTO();
+            buyWithGroupDTO.setToken(infor.getId().toString());
+            return buyWithGroupDTO;
     }
 
     @Override

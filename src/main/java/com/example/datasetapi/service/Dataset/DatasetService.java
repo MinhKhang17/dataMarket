@@ -6,6 +6,7 @@ import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
 import com.example.datasetapi.dto.response.*;
 import com.example.datasetapi.model.Dataset.Dataset;
 import com.example.datasetapi.model.Dataset.DatasetInformation;
+import com.example.datasetapi.model.Dataset.TimeGroup;
 import com.example.datasetapi.model.UserManager.ConsumerSubscription;
 import com.example.datasetapi.model.UserManager.User;
 import jakarta.servlet.http.HttpServletRequest;
@@ -53,4 +54,8 @@ public interface DatasetService {
     List<TimeGroupDTO> getAllTimeGroupFollowDatasetChildGroup(long datasetChildGroupId);
 
     List<DatasetDTO> findAllDatasetByTimeGroup(long datasetTimeGroupId);
+
+    ConsumerBuyResponseDTO buyWithTimeGroup(long timeGroupId, HttpServletRequest request);
+
+    void saveTimeGroup(TimeGroup timeGroup);
 }

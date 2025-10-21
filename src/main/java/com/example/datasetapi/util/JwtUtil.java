@@ -2,6 +2,7 @@
 
     import com.example.datasetapi.model.Dataset.Dataset;
     import com.example.datasetapi.model.Dataset.DownloadToken;
+    import com.example.datasetapi.model.Dataset.TimeGroup;
     import com.example.datasetapi.model.UserManager.User;
     import com.example.datasetapi.repository.DownloadTokenRepository;
     import io.jsonwebtoken.*;
@@ -54,13 +55,18 @@
                     .compact();
         }
 
-        public DownloadToken generateDowloadToken(User consumer, Dataset dataset, long day,int useAmount) {
+        public DownloadToken generateDowloadToken(User consumer, Dataset dataset, long day, int useAmount, TimeGroup timeGroup) {
             DownloadToken token = new DownloadToken();
             token.setId(UUID.randomUUID());
             token.setConsumer(consumer);
             token.setUse_amount(useAmount);
             token.setExpiresAt(LocalDateTime.now().plusDays(day));
-            token.setDataset(dataset);
+            if(dataset!=null){
+                token.setDataset(dataset);
+            }
+            else{
+                token.setTimeGroup(timeGroup);
+            }
             return downloadTokenRepository.save(token);
         }
 

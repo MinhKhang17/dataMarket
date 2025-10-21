@@ -3,6 +3,7 @@ package com.example.datasetapi.service.Dataset;
 import com.example.datasetapi.dto.request.CheckoutRequestDTO;
 import com.example.datasetapi.dto.request.ConsumerBuyRequestDTO;
 import com.example.datasetapi.dto.response.*;
+import com.example.datasetapi.dto.service.BuyWithGroupDTO;
 import com.example.datasetapi.enums.Datasets.*;
 import com.example.datasetapi.enums.TransferType;
 import com.example.datasetapi.exception.CustomException;
@@ -50,6 +51,10 @@ public class DatasetServiceImpl implements DatasetService {
 
     @Autowired
     private JwtUtil jwtUtil;
+    @Autowired
+    private DatasetPlanRepo datasetPlanRepo;
+    @Autowired
+    private WalletRepository walletRepository;
 
     @Override
     public ResponseEntity<?> getAllAllDataset() {
@@ -458,6 +463,27 @@ private ConsumerSubRepo consumerSubRepo;
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public ConsumerBuyResponseDTO buyWithTimeGroup(long timeGroupId, HttpServletRequest request) {
+        TimeGroup timeGroup = timeGroupRepository.findById(timeGroupId)        .orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.TIME_GROUP_NOT_FOUND));
+
+        double price = timeGroup.getPrice() ;
+
+        User user = userService.findUserById(tokenService.getUserIdFromRequest(request));
+        paymentService.updateWallet(TransferType.TODOWN,price,user.getId(),BuyType.BUY_WITH_TIME_GROUP);
+        DownloadToken downloadToken = jwtUtil.generateDowloadToken(user,null,30,5,timeGroup);
+
+
+        return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.BUY_WITH_TIME_GROUP,downloadToken);
+    }
+
+    @Override
+    public void saveTimeGroup(TimeGroup timeGroup) {
+        timeGroupRepository.save(timeGroup);
+    }
+
+
+
 
     private ConsumerBuyResponseDTO createSubPayment(Dataset dataset, User consumer) {
                 ConsumerSubscription consumerSubscription = consumerSubRepo.findByConsumerAndIsUsing(consumer,true)
@@ -475,7 +501,7 @@ private ConsumerSubRepo consumerSubRepo;
             long newRow = consumerSubscription.getRow_amount() - dataset_row;
 
             consumerSubscription.setRow_amount(newRow);
-        DownloadToken downloadToken = jwtUtil.generateDowloadToken(consumer,dataset,30,10);
+        DownloadToken downloadToken = jwtUtil.generateDowloadToken(consumer,dataset,30,10,null);
             consumer.getDownloadTokens().add(downloadToken);
             userService.saveUser(consumer);
         return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.SUBSCRIPTION,consumerSubRepo.save(consumerSubscription));
@@ -483,7 +509,7 @@ private ConsumerSubRepo consumerSubRepo;
     }
 
     private ConsumerBuyResponseDTO createOneTimePayment(Dataset dataset, DatasetPricing datasetPricing, User consumer) {
-        DownloadToken downloadToken = jwtUtil.generateDowloadToken(consumer,dataset,30,5);
+        DownloadToken downloadToken = jwtUtil.generateDowloadToken(consumer,dataset,30,5,null);
         consumer.getDownloadTokens().add(downloadToken);
         userService.saveUser(consumer);
         return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.ONE_TIME,downloadToken.getId());

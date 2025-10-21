@@ -1,5 +1,6 @@
 package com.example.datasetapi.repository;
 
+import com.example.datasetapi.enums.Datasets.PricingMethod;
 import com.example.datasetapi.model.Dataset.Dataset;
 import com.example.datasetapi.model.Dataset.DatasetPlan;
 import io.micrometer.common.KeyValues;
@@ -16,4 +17,6 @@ public interface DatasetPlanRepo extends JpaRepository<DatasetPlan, Integer> {
     List<DatasetPlan> findALlByDataset(Dataset dataset);
 
     Set<DatasetPlan> findALlByDatasetId(Long datasetId);
+
+    DatasetPlan findByDatasetAndPricingMethod(Dataset dataset, PricingMethod pricingMethod);
 }

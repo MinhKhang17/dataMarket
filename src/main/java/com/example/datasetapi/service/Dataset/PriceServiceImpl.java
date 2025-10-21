@@ -8,7 +8,6 @@ import com.example.datasetapi.enums.Datasets.SubType;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
 import com.example.datasetapi.model.Dataset.*;
-import com.example.datasetapi.model.UserManager.User;
 import com.example.datasetapi.repository.DatasetPlanRepo;
 import com.example.datasetapi.repository.DatasetPricingRepository;
 import com.example.datasetapi.repository.PricingRuleRepo;
@@ -16,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -32,6 +30,8 @@ public class PriceServiceImpl implements  PriceService {
     private DatasetPricingRepository datasetPricingRepository;
     @Autowired
     private DatasetMapper datasetMapper;
+@Autowired
+private DatasetService datasetService;
 
     @Override
     public void createPricingForDataset(Dataset dataset, DatasetInformation datasetInformation) {
@@ -76,7 +76,8 @@ public class PriceServiceImpl implements  PriceService {
         oneTimePlan.setPricingMethod(PricingMethod.ONE_TIME);
         oneTimePlan.setDataset(dataset);
         oneTimePlan.setDatasetPack(datasetPack);
-        oneTimePlan.setDatasetPricingList(calculatePricing(PricingMethod.ONE_TIME, datasetPack, datasetInformation.getRowCount(), oneTimePlan));
+        oneTimePlan.setDatasetPricingList(calculatePricing(PricingMethod.ONE_TIME, datasetPack, datasetInformation.getRowCount(), oneTimePlan,dataset));
+
         datasetPlans.add(oneTimePlan);
 
         // SUBSCRIPTION
@@ -84,7 +85,7 @@ public class PriceServiceImpl implements  PriceService {
         subTypePlan.setPricingMethod(PricingMethod.SUBSCRIPTION);
         subTypePlan.setDataset(dataset);
         subTypePlan.setDatasetPack(datasetPack);
-        subTypePlan.setDatasetPricingList(calculatePricing(PricingMethod.SUBSCRIPTION, datasetPack, datasetInformation.getRowCount(), subTypePlan));
+        subTypePlan.setDatasetPricingList(calculatePricing(PricingMethod.SUBSCRIPTION, datasetPack, datasetInformation.getRowCount(), subTypePlan, dataset));
         datasetPlans.add(subTypePlan);
 
         // API
@@ -92,7 +93,7 @@ public class PriceServiceImpl implements  PriceService {
         apiPlan.setDataset(dataset);
         apiPlan.setPricingMethod(PricingMethod.API);
         apiPlan.setDatasetPack(datasetPack);
-        apiPlan.setDatasetPricingList(calculatePricing(PricingMethod.API, datasetPack, datasetInformation.getRowCount(), apiPlan));
+        apiPlan.setDatasetPricingList(calculatePricing(PricingMethod.API, datasetPack, datasetInformation.getRowCount(), apiPlan, dataset));
         datasetPlans.add(apiPlan);
 
         // 👉 Lưu DatasetPlan sẽ tự cascade xuống Pricing
@@ -100,7 +101,7 @@ public class PriceServiceImpl implements  PriceService {
     }
 
 
-    private Set<DatasetPricing> calculatePricing(PricingMethod pricingMethod, DatasetPack datasetPack, Long rowCount, DatasetPlan plan) {
+    private Set<DatasetPricing> calculatePricing(PricingMethod pricingMethod, DatasetPack datasetPack, Long rowCount, DatasetPlan plan, Dataset dataset) {
         Set<DatasetPricing> list = new HashSet<>();
         if(pricingMethod == PricingMethod.ONE_TIME) {
             DatasetPricing datasetPricing = new DatasetPricing();
@@ -108,7 +109,10 @@ public class PriceServiceImpl implements  PriceService {
             datasetPricing.setPrice(oneTimePricingCal(datasetPack,rowCount));
             datasetPricing.setDatasetPack(datasetPack);
             datasetPricing.setPricingMethod(PricingMethod.ONE_TIME);
+            TimeGroup timeGroup = dataset.getTimeGroup();
+            timeGroup.setPrice(timeGroup.getPrice()+datasetPricing.getPrice());
             list.add(datasetPricing);
+            datasetService.saveTimeGroup(timeGroup);
             return list;
         }
        else if(pricingMethod == PricingMethod.SUBSCRIPTION){

@@ -65,7 +65,8 @@ public enum ErrorCode {
     , EXISTS_SUB("EXISTS_SUB","User đã mua gói không thể mua lại" ),
     SUB_NOT_FOUND("SUB_NOT_FOUND","Không tìm thấy gói thuê bao" ),
     SUB_ROW_NOT_ENOUGH("SUB_ROW_NOT_ENOUGH","Số row còn lại không đủ" ),
-    SUB_EXPIRED("SUB_EXPIRED","Gói thuê bao đã hết hạn" );
+    SUB_EXPIRED("SUB_EXPIRED","Gói thuê bao đã hết hạn" ),
+    TIME_GROUP_NOT_FOUND("TIME_GROUP_NOT_FOUND","Không tìm thấy time group" );
     private final String code;
     private final String message;
 

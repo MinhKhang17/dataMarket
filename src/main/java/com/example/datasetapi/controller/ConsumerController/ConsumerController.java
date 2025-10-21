@@ -58,4 +58,9 @@ public class ConsumerController {
     public ResponseEntity<ApiResponse> dowloadKey(@RequestParam long datasetId, HttpServletRequest request){
         return ResponseEntity.ok().body(new ApiResponse(true,"Dowload token ",null));
     }
+    @PostMapping
+    public ResponseEntity<ApiResponse> BuyGroup(@RequestParam long timeGroupId, HttpServletRequest request){
+        ConsumerBuyResponseDTO consumerBuyResponseDTO = datasetService.buyWithTimeGroup(timeGroupId,request);
+        return ResponseEntity.ok().body(new ApiResponse(true,"Dowload token ",consumerBuyResponseDTO));
+    }
 }

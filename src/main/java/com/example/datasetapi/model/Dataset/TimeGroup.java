@@ -32,6 +32,9 @@ public class TimeGroup {
     @JsonIgnore
     private List<Dataset> datasets = new ArrayList<>();
 
+    @Column
+    private double price =0.0;
+
     public static TimeGroup fromDate(LocalDate date) {
         TimeGroup tg = new TimeGroup();
         tg.setYear(date.getYear());
