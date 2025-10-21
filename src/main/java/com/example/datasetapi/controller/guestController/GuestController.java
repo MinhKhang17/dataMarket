@@ -2,9 +2,12 @@ package com.example.datasetapi.controller.guestController;
 
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.dto.response.DatasetParentReposonseDto;
+import com.example.datasetapi.dto.service.PricingRuleDTO;
 import com.example.datasetapi.model.Dataset.DatasetGroup;
 import com.example.datasetapi.service.Dataset.DatasetService;
+import com.example.datasetapi.service.Dataset.PriceService;
 import jakarta.servlet.http.HttpServletRequest;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +22,8 @@ import java.util.List;
 public class GuestController {
     @Autowired
     private DatasetService datasetService;
+    @Autowired
+    private PriceService priceService;
     @GetMapping("dataset/group/get")
     public ResponseEntity<ApiResponse> getDataset(@RequestParam("id") long datasetGroupId, HttpServletRequest request) {
         DatasetParentReposonseDto datasetParentReposonseDtos = datasetService.getDatasetParentWithId(datasetGroupId);
@@ -28,5 +33,10 @@ public class GuestController {
     public ResponseEntity<ApiResponse> getDatasetDetail(@RequestParam("id") long datasetId, HttpServletRequest request) {
         DatasetParentReposonseDto datasetParentReposonseDto = datasetService.getDatasetParentDetailByDatasetId(datasetId);
         return ResponseEntity.ok().body(new ApiResponse(true,"load success",datasetParentReposonseDto));
+    }
+    @GetMapping("/sub/get")
+    public ResponseEntity<ApiResponse> getDatasetSub() {
+        List<PricingRuleDTO> subPacks = priceService.getAllSubPack();
+        return  ResponseEntity.ok().body(new ApiResponse(true,"load success",subPacks));
     }
 }

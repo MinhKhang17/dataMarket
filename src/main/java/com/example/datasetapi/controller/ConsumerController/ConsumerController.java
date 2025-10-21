@@ -5,6 +5,7 @@ import com.example.datasetapi.dto.request.ConsumerBuyRequestDTO;
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.dto.response.CheckoutResponseDTO;
 import com.example.datasetapi.dto.response.ConsumerBuyResponseDTO;
+import com.example.datasetapi.dto.response.ConsumerSubResponseDTO;
 import com.example.datasetapi.enums.Datasets.SubType;
 import com.example.datasetapi.model.Dataset.Dataset;
 import com.example.datasetapi.model.UserManager.ConsumerSubscription;
@@ -36,15 +37,15 @@ public class ConsumerController {
         return ResponseEntity.ok().body(new ApiResponse(true,"buy loading success",consumerBuyResponseDTO));
     }
 
-    @PostMapping("dataset/SubRegister")
-    public ResponseEntity<ApiResponse> buySub(@ModelAttribute long datasetSubPlanId, HttpServletRequest request){
+    @PostMapping("/subRegister")
+    public ResponseEntity<ApiResponse> buySub(@RequestParam long datasetSubPlanId, HttpServletRequest request){
         ConsumerBuyResponseDTO consumerBuyResponseDTO = datasetService.subRegister(datasetSubPlanId,request);
         return ResponseEntity.ok().body(new ApiResponse(true,"sub buy loading success",consumerBuyResponseDTO));
     }
 
     @GetMapping("sub/mySub")
-    public ResponseEntity<ApiResponse> subMySub(@ModelAttribute long datasetSubPlanId, HttpServletRequest request){
-        List<ConsumerSubscription> consumerSubscriptions = consumerService.getConsumerSubscriptions(request);
+    public ResponseEntity<ApiResponse> subMySub(HttpServletRequest request){
+        List<ConsumerSubResponseDTO> consumerSubscriptions = consumerService.getConsumerSubscriptions(request);
     return ResponseEntity.ok().body(new ApiResponse(true,"sub loading success",consumerSubscriptions));
     }
 

@@ -3,6 +3,7 @@ package com.example.datasetapi.service.Dataset;
 import com.example.datasetapi.dto.request.CheckoutRequestDTO;
 import com.example.datasetapi.dto.request.ConsumerBuyRequestDTO;
 import com.example.datasetapi.dto.response.*;
+import com.example.datasetapi.dto.service.PricingRuleDTO;
 import com.example.datasetapi.enums.Datasets.*;
 import com.example.datasetapi.enums.TransferType;
 import com.example.datasetapi.exception.CustomException;
@@ -386,7 +387,7 @@ private ConsumerSubRepo consumerSubRepo;
                return consumerBuyResponseDTO;
             }
             case SUBSCRIPTION -> {
-               ConsumerBuyResponseDTO consumerBuyResponseDTO =  createSubPayment(dataset,datasetPricing,consumer);
+               ConsumerBuyResponseDTO consumerBuyResponseDTO =  createSubPayment(dataset,consumer);
                 return consumerBuyResponseDTO;
             }
         }
@@ -444,7 +445,9 @@ private ConsumerSubRepo consumerSubRepo;
         return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.SUBSCRIPTION,consumerSubRepo.save(consumerSubscription));
     }
 
-    private ConsumerBuyResponseDTO createSubPayment(Dataset dataset, DatasetPricing datasetPricing, User consumer) {
+
+
+    private ConsumerBuyResponseDTO createSubPayment(Dataset dataset, User consumer) {
                 ConsumerSubscription consumerSubscription = consumerSubRepo.findByConsumerAndIsUsing(consumer,true)
                         .orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.SUB_NOT_FOUND));
             long dataset_row = dataset.getDatasetInformation().getRowCount();
@@ -467,8 +470,7 @@ private ConsumerSubRepo consumerSubRepo;
 
     private ConsumerBuyResponseDTO createOneTimePayment(Dataset dataset, DatasetPricing datasetPricing, User consumer) {
         DownloadToken downloadToken = jwtUtil.generateDowloadToken(consumer,dataset,30);
-        ConsumerBuyResponseDTO consumerBuyResponseDTO = datasetMapper.toConsumerBuyResponseDTO(PricingMethod.ONE_TIME,downloadToken.getId());
-        return consumerBuyResponseDTO;
+        return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.ONE_TIME,downloadToken.getId());
     }
 
 

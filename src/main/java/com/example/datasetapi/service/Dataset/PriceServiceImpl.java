@@ -1,5 +1,7 @@
 package com.example.datasetapi.service.Dataset;
 
+import com.example.datasetapi.Mapper.DatasetMapper;
+import com.example.datasetapi.dto.service.PricingRuleDTO;
 import com.example.datasetapi.enums.Datasets.DatasetPack;
 import com.example.datasetapi.enums.Datasets.PricingMethod;
 import com.example.datasetapi.enums.Datasets.SubType;
@@ -18,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class PriceServiceImpl implements  PriceService {
@@ -27,6 +30,8 @@ public class PriceServiceImpl implements  PriceService {
     private DatasetPlanRepo datasetPlanRepo;
     @Autowired
     private DatasetPricingRepository datasetPricingRepository;
+    @Autowired
+    private DatasetMapper datasetMapper;
 
     @Override
     public void createPricingForDataset(Dataset dataset, DatasetInformation datasetInformation) {
@@ -52,6 +57,14 @@ public class PriceServiceImpl implements  PriceService {
     @Override
     public PricingRule findSubPricingRuleById(long pricingSubRuleId) {
         return pricingRuleRepo.findByMethodAndId(PricingMethod.SUBSCRIPTION,pricingSubRuleId).orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.RuleNotFound));
+    }
+
+    @Override
+    public List<PricingRuleDTO> getAllSubPack() {
+        return pricingRuleRepo.findAllByMethod(PricingMethod.SUBSCRIPTION)
+                .stream()
+                .map(datasetMapper::toPricingRuleDTO)
+                .collect(Collectors.toList());
     }
 
 
