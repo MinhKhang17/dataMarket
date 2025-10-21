@@ -7,6 +7,7 @@ import com.example.datasetapi.enums.Datasets.FileExtension;
 import com.example.datasetapi.model.UserManager.Provider;
 import com.example.datasetapi.model.location.Commune;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -66,6 +67,8 @@ private LocalDateTime createAt = LocalDateTime.now();
     private LocalDateTime updateAt = LocalDateTime.now();
 @Column
 private LocalDate dataset_time;
-@OneToOne(cascade =  CascadeType.ALL)
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     private Dataset dataset;
+
 }

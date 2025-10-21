@@ -1,6 +1,7 @@
 package com.example.datasetapi.model.Dataset;
 
 import com.example.datasetapi.model.UserManager.Provider;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -27,7 +28,8 @@ public class TimeGroup {
     @JoinColumn(name = "provider_id")
     private Provider provider;
 
-    @OneToMany(mappedBy = "timeGroup", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "timeGroup", orphanRemoval = true)
+    @JsonIgnore
     private List<Dataset> datasets = new ArrayList<>();
 
     public static TimeGroup fromDate(LocalDate date) {

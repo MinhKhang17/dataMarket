@@ -22,7 +22,7 @@ public class DownloadToken {
 
     @ManyToOne
     @NotNull
-    private User user;
+    private User consumer;
 
     @ManyToOne
     @NotNull
@@ -34,4 +34,5 @@ public class DownloadToken {
     private LocalDateTime expiresAt;
 
     private LocalDateTime createdAt =LocalDateTime.now();
+
 }

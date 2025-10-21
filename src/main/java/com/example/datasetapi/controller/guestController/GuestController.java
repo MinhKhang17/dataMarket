@@ -39,4 +39,5 @@ public class GuestController {
         List<PricingRuleDTO> subPacks = priceService.getAllSubPack();
         return  ResponseEntity.ok().body(new ApiResponse(true,"load success",subPacks));
     }
+
 }

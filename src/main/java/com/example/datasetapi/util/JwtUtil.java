@@ -54,12 +54,13 @@
                     .compact();
         }
 
-        public DownloadToken generateDowloadToken(User user, Dataset dataset, long day) {
+        public DownloadToken generateDowloadToken(User consumer, Dataset dataset, long day,int useAmount) {
             DownloadToken token = new DownloadToken();
             token.setId(UUID.randomUUID());
-            token.setUser(user);
-            token.setUse_amount(5);
+            token.setConsumer(consumer);
+            token.setUse_amount(useAmount);
             token.setExpiresAt(LocalDateTime.now().plusDays(day));
+            token.setDataset(dataset);
             return downloadTokenRepository.save(token);
         }
 

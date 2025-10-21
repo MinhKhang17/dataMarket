@@ -307,7 +307,6 @@ private WalletRepository walletRepository;
 
     private void createDatasetDemo() {
         DatasetGroup datasetGroup = new DatasetGroup();
-        datasetGroup.setProvider(providerRepository.findById(4L).get());
         datasetGroup.setDatasetType(datasetTypeRepository.getOne(1L));
 
         Dataset dataset = new Dataset();

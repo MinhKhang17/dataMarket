@@ -10,4 +10,5 @@ public class BuySubInfoDTO {
     private LocalDateTime expiredDay;
     private long rowLimit;
     private SubType subType;
+    private String dowloadToken;
 }

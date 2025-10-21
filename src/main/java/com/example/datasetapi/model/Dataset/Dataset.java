@@ -3,6 +3,7 @@ package com.example.datasetapi.model.Dataset;
 import com.example.datasetapi.enums.Datasets.DatasetPack;
 import com.example.datasetapi.enums.Datasets.DatasetStatus;
 import com.example.datasetapi.model.UserManager.Provider;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
@@ -48,18 +49,20 @@ private int version;
 @Column
 private String title;
 
-@ManyToOne(cascade = CascadeType.ALL)
-@JsonIgnore
-@JoinColumn(name = "dataset_group_id")
-private DatasetGroup datasetChildGroup;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnore
+    @JoinColumn(name = "dataset_group_id")
+    private DatasetGroup datasetChildGroup;
 
-@ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnore
     private Provider provider;
 @Column
     @Enumerated(EnumType.STRING)
     private DatasetPack datasetPack=DatasetPack.UNDETERMINED;
 
-@ManyToOne(fetch = FetchType.LAZY,cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnore
     @JoinColumn(name = "time_group_id")
     private TimeGroup timeGroup;
 
@@ -68,6 +71,5 @@ private DatasetGroup datasetChildGroup;
     @JsonManagedReference  // Phía parent - sẽ serialize
     private List<DatasetPlan> datasetPlans = new ArrayList<>();
 
-    @OneToOne
-    private DatasetInformation datasetInformation;
+    private long row_count;
 }

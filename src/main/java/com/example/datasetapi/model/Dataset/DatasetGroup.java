@@ -33,9 +33,9 @@ public class DatasetGroup {
     @JoinColumn(name = "dataset_type_id")
     private DatasetType datasetType;
 
-    @ManyToOne (fetch = FetchType.LAZY)
-    @JoinColumn(name = "provider_id")
-    private Provider provider;
+//    @ManyToOne (fetch = FetchType.LAZY)
+//    @JoinColumn(name = "provider_id")
+//    private Provider provider;
 
     @OneToMany(cascade = CascadeType.ALL)
     private List<Dataset> datasets = new ArrayList<Dataset>();

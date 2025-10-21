@@ -51,11 +51,9 @@ public class DatasetMapperImpl implements DatasetMapper {
                     .map(this::toDatasetPlanWithPricingDTO)
                     .collect(Collectors.toList()));
 
-        System.out.println("empty roi");
         if(dataset.getTimeGroup()!=null){
             datasetDTO.setDatasetTime(TimeGroup.toDate(dataset.getTimeGroup()));
         }
-        System.out.println("time group bi null");
         datasetDTO.setProvider(toProviderDto(dataset.getProvider()));
         datasetDTO.setTitle(dataset.getTitle());
         datasetDTO.setTitle(dataset.getDescription());
@@ -143,11 +141,22 @@ public class DatasetMapperImpl implements DatasetMapper {
             return pricingRuleDTO;
     }
 
+    @Override
+    public TimeGroupDTO toTimeGroupDTO(TimeGroup timeGroup) {
+        TimeGroupDTO timeGroupDTO = new TimeGroupDTO();
+       timeGroupDTO.setTimeGroupId(timeGroup.getId());
+        timeGroupDTO.setDay(timeGroup.getDay());
+        timeGroupDTO.setMonth(timeGroup.getMonth());
+        timeGroupDTO.setYear(timeGroup.getYear());
+        return timeGroupDTO;
+    }
+
     private BuySubInfoDTO toBuySubInfoDTO(ConsumerSubscription infor) {
         BuySubInfoDTO buySubInfoDTO = new BuySubInfoDTO();
         buySubInfoDTO.setSubType(infor.getSubType());
     buySubInfoDTO.setRowLimit(infor.getRow_amount());
     buySubInfoDTO.setExpiredDay(infor.getExpiresAt());
+
     return buySubInfoDTO;
     }
 
@@ -200,7 +209,6 @@ public class DatasetMapperImpl implements DatasetMapper {
         if(group.getDatasetGroups()!= null){
             dto.setDatasetChildGroups(group.getDatasetGroups().stream().map(this::toDatasetChildGroupDTO).collect(Collectors.toList()));
         }
-        dto.setProviderDTO(toProviderDto(group.getProvider()));
         return dto;
     }
 private DatasetChildGroupDTO toDatasetChildGroupDTO(DatasetGroup datasetGroup){
