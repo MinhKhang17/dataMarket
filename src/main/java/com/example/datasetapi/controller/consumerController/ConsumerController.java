@@ -22,6 +22,7 @@ public class ConsumerController {
     private DatasetService datasetService;
     @Autowired
     private ConsumerService consumerService;
+
     @PostMapping("dataset/checkout")
     public ResponseEntity<ApiResponse> checkout(@ModelAttribute CheckoutRequestDTO checkoutRequestDTO, HttpServletRequest request){
         CheckoutResponseDTO checkoutResponseDTO = datasetService.checkoutDatasetPayment(checkoutRequestDTO,request);
@@ -35,19 +36,19 @@ public class ConsumerController {
     }
 
     @PostMapping("dataset/SubRegister")
-    public ResponseEntity<ApiResponse> buySub(@ModelAttribute long datasetSubPlanId, HttpServletRequest request){
+    public ResponseEntity<ApiResponse> buySub(@RequestParam long datasetSubPlanId, HttpServletRequest request){
         ConsumerBuyResponseDTO consumerBuyResponseDTO = datasetService.subRegister(datasetSubPlanId,request);
         return ResponseEntity.ok().body(new ApiResponse(true,"sub buy loading success",consumerBuyResponseDTO));
     }
 
     @GetMapping("sub/mySub")
-    public ResponseEntity<ApiResponse> subMySub(@ModelAttribute long datasetSubPlanId, HttpServletRequest request){
+    public ResponseEntity<ApiResponse> subMySub(HttpServletRequest request){
         List<ConsumerSubscription> consumerSubscriptions = consumerService.getConsumerSubscriptions(request);
     return ResponseEntity.ok().body(new ApiResponse(true,"sub loading success",consumerSubscriptions));
     }
 
     @PostMapping("sub/select")
-    public ResponseEntity<ApiResponse> selectSub(@ModelAttribute long consumerSubId, HttpServletRequest request){
+    public ResponseEntity<ApiResponse> selectSub(@RequestParam long consumerSubId, HttpServletRequest request){
         ConsumerBuyResponseDTO consumerBuyResponseDTO = datasetService.selectSubPack(consumerSubId,request);
         return ResponseEntity.ok().body(new ApiResponse(true,"sub selecting success",consumerBuyResponseDTO));
     }

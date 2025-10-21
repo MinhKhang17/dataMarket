@@ -79,18 +79,18 @@ public class DatasetServiceImpl implements DatasetService {
     private ReviewHistoryRepository reviewHistoryRepository;
     @Autowired
     private DatasetMapper datasetMapper;
-@Autowired
-private PriceService priceService;
-@Autowired
-private CommuneRepository communeRepository;
-@Autowired
-TimeGroupRepository timeGroupRepository;
-@Autowired
-private PaymentService paymentService;
-@Autowired
-private  DatasetPricingRepository datasetPricingRepository;
-@Autowired
-private ConsumerSubRepo consumerSubRepo;
+    @Autowired
+    private PriceService priceService;
+    @Autowired
+    private CommuneRepository communeRepository;
+    @Autowired
+    TimeGroupRepository timeGroupRepository;
+    @Autowired
+    private PaymentService paymentService;
+    @Autowired
+    private  DatasetPricingRepository datasetPricingRepository;
+    @Autowired
+    private ConsumerSubRepo consumerSubRepo;
 
     @Value("${aws.bucket.name}")
     private String BUCKET_NAME;
