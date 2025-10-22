@@ -31,8 +31,5 @@ public class DatasetController {
         return datasetService.getAllDatasetParent();
     }
 
-    @GetMapping("/getDataset")
-    public ResponseEntity<ApiResponse> getDataset(@RequestParam long dataset_time_Group_id){
-        return ResponseEntity.ok().body(new ApiResponse(true,"load success",datasetService.findAllDatasetByTimeGroup(dataset_time_Group_id)));
-    }
+
 }

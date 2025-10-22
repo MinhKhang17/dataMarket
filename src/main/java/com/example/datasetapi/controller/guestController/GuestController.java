@@ -43,4 +43,8 @@ public class GuestController {
     public ResponseEntity<ApiResponse> getDatasetTime(@RequestParam long dataset_child_group_id){
         return ResponseEntity.ok().body(new ApiResponse(true,"load success",datasetService.getAllTimeGroupFollowDatasetChildGroup(dataset_child_group_id))) ;
     }
+    @GetMapping("/getDatasets")
+    public ResponseEntity<ApiResponse> getDataset(@RequestParam long dataset_time_Group_id){
+        return ResponseEntity.ok().body(new ApiResponse(true,"load success",datasetService.findAllDatasetByTimeGroup(dataset_time_Group_id)));
+    }
 }
