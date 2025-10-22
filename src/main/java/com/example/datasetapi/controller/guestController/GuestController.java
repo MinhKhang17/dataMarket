@@ -39,5 +39,8 @@ public class GuestController {
         List<PricingRuleDTO> subPacks = priceService.getAllSubPack();
         return  ResponseEntity.ok().body(new ApiResponse(true,"load success",subPacks));
     }
-
+    @GetMapping("/getTime")
+    public ResponseEntity<ApiResponse> getDatasetTime(@RequestParam long dataset_child_group_id){
+        return ResponseEntity.ok().body(new ApiResponse(true,"load success",datasetService.getAllTimeGroupFollowDatasetChildGroup(dataset_child_group_id))) ;
+    }
 }

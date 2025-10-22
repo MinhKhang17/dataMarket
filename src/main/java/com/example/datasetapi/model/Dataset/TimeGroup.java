@@ -19,7 +19,6 @@ public class TimeGroup {
 
     private int year;
     private int month;
-    private int day;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "dataset_group_child_id")
@@ -41,10 +40,9 @@ public class TimeGroup {
         TimeGroup tg = new TimeGroup();
         tg.setYear(date.getYear());
         tg.setMonth(date.getMonthValue());
-        tg.setDay(date.getDayOfMonth());
         return tg;
     }
     public static LocalDate toDate(TimeGroup tg) {
-        return LocalDate.of(tg.getYear(), tg.getMonth(), tg.getDay());
+        return LocalDate.of(tg.getYear(), tg.getMonth(), 1);
     }
 }

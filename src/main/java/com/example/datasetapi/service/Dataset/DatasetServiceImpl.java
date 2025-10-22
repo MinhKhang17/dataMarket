@@ -47,6 +47,10 @@ import org.slf4j.Logger;
 @Slf4j
 @Service
 public class DatasetServiceImpl implements DatasetService {
+    @Override
+    public ConsumerBuyResponseDTO buyGroupByAPI(long timeGroupId, HttpServletRequest request) {
+        return null;
+    }
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -164,10 +168,9 @@ private ConsumerSubRepo consumerSubRepo;
             //  Tìm hoặc tạo TimeGroup
             LocalDate datasetDate = DateUtil.parseToLocalDate(request.getDataset_time());
             TimeGroup timeGroup = timeGroupRepository
-                    .findByYearAndMonthAndDayAndDatasetGroupChildAndProvider(
+                    .findByYearAndMonthAndDatasetGroupChildAndProvider(
                             datasetDate.getYear(),
                             datasetDate.getMonthValue(),
-                            datasetDate.getDayOfMonth(),
                             childGroup,
                             provider
                     )

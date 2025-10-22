@@ -13,14 +13,13 @@ import java.util.Optional;
 
 @Repository
 public interface TimeGroupRepository extends JpaRepository<TimeGroup, Long> {
-    Optional<TimeGroup> findByYearAndMonthAndDayAndDatasetGroupChildAndProvider(
-            int year, int month, int day, DatasetGroup datasetGroupChild, Provider provider
-    );
+
 
 
     List<TimeGroup> findAllByDatasetGroupChild(DatasetGroup datasetGroupChild);
 
     List<TimeGroup> findAllByDatasetGroupChildId(long datasetGroupChildId);
 
+    Optional<TimeGroup> findByYearAndMonthAndDatasetGroupChildAndProvider(int year, int monthValue, DatasetGroup childGroup, Provider provider);
 }
 

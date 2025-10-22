@@ -114,7 +114,7 @@ public class DatasetMapperImpl implements DatasetMapper {
             }
             case API -> {
                 ConsumerBuyResponseDTO consumerBuyResponseDTO = new ConsumerBuyResponseDTO();
-                consumerBuyResponseDTO.setBuyApiInforDTO(toBuyApiInfoDTO((DownloadToken)infor);
+                consumerBuyResponseDTO.setBuyApiInforDTO(toBuyApiInfoDTO((DownloadToken)infor));
             }
         }
         return null;
@@ -165,7 +165,6 @@ public class DatasetMapperImpl implements DatasetMapper {
     public TimeGroupDTO toTimeGroupDTO(TimeGroup timeGroup) {
         TimeGroupDTO timeGroupDTO = new TimeGroupDTO();
        timeGroupDTO.setTimeGroupId(timeGroup.getId());
-        timeGroupDTO.setDay(timeGroup.getDay());
         timeGroupDTO.setMonth(timeGroup.getMonth());
         timeGroupDTO.setYear(timeGroup.getYear());
         return timeGroupDTO;
@@ -233,6 +232,7 @@ public class DatasetMapperImpl implements DatasetMapper {
     }
 private DatasetChildGroupDTO toDatasetChildGroupDTO(DatasetGroup datasetGroup){
         DatasetChildGroupDTO dto = new DatasetChildGroupDTO();
+        dto.setDatasetChildGroupId(datasetGroup.getId());
         dto.setCommuneDto(toCommuneDTO(datasetGroup.getCommune()));
         if(datasetGroup.getDatasets()!= null){
             dto.setDatasetDtoList(datasetGroup.getDatasets().stream()
