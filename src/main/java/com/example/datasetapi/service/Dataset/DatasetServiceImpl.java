@@ -48,7 +48,6 @@ import org.slf4j.Logger;
 @Service
 public class DatasetServiceImpl implements DatasetService {
 
-
     @Autowired
     private JwtUtil jwtUtil;
     @Autowired
@@ -90,7 +89,7 @@ private PriceService priceService;
 @Autowired
 private CommuneRepository communeRepository;
 @Autowired
-TimeGroupRepository timeGroupRepository;
+private TimeGroupRepository timeGroupRepository;
 @Autowired
 private PaymentService paymentService;
 @Autowired
@@ -135,13 +134,13 @@ private ConsumerSubRepo consumerSubRepo;
         try {
             logger.info("=== Start checking and creating Dataset Group and Dataset ===");
 
-            // 🧩 Lấy thông tin commune và provider
+            //  Lấy thông tin commune và provider
             Commune commune = communeRepository.findById(request.getCommune_id())
                     .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.COMMUNE_NOT_FOUND));
 
             Provider provider = userService.findProviderById(providerId);
 
-            // 🧩 Tìm hoặc tạo DatasetGroup parent
+            //  Tìm hoặc tạo DatasetGroup parent
             DatasetGroup parentGroup = datasetGroupRepository
                     .findByDatasetGroupTypeAndProvinceAndDatasetType(
                             DatasetGroupType.PARENT, commune.getProvince(), datasetInformation.getDatasetType()
@@ -150,19 +149,19 @@ private ConsumerSubRepo consumerSubRepo;
 
             parentGroup.setUpdateAt(LocalDateTime.now());
 
-            // 🧩 Tìm hoặc tạo DatasetGroup con (theo commune)
+            //  Tìm hoặc tạo DatasetGroup con (theo commune)
             DatasetGroup childGroup = parentGroup.getDatasetGroups().stream()
                     .filter(group -> commune.equals(group.getCommune()))
                     .findFirst()
                     .orElseGet(() -> createChildDatasetGroup(parentGroup, commune, datasetInformation));
 
-            // 🧩 Tạo dataset mới
+            //  Tạo dataset mới
             Dataset dataset = new Dataset();
             dataset.setDatasetStatus(DatasetStatus.PENDING);
             dataset.setDatasetChildGroup(childGroup);
             childGroup.getDatasets().add(dataset);
 
-            // 🧩 Tìm hoặc tạo TimeGroup
+            //  Tìm hoặc tạo TimeGroup
             LocalDate datasetDate = DateUtil.parseToLocalDate(request.getDataset_time());
             TimeGroup timeGroup = timeGroupRepository
                     .findByYearAndMonthAndDayAndDatasetGroupChildAndProvider(
@@ -174,7 +173,8 @@ private ConsumerSubRepo consumerSubRepo;
                     )
                     .orElseGet(() -> createTimeGroup(datasetDate, childGroup, provider));
 
-            // 🧩 Gán thông tin dataset
+            //  Gán thông tin dataset
+            timeGroup.setRow_Count(timeGroup.getRow_Count()+datasetInformation.getRowCount());
             dataset.setTimeGroup(timeGroup);
             dataset.setDescription(request.getDescription());
             dataset.setTitle(request.getTitle());
@@ -184,12 +184,12 @@ private ConsumerSubRepo consumerSubRepo;
             datasetInformation.setDataset(dataset);
             datasetInformation.setDataset_time(datasetDate);
 
-            // 🧩 Upload file tạm
+            // Upload file tạm
             File file = new File(datasetInformation.getFile_url());
             uploadCSVFileToPendingFolder(file, dataset);
             logger.info("✅ Upload CSV file thành công cho dataset: {}", dataset.getTitle());
 
-            // 🧩 Lưu dữ liệu
+            //  Lưu dữ liệu
             datasetGroupRepository.save(childGroup);
             datasetGroupRepository.save(parentGroup);
             timeGroupRepository.save(timeGroup);
@@ -199,7 +199,7 @@ private ConsumerSubRepo consumerSubRepo;
 
             logger.info("=== Completed checkExitsAndCreateDatasetGroupAndDateset ===");
         } catch (Exception e) {
-            logger.error("❌ Error while processing dataset creation: {}", e.getMessage(), e);
+            logger.error(" Error while processing dataset creation: {}", e.getMessage(), e);
             throw new RuntimeException("Error while creating dataset and groups", e);
         }
     }
@@ -468,7 +468,7 @@ private ConsumerSubRepo consumerSubRepo;
         TimeGroup timeGroup = timeGroupRepository.findById(timeGroupId)        .orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.TIME_GROUP_NOT_FOUND));
 
         double price = timeGroup.getPrice() ;
-
+        System.out.println(price);
         User user = userService.findUserById(tokenService.getUserIdFromRequest(request));
         paymentService.updateWallet(TransferType.TODOWN,price,user.getId(),BuyType.BUY_WITH_TIME_GROUP);
         DownloadToken downloadToken = jwtUtil.generateDowloadToken(user,null,30,5,timeGroup);
@@ -498,9 +498,8 @@ private ConsumerSubRepo consumerSubRepo;
                 throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.SUB_EXPIRED);
             }
 
-            long newRow = consumerSubscription.getRow_amount() - dataset_row;
+            buyWithSubProcess(consumerSubscription,dataset_row);
 
-            consumerSubscription.setRow_amount(newRow);
         DownloadToken downloadToken = jwtUtil.generateDowloadToken(consumer,dataset,30,10,null);
             consumer.getDownloadTokens().add(downloadToken);
             userService.saveUser(consumer);
@@ -536,7 +535,35 @@ private ConsumerSubRepo consumerSubRepo;
     }
 
 
+    @Override
+    public ConsumerBuyResponseDTO buyTimeGroupWithSub(long timeGroupId, HttpServletRequest request) {
+        TimeGroup timeGroup = timeGroupRepository.findById(timeGroupId).orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.TIME_GROUP_NOT_FOUND));
 
+        User consumer = userService.findUserById(tokenService.getUserIdFromRequest(request));
+
+        ConsumerSubscription consumerSubscription = consumerSubRepo.findByConsumerAndIsUsing(consumer,true).orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.SUB_NOT_FOUND));
+
+        long timeGroupRowCount = timeGroup.getRow_Count();
+
+        buyWithSubProcess(consumerSubscription,timeGroupRowCount);
+
+        DownloadToken downloadToken = jwtUtil.generateDowloadToken(consumer,null,30,10,timeGroup);
+
+        return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.BUY_WITH_TIME_GROUP,downloadToken);
+    }
+
+
+
+
+    public void buyWithSubProcess (ConsumerSubscription consumerSubscription,long rowCount){
+            long rowCountConsumer = consumerSubscription.getRow_amount();
+
+            if(rowCountConsumer<rowCount){
+                throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.SUB_ROW_NOT_ENOUGH);
+            }
+            consumerSubscription.setRow_amount(rowCountConsumer-rowCount);
+            consumerSubRepo.save(consumerSubscription);
+    }
 //    @Transactional
 //    @Override
 //    public ResponseEntity<?> dowloadDataset(String dowloadToken) {

@@ -6,10 +6,12 @@ import com.example.datasetapi.model.Dataset.DatasetGroup;
 import com.example.datasetapi.model.Dataset.TimeGroup;
 import com.example.datasetapi.model.UserManager.Provider;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public interface TimeGroupRepository extends JpaRepository<TimeGroup, Long> {
     Optional<TimeGroup> findByYearAndMonthAndDayAndDatasetGroupChildAndProvider(
             int year, int month, int day, DatasetGroup datasetGroupChild, Provider provider

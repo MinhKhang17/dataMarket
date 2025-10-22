@@ -86,6 +86,7 @@ private WalletRepository walletRepository;
         createProviderRegistration();
 
 
+
         createCategory();
 
 

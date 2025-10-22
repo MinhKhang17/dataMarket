@@ -11,6 +11,7 @@ import java.util.List;
 
 @Entity
 @Data
+@Table
 public class TimeGroup {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,7 +35,8 @@ public class TimeGroup {
 
     @Column
     private double price =0.0;
-
+    @Column
+    private long Row_Count;
     public static TimeGroup fromDate(LocalDate date) {
         TimeGroup tg = new TimeGroup();
         tg.setYear(date.getYear());

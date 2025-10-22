@@ -58,4 +58,8 @@ public interface DatasetService {
     ConsumerBuyResponseDTO buyWithTimeGroup(long timeGroupId, HttpServletRequest request);
 
     void saveTimeGroup(TimeGroup timeGroup);
+
+    ConsumerBuyResponseDTO buyTimeGroupWithSub(long timeGroupId, HttpServletRequest request);
+
+    ConsumerBuyResponseDTO buyGroupByAPI(long timeGroupId, HttpServletRequest request);
 }

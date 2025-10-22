@@ -2,10 +2,7 @@ package com.example.datasetapi.Mapper;
 
 import com.example.datasetapi.config.ModelMapper;
 import com.example.datasetapi.dto.response.*;
-import com.example.datasetapi.dto.service.BuyOnTimeInfoDTO;
-import com.example.datasetapi.dto.service.BuySubInfoDTO;
-import com.example.datasetapi.dto.service.BuyWithGroupDTO;
-import com.example.datasetapi.dto.service.PricingRuleDTO;
+import com.example.datasetapi.dto.service.*;
 import com.example.datasetapi.enums.Datasets.DatasetStatus;
 import com.example.datasetapi.enums.Datasets.PricingMethod;
 import com.example.datasetapi.model.Dataset.*;
@@ -86,6 +83,7 @@ public class DatasetMapperImpl implements DatasetMapper {
     public DatasetPricingDTO toDatasetPricingDTO(DatasetPricing datasetPricing) {
         DatasetPricingDTO datasetPricingDTO = new DatasetPricingDTO();
         if(datasetPricing.getPricingRule().getMethod()== PricingMethod.API){
+            datasetPricingDTO.setPricingId(datasetPricing.getId());
             datasetPricingDTO.setPrice(datasetPricing.getPricePerRequest());
             datasetPricingDTO.setPricingMethod(datasetPricing.getPricingRule().getMethod());
             return datasetPricingDTO;
@@ -114,8 +112,18 @@ public class DatasetMapperImpl implements DatasetMapper {
                     consumerBuyResponseDTO.setBuyWithGroupDTO(toBuyWithGroupDTO((DownloadToken)infor));
                     return consumerBuyResponseDTO;
             }
+            case API -> {
+                ConsumerBuyResponseDTO consumerBuyResponseDTO = new ConsumerBuyResponseDTO();
+                consumerBuyResponseDTO.setBuyApiInforDTO(toBuyApiInfoDTO((DownloadToken)infor);
+            }
         }
         return null;
+    }
+
+    private BuyApiInforDTO toBuyApiInfoDTO(DownloadToken infor) {
+        BuyApiInforDTO buyApiInforDTO = new BuyApiInforDTO();
+        buyApiInforDTO.setDowLoadToken(infor.getId().toString());
+        return  buyApiInforDTO;
     }
 
     public BuyWithGroupDTO toBuyWithGroupDTO(DownloadToken infor) {

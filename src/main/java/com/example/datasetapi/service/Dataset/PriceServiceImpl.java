@@ -30,8 +30,6 @@ public class PriceServiceImpl implements  PriceService {
     private DatasetPricingRepository datasetPricingRepository;
     @Autowired
     private DatasetMapper datasetMapper;
-@Autowired
-private DatasetService datasetService;
 
     @Override
     public void createPricingForDataset(Dataset dataset, DatasetInformation datasetInformation) {
@@ -109,10 +107,8 @@ private DatasetService datasetService;
             datasetPricing.setPrice(oneTimePricingCal(datasetPack,rowCount));
             datasetPricing.setDatasetPack(datasetPack);
             datasetPricing.setPricingMethod(PricingMethod.ONE_TIME);
-            TimeGroup timeGroup = dataset.getTimeGroup();
-            timeGroup.setPrice(timeGroup.getPrice()+datasetPricing.getPrice());
+            dataset.getTimeGroup().setPrice(dataset.getTimeGroup().getPrice()+datasetPricing.getPrice());
             list.add(datasetPricing);
-            datasetService.saveTimeGroup(timeGroup);
             return list;
         }
        else if(pricingMethod == PricingMethod.SUBSCRIPTION){
