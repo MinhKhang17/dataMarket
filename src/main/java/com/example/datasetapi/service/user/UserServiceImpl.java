@@ -24,7 +24,6 @@ import com.example.datasetapi.repository.RoleRepository;
 import com.example.datasetapi.repository.ProviderRegistrationRepository;
 import com.example.datasetapi.service.feature.ImageServiceImpl;
 import com.example.datasetapi.repository.WalletRepository;
-import com.example.datasetapi.service.payment.PaymentService;
 import com.example.datasetapi.service.payment.WalletService;
 import com.example.datasetapi.util.PasswordUtil;
 import com.example.datasetapi.util.Validator;

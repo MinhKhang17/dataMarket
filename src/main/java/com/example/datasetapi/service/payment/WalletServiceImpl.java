@@ -8,7 +8,6 @@ import com.example.datasetapi.model.userManager.User;
 import com.example.datasetapi.repository.UserRepository;
 import com.example.datasetapi.repository.WalletRepository;
 import com.example.datasetapi.service.user.TokenService;
-import com.example.datasetapi.service.user.UserService;
 import com.example.datasetapi.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

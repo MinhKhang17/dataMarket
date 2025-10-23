@@ -4,6 +4,7 @@ import com.example.datasetapi.config.ModelMapper;
 import com.example.datasetapi.dto.response.*;
 import com.example.datasetapi.dto.service.BuyOnTimeInfoDTO;
 import com.example.datasetapi.dto.service.BuySubInfoDTO;
+import com.example.datasetapi.dto.service.PricingRuleDTO;
 import com.example.datasetapi.enums.Datasets.DatasetStatus;
 import com.example.datasetapi.enums.Datasets.PricingMethod;
 import com.example.datasetapi.model.dataset.*;
@@ -111,6 +112,35 @@ public class DatasetMapperImpl implements DatasetMapper {
             }
         }
         return null;
+    }
+
+    @Override
+    public List<ConsumerSubResponseDTO> toConsumerSubDTO(List<ConsumerSubscription> consumerSub) {
+        return consumerSub
+                .stream()
+                .map(this::toConsumerSubReponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    private ConsumerSubResponseDTO toConsumerSubReponseDTO(ConsumerSubscription consumerSubscription) {
+            ConsumerSubResponseDTO consumerSubResponseDTO = new ConsumerSubResponseDTO();
+            consumerSubResponseDTO.setConsumer(toUserDto(consumerSubscription.getConsumer()));
+            consumerSubResponseDTO.setSubType(consumerSubscription.getSubType());
+            consumerSubResponseDTO.setUsing(consumerSubscription.isUsing());
+            consumerSubResponseDTO.setExpirationDate(consumerSubscription.getExpiresAt());
+            consumerSubResponseDTO.setRow_amount(consumerSubscription.getRow_amount());
+            consumerSubResponseDTO.setPricingRuleDTO(toPricingRuleDTO(consumerSubscription.getPricingRule()));
+        return consumerSubResponseDTO;
+    }
+
+    public PricingRuleDTO toPricingRuleDTO(PricingRule pricingRule) {
+            PricingRuleDTO pricingRuleDTO = new PricingRuleDTO();
+            pricingRuleDTO.setPricing_rule_id(pricingRule.getId());
+            pricingRuleDTO.setPricingMethod(pricingRule.getMethod());
+            pricingRuleDTO.setPlanName(pricingRule.getPlanName());
+            pricingRuleDTO.setBase_price(pricingRule.getBasePricePoint());
+            pricingRuleDTO.setRow_limit_of_this_pack(pricingRule.getRowLimit());
+            return pricingRuleDTO;
     }
 
     private BuySubInfoDTO toBuySubInfoDTO(ConsumerSubscription infor) {

@@ -385,7 +385,7 @@ public class DatasetServiceImpl implements DatasetService {
                return consumerBuyResponseDTO;
             }
             case SUBSCRIPTION -> {
-               ConsumerBuyResponseDTO consumerBuyResponseDTO =  createSubPayment(dataset,datasetPricing,consumer);
+               ConsumerBuyResponseDTO consumerBuyResponseDTO =  createSubPayment(dataset,consumer);
                 return consumerBuyResponseDTO;
             }
         }
@@ -443,7 +443,9 @@ public class DatasetServiceImpl implements DatasetService {
         return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.SUBSCRIPTION,consumerSubRepo.save(consumerSubscription));
     }
 
-    private ConsumerBuyResponseDTO createSubPayment(Dataset dataset, DatasetPricing datasetPricing, User consumer) {
+
+
+    private ConsumerBuyResponseDTO createSubPayment(Dataset dataset, User consumer) {
                 ConsumerSubscription consumerSubscription = consumerSubRepo.findByConsumerAndIsUsing(consumer,true)
                         .orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.SUB_NOT_FOUND));
             long dataset_row = dataset.getDatasetInformation().getRowCount();
@@ -466,8 +468,7 @@ public class DatasetServiceImpl implements DatasetService {
 
     private ConsumerBuyResponseDTO createOneTimePayment(Dataset dataset, DatasetPricing datasetPricing, User consumer) {
         DownloadToken downloadToken = jwtUtil.generateDowloadToken(consumer,dataset,30);
-        ConsumerBuyResponseDTO consumerBuyResponseDTO = datasetMapper.toConsumerBuyResponseDTO(PricingMethod.ONE_TIME,downloadToken.getId());
-        return consumerBuyResponseDTO;
+        return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.ONE_TIME,downloadToken.getId());
     }
 
 

@@ -5,8 +5,9 @@ import com.example.datasetapi.dto.request.ConsumerBuyRequestDTO;
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.dto.response.CheckoutResponseDTO;
 import com.example.datasetapi.dto.response.ConsumerBuyResponseDTO;
+
+import com.example.datasetapi.dto.response.ConsumerSubResponseDTO;
 import com.example.datasetapi.service.dataset.DatasetService;
-import com.example.datasetapi.model.userManager.ConsumerSubscription;
 import com.example.datasetapi.service.user.ConsumerService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +36,8 @@ public class ConsumerController {
         return ResponseEntity.ok().body(new ApiResponse(true,"buy loading success",consumerBuyResponseDTO));
     }
 
-    @PostMapping("dataset/SubRegister")
+
+    @PostMapping("/subRegister")
     public ResponseEntity<ApiResponse> buySub(@RequestParam long datasetSubPlanId, HttpServletRequest request){
         ConsumerBuyResponseDTO consumerBuyResponseDTO = datasetService.subRegister(datasetSubPlanId,request);
         return ResponseEntity.ok().body(new ApiResponse(true,"sub buy loading success",consumerBuyResponseDTO));
@@ -43,7 +45,8 @@ public class ConsumerController {
 
     @GetMapping("sub/mySub")
     public ResponseEntity<ApiResponse> subMySub(HttpServletRequest request){
-        List<ConsumerSubscription> consumerSubscriptions = consumerService.getConsumerSubscriptions(request);
+
+        List<ConsumerSubResponseDTO> consumerSubscriptions = consumerService.getConsumerSubscriptions(request);
     return ResponseEntity.ok().body(new ApiResponse(true,"sub loading success",consumerSubscriptions));
     }
 
