@@ -30,6 +30,12 @@ public class TimeGroup {
     @OneToMany(mappedBy = "timeGroup", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Dataset> datasets = new ArrayList<>();
 
+    @Column
+    private double price =0.0;
+
+    @Column
+    private long Row_Count;
+
     public static TimeGroup fromDate(LocalDate date) {
         TimeGroup tg = new TimeGroup();
         tg.setYear(date.getYear());

@@ -1,7 +1,6 @@
-package com.example.datasetapi.service.Location;
+package com.example.datasetapi.service.location;
 
 import com.example.datasetapi.dto.response.CommuneDTO;
-import com.example.datasetapi.model.location.Commune;
 import com.example.datasetapi.model.location.Province;
 
 import java.util.List;

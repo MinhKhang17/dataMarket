@@ -1,10 +1,13 @@
 package com.example.datasetapi.model.userManager;
 
 import com.example.datasetapi.enums.UserStatus;
+import com.example.datasetapi.model.dataset.DownloadToken;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Entity
 @Table(name = "User_Information")
@@ -46,6 +49,9 @@ public class User {
     private UserStatus userStatus;
 
     private boolean isActive=false;
+
+    @OneToMany
+    private List<DownloadToken> downloadTokens;
 
     public void setToken(Token token) {
         this.token = token;

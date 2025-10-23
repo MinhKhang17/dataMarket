@@ -497,6 +497,11 @@ public class UserServiceImpl implements UserService {
         return providerRepository.save(provider);
     }
 
+    @Override
+    public void saveUser(User consumer) {
+         userRepository.save(consumer);
+    }
+
 
     @Override
     public ResponseEntity<ApiResponse> getUserInformationFromRequest(HttpServletRequest request) {

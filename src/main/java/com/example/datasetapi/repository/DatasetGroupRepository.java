@@ -12,13 +12,12 @@ import java.util.Optional;
 
 public interface DatasetGroupRepository extends JpaRepository<DatasetGroup,Long> {
 
-    Optional<DatasetGroup> findByProviderAndProvinceAndDatasetType(Provider provider, Province province, DatasetType datasetType);
 
-    Optional<DatasetGroup> findByProviderAndDatasetGroupTypeAndProvince(Provider provider, DatasetGroupType datasetGroupType, Province province);
 
-    Optional<DatasetGroup> findByProviderAndDatasetGroupTypeAndProvinceAndDatasetType(Provider provider, DatasetGroupType datasetGroupType, Province province, DatasetType datasetType);
 
     List<DatasetGroup> findByDatasetGroupType(DatasetGroupType datasetGroupType);
 
     Optional<DatasetGroup> findByIdAndDatasetGroupType(long id, DatasetGroupType datasetGroupType);
+
+    Optional<DatasetGroup> findByDatasetGroupTypeAndProvinceAndDatasetType(DatasetGroupType datasetGroupType, Province province, DatasetType datasetType);
 }

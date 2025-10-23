@@ -44,4 +44,6 @@ public interface UserService {
     Role findRoleByName(String provider);
 
     Provider saveProvider(Provider provider);
+
+    void saveUser(User consumer);
 }

@@ -66,6 +66,8 @@ private LocalDateTime createAt = LocalDateTime.now();
     private LocalDateTime updateAt = LocalDateTime.now();
 @Column
 private LocalDate dataset_time;
-@OneToOne(cascade =  CascadeType.ALL)
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     private Dataset dataset;
+
 }

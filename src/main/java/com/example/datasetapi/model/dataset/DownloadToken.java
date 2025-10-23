@@ -21,10 +21,9 @@ public class DownloadToken {
 
     @ManyToOne
     @NotNull
-    private User user;
+    private User consumer;
 
     @ManyToOne
-    @NotNull
     private Dataset dataset;
 
     private int use_amount = 5;
@@ -33,4 +32,7 @@ public class DownloadToken {
     private LocalDateTime expiresAt;
 
     private LocalDateTime createdAt =LocalDateTime.now();
+
+    @ManyToOne
+    private TimeGroup timeGroup;
 }

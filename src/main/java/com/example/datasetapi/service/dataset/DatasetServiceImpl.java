@@ -31,7 +31,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.s3.S3Client;
-
 import java.io.File;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -39,16 +38,35 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
 import org.slf4j.Logger;
 
 @Slf4j
 @Service
 public class DatasetServiceImpl implements DatasetService {
+    @Override
+    public ConsumerBuyResponseDTO buyGroupByAPI(long timeGroupId, HttpServletRequest request) {
+        return null;
+    }
 
+    @Override
+    public ConsumerBuyResponseDTO buyApiPack(long apiPackId, HttpServletRequest request) {
+        PricingRule pricingRule = priceService.findApiPricingRuleById(apiPackId);
+        User user = userService.findUserById(tokenService.getUserIdFromRequest(request));
+        double price = pricingRule.getBasePricePoint();
+
+        paymentService.updateWallet(TransferType.TODOWN,price,user.getId(),BuyType.BUY_API);
+
+        DownloadToken downloadToken = jwtUtil.generateDowloadToken(user,null,30,5,null);
+
+        return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.API,downloadToken);
+    }
 
     @Autowired
     private JwtUtil jwtUtil;
+    @Autowired
+    private DatasetPlanRepo datasetPlanRepo;
+    @Autowired
+    private WalletRepository walletRepository;
 
     @Override
     public ResponseEntity<?> getAllAllDataset() {
@@ -91,7 +109,6 @@ public class DatasetServiceImpl implements DatasetService {
     private  DatasetPricingRepository datasetPricingRepository;
     @Autowired
     private ConsumerSubRepo consumerSubRepo;
-
     @Value("${aws.bucket.name}")
     private String BUCKET_NAME;
 
@@ -121,111 +138,107 @@ public class DatasetServiceImpl implements DatasetService {
 
     @Transactional
     @Override
-    public void checkExitsAndCreateDatasetGroupAndDateset(ProviderUploadDatasetRequest providerUploadDatasetRequest, long provider_id, DatasetInformation datasetInformation) {
+    public void checkExitsAndCreateDatasetGroupAndDateset(
+            ProviderUploadDatasetRequest request,
+            long providerId,
+            DatasetInformation datasetInformation) {
+
         try {
-            logger.info("Check Exit and Create Dataset Group and Dateset");
+            logger.info("=== Start checking and creating Dataset Group and Dataset ===");
 
-
-            // một user có nhiều địa chỉ upload tìm theo địa chỉ và dataset type
-            Commune commune = communeRepository.findById(providerUploadDatasetRequest.getCommune_id())
+            //  Lấy thông tin commune và provider
+            Commune commune = communeRepository.findById(request.getCommune_id())
                     .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.COMMUNE_NOT_FOUND));
 
-            Provider provider = userService.findProviderById(provider_id);
+            Provider provider = userService.findProviderById(providerId);
 
-            //check xem đã tồn tại một dataset group parent chưa nếu chưa thì mặc định nó là lần đầu
-            Optional<DatasetGroup> datasetGroupParentOptionnal = datasetGroupRepository.findByProviderAndDatasetGroupTypeAndProvinceAndDatasetType(provider,DatasetGroupType.PARENT, commune.getProvince(),datasetInformation.getDatasetType());
-            DatasetGroup datasetGroupParent = new DatasetGroup();
-            if(datasetGroupParentOptionnal.isEmpty()){
-                  datasetGroupParent = new DatasetGroup();
-                  datasetGroupParent.setDatasetGroupType(DatasetGroupType.PARENT);
-                 datasetGroupParent.setDatasetType(datasetInformation.getDatasetType());
-                 datasetGroupParent.setProvider(provider);
-                 datasetGroupParent.setProvince(commune.getProvince());
-                 datasetGroupParent.setUpdateAt(LocalDateTime.now());
-                 datasetGroupParent = datasetGroupRepository.save(datasetGroupParent);
-            }
-            else {
-                 datasetGroupParent = datasetGroupParentOptionnal.get();
-                datasetGroupParent.setUpdateAt(LocalDateTime.now());
-            }
+            //  Tìm hoặc tạo DatasetGroup parent
+            DatasetGroup parentGroup = datasetGroupRepository
+                    .findByDatasetGroupTypeAndProvinceAndDatasetType(
+                            DatasetGroupType.PARENT, commune.getProvince(), datasetInformation.getDatasetType()
+                    )
+                    .orElseGet(() -> createParentDatasetGroup(commune, datasetInformation));
 
-            List<DatasetGroup> datasetGroupsChild = datasetGroupParent.getDatasetGroups();
-            DatasetGroup datasetGroupFollowCommune = new DatasetGroup();
-            boolean haveDatasetGroup = false;
-            for( DatasetGroup datasetGroupChild : datasetGroupsChild ){
-                if(datasetGroupChild.getCommune().equals(commune)){
-                    datasetGroupFollowCommune = datasetGroupChild;
-                    haveDatasetGroup = true;
-                    break;
-                }
-            }
+            parentGroup.setUpdateAt(LocalDateTime.now());
 
+            //  Tìm hoặc tạo DatasetGroup con (theo commune)
+            DatasetGroup childGroup = parentGroup.getDatasetGroups().stream()
+                    .filter(group -> commune.equals(group.getCommune()))
+                    .findFirst()
+                    .orElseGet(() -> createChildDatasetGroup(parentGroup, commune, datasetInformation));
+
+            //  Tạo dataset mới
             Dataset dataset = new Dataset();
-            //nếu là lần tạo đầu tiên thì tạo group để chứa các phiên bản
-            if (!haveDatasetGroup) {
-                datasetGroupFollowCommune = new DatasetGroup();
-                datasetGroupFollowCommune.setDatasetGroupType(DatasetGroupType.CHILD);
-                datasetGroupFollowCommune.setDatasetType(datasetInformation.getDatasetType());
-                datasetGroupFollowCommune.setCommune(commune);
-                datasetGroupFollowCommune.setProvider(provider);
-                datasetGroupFollowCommune.setParent(datasetGroupParent);
-                datasetGroupFollowCommune.getDatasets().add(dataset);
-                datasetGroupParent.getDatasetGroups().add(datasetGroupFollowCommune);
-                dataset.setDatasetChildGroup(datasetGroupFollowCommune);
-                datasetGroupFollowCommune = datasetGroupRepository.save(datasetGroupFollowCommune);
-            }
-            else {
-                //nếu là lần tạo thứ 2 thì chỉ cần gán dataset mới vào
-                dataset.setDatasetStatus(DatasetStatus.PENDING);
-                dataset.setDatasetChildGroup(datasetGroupFollowCommune);
-                datasetGroupFollowCommune.getDatasets().add(dataset);
-            }
+            dataset.setDatasetStatus(DatasetStatus.PENDING);
+            dataset.setDatasetChildGroup(childGroup);
+            childGroup.getDatasets().add(dataset);
 
-            //thêm thời gian để truy xuất
-            LocalDate datasetDate = DateUtil.parseToLocalDate(providerUploadDatasetRequest.getDataset_time());
-            Optional<TimeGroup> timeGroupOptional = timeGroupRepository
-                    .findByYearAndMonthAndDayAndDatasetGroupChildAndProvider(
+            //  Tìm hoặc tạo TimeGroup
+            LocalDate datasetDate = DateUtil.parseToLocalDate(request.getDataset_time());
+            TimeGroup timeGroup = timeGroupRepository
+                    .findByYearAndMonthAndDatasetGroupChildAndProvider(
                             datasetDate.getYear(),
                             datasetDate.getMonthValue(),
-                            datasetDate.getDayOfMonth(),
-                            datasetGroupFollowCommune,
+                            childGroup,
                             provider
-                    );
+                    )
+                    .orElseGet(() -> createTimeGroup(datasetDate, childGroup, provider));
 
-            TimeGroup timeGroup;
-            if (timeGroupOptional.isPresent()) {
-                timeGroup = timeGroupOptional.get();
-            } else {
-                timeGroup = TimeGroup.fromDate(datasetDate);
-                timeGroup.setDatasetGroupChild(datasetGroupFollowCommune);
-                timeGroup.setProvider(provider);
-            }
-
-
-            dataset.setProvider(provider);
+            //  Gán thông tin dataset
+            timeGroup.setRow_Count(timeGroup.getRow_Count()+datasetInformation.getRowCount());
             dataset.setTimeGroup(timeGroup);
-            dataset.setDescription(providerUploadDatasetRequest.getDescription());
-            dataset.setTitle(providerUploadDatasetRequest.getTitle());
-            setDatasetPack(dataset,datasetInformation);
-                logger.info("Đã chạy xong method check tồn tại vào datasetgroup");
-
-            datasetGroupRepository.save(datasetGroupFollowCommune);
-            datasetGroupRepository.save(datasetGroupParent);
-
-
-//            //luu tam de test
-            File file = new File(datasetInformation.getFile_url());
-                uploadCSVFileToPendingFolder(file, dataset);
-
-            System.out.println("Upload success!");
+            dataset.setDescription(request.getDescription());
+            dataset.setTitle(request.getTitle());
+            setDatasetPack(dataset, datasetInformation);
+            dataset.setRow_count(datasetInformation.getRowCount());
+            dataset.setProvider(provider);
             datasetInformation.setDataset(dataset);
-            datasetInformation.setDataset_time(DateUtil.parseToLocalDate(providerUploadDatasetRequest.getDataset_time()));
+            datasetInformation.setDataset_time(datasetDate);
+
+            // Upload file tạm
+            File file = new File(datasetInformation.getFile_url());
+            uploadCSVFileToPendingFolder(file, dataset);
+            logger.info("✅ Upload CSV file thành công cho dataset: {}", dataset.getTitle());
+
+            //  Lưu dữ liệu
+            datasetGroupRepository.save(childGroup);
+            datasetGroupRepository.save(parentGroup);
+            timeGroupRepository.save(timeGroup);
             datasetInforRepository.save(datasetInformation);
             datasetRepository.save(dataset);
+            userService.saveProvider(provider);
 
+            logger.info("=== Completed checkExitsAndCreateDatasetGroupAndDateset ===");
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            logger.error(" Error while processing dataset creation: {}", e.getMessage(), e);
+            throw new RuntimeException("Error while creating dataset and groups", e);
         }
+    }
+
+    private DatasetGroup createParentDatasetGroup(Commune commune, DatasetInformation info) {
+        DatasetGroup parent = new DatasetGroup();
+        parent.setDatasetGroupType(DatasetGroupType.PARENT);
+        parent.setDatasetType(info.getDatasetType());
+        parent.setProvince(commune.getProvince());
+        parent.setUpdateAt(LocalDateTime.now());
+        return datasetGroupRepository.save(parent);
+    }
+
+    private DatasetGroup createChildDatasetGroup(DatasetGroup parent, Commune commune, DatasetInformation info) {
+        DatasetGroup child = new DatasetGroup();
+        child.setDatasetGroupType(DatasetGroupType.CHILD);
+        child.setDatasetType(info.getDatasetType());
+        child.setCommune(commune);
+        child.setParent(parent);
+        parent.getDatasetGroups().add(child);
+        return datasetGroupRepository.save(child);
+    }
+
+    private TimeGroup createTimeGroup(LocalDate date, DatasetGroup group, Provider provider) {
+        TimeGroup tg = TimeGroup.fromDate(date);
+        tg.setDatasetGroupChild(group);
+        tg.setProvider(provider);
+        return tg;
     }
 
 
@@ -282,7 +295,7 @@ public class DatasetServiceImpl implements DatasetService {
         ReviewHistory reviewHistory = new ReviewHistory();
         reviewHistory.setDataset(dataset);
         reviewHistory.setModerator(userService.findUserById(moderator_id));
-        reviewHistory.setProvider(datasetInformationOptional.get().getProvider());
+        reviewHistory.setProvider(datasetInformationOptional.get().getDataset().getProvider());
         reviewHistoryRepository.save(reviewHistory);
         ReviewHistoryDto reviewHistoryDto = datasetMapper.toReviewHistoryDto(reviewHistoryRepository.save(reviewHistory));
 
@@ -385,8 +398,7 @@ public class DatasetServiceImpl implements DatasetService {
                return consumerBuyResponseDTO;
             }
             case SUBSCRIPTION -> {
-               ConsumerBuyResponseDTO consumerBuyResponseDTO =  createSubPayment(dataset,consumer);
-                return consumerBuyResponseDTO;
+                return   createSubPayment(dataset,consumer);
             }
         }
         return null;
@@ -443,12 +455,51 @@ public class DatasetServiceImpl implements DatasetService {
         return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.SUBSCRIPTION,consumerSubRepo.save(consumerSubscription));
     }
 
+    @Override
+    public List<TimeGroupDTO> getAllTimeGroupFollowDatasetChildGroup(long datasetChildGroupId) {
+        return timeGroupRepository.findAllByDatasetGroupChildId(datasetChildGroupId)
+                .stream()
+                .map(datasetMapper::toTimeGroupDTO)
+                .collect(Collectors.toList());
+
+    }
+
+    @Override
+    public List<DatasetDTO> findAllDatasetByTimeGroup(long datasetTimeGroupId) {
+        return timeGroupRepository.findById(datasetTimeGroupId).
+                orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND))
+                .getDatasets()
+                .stream()
+                .map(datasetMapper::toDatasetDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public ConsumerBuyResponseDTO buyWithTimeGroup(long timeGroupId, HttpServletRequest request) {
+        TimeGroup timeGroup = timeGroupRepository.findById(timeGroupId)        .orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.TIME_GROUP_NOT_FOUND));
+
+        double price = timeGroup.getPrice() ;
+        System.out.println(price);
+        User user = userService.findUserById(tokenService.getUserIdFromRequest(request));
+        paymentService.updateWallet(TransferType.TODOWN,price,user.getId(),BuyType.BUY_WITH_TIME_GROUP);
+        DownloadToken downloadToken = jwtUtil.generateDowloadToken(user,null,30,5,timeGroup);
+
+
+        return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.BUY_WITH_TIME_GROUP,downloadToken);
+    }
+
+    @Override
+    public void saveTimeGroup(TimeGroup timeGroup) {
+        timeGroupRepository.save(timeGroup);
+    }
+
+
 
 
     private ConsumerBuyResponseDTO createSubPayment(Dataset dataset, User consumer) {
                 ConsumerSubscription consumerSubscription = consumerSubRepo.findByConsumerAndIsUsing(consumer,true)
                         .orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.SUB_NOT_FOUND));
-            long dataset_row = dataset.getDatasetInformation().getRowCount();
+            long dataset_row = dataset.getRow_count();
 
             if(consumerSubscription.getRow_amount()<dataset_row){
                 throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.SUB_ROW_NOT_ENOUGH);
@@ -458,16 +509,19 @@ public class DatasetServiceImpl implements DatasetService {
                 throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.SUB_EXPIRED);
             }
 
-            long newRow = consumerSubscription.getRow_amount() - dataset_row;
+            buyWithSubProcess(consumerSubscription,dataset_row);
 
-            consumerSubscription.setRow_amount(newRow);
-
-            return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.SUBSCRIPTION,consumerSubRepo.save(consumerSubscription));
+        DownloadToken downloadToken = jwtUtil.generateDowloadToken(consumer,dataset,30,10,null);
+            consumer.getDownloadTokens().add(downloadToken);
+            userService.saveUser(consumer);
+        return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.SUBSCRIPTION,consumerSubRepo.save(consumerSubscription));
 
     }
 
     private ConsumerBuyResponseDTO createOneTimePayment(Dataset dataset, DatasetPricing datasetPricing, User consumer) {
-        DownloadToken downloadToken = jwtUtil.generateDowloadToken(consumer,dataset,30);
+        DownloadToken downloadToken = jwtUtil.generateDowloadToken(consumer,dataset,30,5,null);
+        consumer.getDownloadTokens().add(downloadToken);
+        userService.saveUser(consumer);
         return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.ONE_TIME,downloadToken.getId());
     }
 
@@ -492,7 +546,35 @@ public class DatasetServiceImpl implements DatasetService {
     }
 
 
+    @Override
+    public ConsumerBuyResponseDTO buyTimeGroupWithSub(long timeGroupId, HttpServletRequest request) {
+        TimeGroup timeGroup = timeGroupRepository.findById(timeGroupId).orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.TIME_GROUP_NOT_FOUND));
 
+        User consumer = userService.findUserById(tokenService.getUserIdFromRequest(request));
+
+        ConsumerSubscription consumerSubscription = consumerSubRepo.findByConsumerAndIsUsing(consumer,true).orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.SUB_NOT_FOUND));
+
+        long timeGroupRowCount = timeGroup.getRow_Count();
+
+        buyWithSubProcess(consumerSubscription,timeGroupRowCount);
+
+        DownloadToken downloadToken = jwtUtil.generateDowloadToken(consumer,null,30,10,timeGroup);
+
+        return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.BUY_WITH_TIME_GROUP,downloadToken);
+    }
+
+
+
+
+    public void buyWithSubProcess (ConsumerSubscription consumerSubscription,long rowCount){
+            long rowCountConsumer = consumerSubscription.getRow_amount();
+
+            if(rowCountConsumer<rowCount){
+                throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.SUB_ROW_NOT_ENOUGH);
+            }
+            consumerSubscription.setRow_amount(rowCountConsumer-rowCount);
+            consumerSubRepo.save(consumerSubscription);
+    }
 //    @Transactional
 //    @Override
 //    public ResponseEntity<?> dowloadDataset(String dowloadToken) {

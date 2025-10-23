@@ -15,4 +15,8 @@ public interface PriceService {
     PricingRule findSubPricingRuleById(long pricingSubRuleId );
 
     List<PricingRuleDTO> getAllSubPack();
+
+    List<PricingRuleDTO> getAllAPIPricingRule();
+
+    PricingRule findApiPricingRuleById(long apiPackId);
 }

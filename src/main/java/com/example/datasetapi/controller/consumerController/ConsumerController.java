@@ -55,4 +55,26 @@ public class ConsumerController {
         ConsumerBuyResponseDTO consumerBuyResponseDTO = datasetService.selectSubPack(consumerSubId,request);
         return ResponseEntity.ok().body(new ApiResponse(true,"sub selecting success",consumerBuyResponseDTO));
     }
+    @PostMapping("dowload/key")
+    public ResponseEntity<ApiResponse> dowloadKey(@RequestParam long datasetId, HttpServletRequest request){
+        return ResponseEntity.ok().body(new ApiResponse(true,"Dowload token ",null));
+    }
+    @PostMapping("group/buy")
+    public ResponseEntity<ApiResponse> BuyGroup(@RequestParam long timeGroupId, HttpServletRequest request){
+        ConsumerBuyResponseDTO consumerBuyResponseDTO = datasetService.buyWithTimeGroup(timeGroupId,request);
+        return ResponseEntity.ok().body(new ApiResponse(true,"Dowload token ",consumerBuyResponseDTO));
+    }
+    @PostMapping("group/sub/buy")
+    public ResponseEntity<ApiResponse> BuySubGroup(@RequestParam long timeGroupId, HttpServletRequest request){
+        ConsumerBuyResponseDTO consumerBuyResponseDTO = datasetService.buyTimeGroupWithSub(timeGroupId,request);
+        return ResponseEntity.ok().body(new ApiResponse(true,"sub buy ",consumerBuyResponseDTO));
+    }
+    @PostMapping("apipack/buy")
+    public ResponseEntity<ApiResponse> buyApiPack(@RequestParam long apiPackId, HttpServletRequest request){
+        ConsumerBuyResponseDTO consumerBuyResponseDTO = datasetService.buyApiPack(apiPackId,request);
+        return ResponseEntity.ok().body(new ApiResponse(true,"Dowload token ",consumerBuyResponseDTO));
+    }
+
+
+
 }

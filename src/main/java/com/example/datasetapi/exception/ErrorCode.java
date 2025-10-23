@@ -68,11 +68,13 @@ public enum ErrorCode {
     FILE_TOO_BIG("FILE_TOO_BIG", "File size too large"),
     DATASET_PRICING_NOT_FOUND("DATASET_PRICING_NOT_FOUND", "Dataset pricing not found"),
 
-    RuleNotFound("RuleNotFound","Không tìm thấy gói" )
-    , EXISTS_SUB("EXISTS_SUB","User đã mua gói không thể mua lại" ),
-    SUB_NOT_FOUND("SUB_NOT_FOUND","Không tìm thấy gói thuê bao" ),
-    SUB_ROW_NOT_ENOUGH("SUB_ROW_NOT_ENOUGH","Số row còn lại không đủ" ),
-    SUB_EXPIRED("SUB_EXPIRED","Gói thuê bao đã hết hạn" );
+    RuleNotFound("RuleNotFound", "Package not found"),
+    EXISTS_SUB("EXISTS_SUB", "User has already purchased this package"),
+    SUB_NOT_FOUND("SUB_NOT_FOUND", "Subscription package not found"),
+    SUB_ROW_NOT_ENOUGH("SUB_ROW_NOT_ENOUGH", "Not enough remaining rows in the subscription"),
+    SUB_EXPIRED("SUB_EXPIRED", "Subscription package has expired"),
+    TIME_GROUP_NOT_FOUND("TIME_GROUP_NOT_FOUND", "Time group not found");
+
     private final String code;
     private final String message;
 

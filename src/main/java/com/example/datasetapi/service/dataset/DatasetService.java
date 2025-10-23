@@ -11,6 +11,8 @@ import com.example.datasetapi.model.dataset.Dataset;
 import com.example.datasetapi.model.dataset.DatasetInformation;
 import com.example.datasetapi.model.userManager.ConsumerSubscription;
 import com.example.datasetapi.model.userManager.User;
+import com.example.datasetapi.dto.response.*;
+import com.example.datasetapi.model.dataset.TimeGroup;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -53,4 +55,17 @@ public interface DatasetService {
 
     ConsumerBuyResponseDTO selectSubPack(long consumerSubId, HttpServletRequest request);
 
+    List<TimeGroupDTO> getAllTimeGroupFollowDatasetChildGroup(long datasetChildGroupId);
+
+    List<DatasetDTO> findAllDatasetByTimeGroup(long datasetTimeGroupId);
+
+    ConsumerBuyResponseDTO buyWithTimeGroup(long timeGroupId, HttpServletRequest request);
+
+    void saveTimeGroup(TimeGroup timeGroup);
+
+    ConsumerBuyResponseDTO buyTimeGroupWithSub(long timeGroupId, HttpServletRequest request);
+
+    ConsumerBuyResponseDTO buyGroupByAPI(long timeGroupId, HttpServletRequest request);
+
+    ConsumerBuyResponseDTO buyApiPack(long apiPackId, HttpServletRequest request);
 }

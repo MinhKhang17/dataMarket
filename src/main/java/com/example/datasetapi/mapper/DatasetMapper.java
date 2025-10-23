@@ -30,4 +30,6 @@ public interface DatasetMapper {
 
     List<ConsumerSubResponseDTO> toConsumerSubDTO(List<ConsumerSubscription> consumerSub);
     PricingRuleDTO toPricingRuleDTO(PricingRule pricingRule);
+
+    TimeGroupDTO toTimeGroupDTO(TimeGroup timeGroup);
 }
