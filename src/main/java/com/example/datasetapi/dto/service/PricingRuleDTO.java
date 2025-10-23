@@ -11,4 +11,5 @@ public class PricingRuleDTO {
     private String planName;
     private long row_limit_of_this_pack;
     private double base_price;
+    private String pricing_Rule_name;
 }

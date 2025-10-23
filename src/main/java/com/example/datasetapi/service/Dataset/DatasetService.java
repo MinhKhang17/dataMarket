@@ -62,4 +62,6 @@ public interface DatasetService {
     ConsumerBuyResponseDTO buyTimeGroupWithSub(long timeGroupId, HttpServletRequest request);
 
     ConsumerBuyResponseDTO buyGroupByAPI(long timeGroupId, HttpServletRequest request);
+
+    ConsumerBuyResponseDTO buyApiPack(long apiPackId, HttpServletRequest request);
 }

@@ -52,6 +52,19 @@ public class DatasetServiceImpl implements DatasetService {
         return null;
     }
 
+    @Override
+    public ConsumerBuyResponseDTO buyApiPack(long apiPackId, HttpServletRequest request) {
+        PricingRule pricingRule = priceService.findApiPricingRuleById(apiPackId);
+        User user = userService.findUserById(tokenService.getUserIdFromRequest(request));
+        double price = pricingRule.getBasePricePoint();
+
+        paymentService.updateWallet(TransferType.TODOWN,price,user.getId(),BuyType.BUY_API);
+
+        DownloadToken downloadToken = jwtUtil.generateDowloadToken(user,null,30,5,null);
+
+        return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.API,downloadToken);
+    }
+
     @Autowired
     private JwtUtil jwtUtil;
     @Autowired

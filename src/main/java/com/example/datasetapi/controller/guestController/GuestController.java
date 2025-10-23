@@ -47,4 +47,9 @@ public class GuestController {
     public ResponseEntity<ApiResponse> getDataset(@RequestParam long dataset_time_Group_id){
         return ResponseEntity.ok().body(new ApiResponse(true,"load success",datasetService.findAllDatasetByTimeGroup(dataset_time_Group_id)));
     }
+    @GetMapping("apiPack/get")
+    public ResponseEntity<ApiResponse>getAPIs(){
+        List<PricingRuleDTO> pricingRuleDTO = priceService.getAllAPIPricingRule();
+        return ResponseEntity.ok().body(new ApiResponse(true,"load success",pricingRuleDTO));
+    }
 }

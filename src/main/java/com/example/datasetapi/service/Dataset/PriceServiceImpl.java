@@ -65,6 +65,19 @@ public class PriceServiceImpl implements  PriceService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public List<PricingRuleDTO> getAllAPIPricingRule() {
+        return pricingRuleRepo.findAllByMethod(PricingMethod.API)
+                .stream()
+                .map(datasetMapper::toPricingRuleDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public PricingRule findApiPricingRuleById(long apiPackId) {
+        return pricingRuleRepo.findByIdAndMethod(apiPackId,PricingMethod.API);
+    }
+
 
     private void createPricing(Dataset dataset, DatasetInformation datasetInformation, DatasetPack datasetPack) {
         Set<DatasetPlan> datasetPlans = new HashSet<>() ;
@@ -86,13 +99,13 @@ public class PriceServiceImpl implements  PriceService {
         subTypePlan.setDatasetPricingList(calculatePricing(PricingMethod.SUBSCRIPTION, datasetPack, datasetInformation.getRowCount(), subTypePlan, dataset));
         datasetPlans.add(subTypePlan);
 
-        // API
-        DatasetPlan apiPlan = new DatasetPlan();
-        apiPlan.setDataset(dataset);
-        apiPlan.setPricingMethod(PricingMethod.API);
-        apiPlan.setDatasetPack(datasetPack);
-        apiPlan.setDatasetPricingList(calculatePricing(PricingMethod.API, datasetPack, datasetInformation.getRowCount(), apiPlan, dataset));
-        datasetPlans.add(apiPlan);
+//        // API
+//        DatasetPlan apiPlan = new DatasetPlan();
+//        apiPlan.setDataset(dataset);
+//        apiPlan.setPricingMethod(PricingMethod.API);
+//        apiPlan.setDatasetPack(datasetPack);
+//        apiPlan.setDatasetPricingList(calculatePricing(PricingMethod.API, datasetPack, datasetInformation.getRowCount(), apiPlan, dataset));
+//        datasetPlans.add(apiPlan);
 
         // 👉 Lưu DatasetPlan sẽ tự cascade xuống Pricing
         datasetPlanRepo.saveAll(datasetPlans);

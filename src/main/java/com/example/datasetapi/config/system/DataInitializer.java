@@ -212,14 +212,14 @@ private WalletRepository walletRepository;
         // API Package (Giữ nguyên cấu hình cũ)
         PricingRule r7 = new PricingRule();
         r7.setMethod(PricingMethod.API);
-        r7.setPlanName("Starter 10K Call");
+        r7.setPlanName("EV_Station_Location_Basic API");
         r7.setBasePricePoint(500.0);
         r7.setRequestLimit(10000L);
         r7.setAllowOverage(false);
         r7.setProviderShare(40);
         r7.setPlatformShare(60);
         r7.setSubType(SubType.SMALL);
-
+        r7.setDatasetType(datasetTypeRepository.findByName("EV_Station_Location_Basic"));
         r7.setNote("API package with 10K requests");
         rules.add(r7);
 
@@ -234,6 +234,7 @@ private WalletRepository walletRepository;
         r8.setProviderShare(35);
         r8.setPlatformShare(65);
         r8.setNote("API package with 100K requests");
+        r8.setDatasetType(datasetTypeRepository.findByName("EV_Station_Geo_Usage"));
         rules.add(r8);
 
         PricingRule r9 = new PricingRule();
@@ -246,8 +247,77 @@ private WalletRepository walletRepository;
         r9.setAllowOverage(false);
         r9.setProviderShare(30);
         r9.setPlatformShare(70);
+        r9.setDatasetType(datasetTypeRepository.findByName("EV_Tech_Capacity"));
         r9.setNote("API package with 1M requests");
         rules.add(r9);
+
+        PricingRule r10 = new PricingRule();
+        r10.setMethod(PricingMethod.API);
+        r10.setPlanName("Market Overview 10K Call");
+        r10.setBasePricePoint(600.0);
+        r10.setRequestLimit(10000L);
+        r10.setAllowOverage(false);
+        r10.setProviderShare(40);
+        r10.setPlatformShare(60);
+        r10.setSubType(SubType.SMALL);
+        r10.setDatasetType(datasetTypeRepository.findByName("EV_Station_Market_Overview"));
+        r10.setNote("API package with 10K requests for Market Overview");
+        rules.add(r10);
+
+        PricingRule r11 = new PricingRule();
+        r11.setMethod(PricingMethod.API);
+        r11.setPlanName("User Behavior 100K Call");
+        r11.setBasePricePoint(3500.0);
+        r11.setRequestLimit(100000L);
+        r11.setSubType(SubType.MEDIUM);
+        r11.setDiscountPercent(5);
+        r11.setAllowOverage(false);
+        r11.setProviderShare(35);
+        r11.setPlatformShare(65);
+        r11.setDatasetType(datasetTypeRepository.findByName("EV_User_Behavior_Summary"));
+        r11.setNote("API package with 100K requests for User Behavior Summary");
+        rules.add(r11);
+
+        PricingRule r12 = new PricingRule();
+        r12.setMethod(PricingMethod.API);
+        r12.setPlanName("Pricing Analytics 1M Call");
+        r12.setBasePricePoint(21000.0);
+        r12.setRequestLimit(1000000L);
+        r12.setDiscountPercent(10);
+        r12.setSubType(SubType.LARGE);
+        r12.setAllowOverage(false);
+        r12.setProviderShare(30);
+        r12.setPlatformShare(70);
+        r12.setDatasetType(datasetTypeRepository.findByName("EV_Pricing_Analytics"));
+        r12.setNote("API package with 1M requests for Pricing Analytics");
+        rules.add(r12);
+
+        PricingRule r13 = new PricingRule();
+        r13.setMethod(PricingMethod.API);
+        r13.setPlanName("Performance Trend 10K Call");
+        r13.setBasePricePoint(700.0);
+        r13.setRequestLimit(10000L);
+        r13.setAllowOverage(false);
+        r13.setProviderShare(40);
+        r13.setPlatformShare(60);
+        r13.setSubType(SubType.SMALL);
+        r13.setDatasetType(datasetTypeRepository.findByName("EV_Station_Performance_Trend"));
+        r13.setNote("API package with 10K requests for Performance Trend");
+        rules.add(r13);
+
+        PricingRule r14 = new PricingRule();
+        r14.setMethod(PricingMethod.API);
+        r14.setPlanName("All in One 1M Call");
+        r14.setBasePricePoint(25000.0);
+        r14.setRequestLimit(1000000L);
+        r14.setDiscountPercent(10);
+        r14.setSubType(SubType.LARGE);
+        r14.setAllowOverage(false);
+        r14.setProviderShare(30);
+        r14.setPlatformShare(70);
+        r14.setDatasetType(datasetTypeRepository.findByName("EV_All_in_One"));
+        r14.setNote("API package with 1M requests for All in One dataset");
+        rules.add(r14);
 
         pricingRuleRepo.saveAll(rules);
     }

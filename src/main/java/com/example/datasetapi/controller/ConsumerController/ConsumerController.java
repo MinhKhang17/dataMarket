@@ -68,6 +68,11 @@ public class ConsumerController {
         ConsumerBuyResponseDTO consumerBuyResponseDTO = datasetService.buyTimeGroupWithSub(timeGroupId,request);
         return ResponseEntity.ok().body(new ApiResponse(true,"sub buy ",consumerBuyResponseDTO));
     }
+    @PostMapping("apipack/buy")
+    public ResponseEntity<ApiResponse> buyApiPack(@RequestParam long apiPackId, HttpServletRequest request){
+        ConsumerBuyResponseDTO consumerBuyResponseDTO = datasetService.buyApiPack(apiPackId,request);
+        return ResponseEntity.ok().body(new ApiResponse(true,"Dowload token ",consumerBuyResponseDTO));
+    }
 
 
 

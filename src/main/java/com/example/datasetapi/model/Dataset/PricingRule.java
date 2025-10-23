@@ -67,4 +67,8 @@ public class PricingRule {
     @Column()
     @Enumerated(EnumType.STRING)
     private DatasetPack datasetPack;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    DatasetType datasetType;
+
 }

@@ -18,4 +18,6 @@ public interface PricingRuleRepo extends JpaRepository<PricingRule,Long> {
     Optional<PricingRule> findByMethodAndId(PricingMethod method, Long id);
 
     List<PricingRule> findAllByMethod(PricingMethod method);
+
+    PricingRule findByIdAndMethod(Long id, PricingMethod method);
 }

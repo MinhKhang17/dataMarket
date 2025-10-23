@@ -4,7 +4,6 @@ import com.example.datasetapi.dto.service.PricingRuleDTO;
 import com.example.datasetapi.model.Dataset.Dataset;
 import com.example.datasetapi.model.Dataset.DatasetInformation;
 import com.example.datasetapi.model.Dataset.PricingRule;
-import com.example.datasetapi.model.UserManager.User;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,4 +15,8 @@ public interface PriceService {
     PricingRule findSubPricingRuleById(long pricingSubRuleId );
 
     List<PricingRuleDTO> getAllSubPack();
+
+    List<PricingRuleDTO> getAllAPIPricingRule();
+
+    PricingRule findApiPricingRuleById(long apiPackId);
 }

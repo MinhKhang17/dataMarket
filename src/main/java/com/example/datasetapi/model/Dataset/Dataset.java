@@ -72,4 +72,6 @@ private String title;
     private List<DatasetPlan> datasetPlans = new ArrayList<>();
 
     private long row_count;
+
+    private long dowload_count; 
 }
