@@ -24,6 +24,8 @@ import com.example.datasetapi.repository.RoleRepository;
 import com.example.datasetapi.repository.ProviderRegistrationRepository;
 import com.example.datasetapi.service.feature.ImageServiceImpl;
 import com.example.datasetapi.repository.WalletRepository;
+import com.example.datasetapi.service.payment.PaymentService;
+import com.example.datasetapi.service.payment.WalletService;
 import com.example.datasetapi.util.PasswordUtil;
 import com.example.datasetapi.util.Validator;
 import com.example.datasetapi.repository.UserRepository;
@@ -58,13 +60,14 @@ public class UserServiceImpl implements UserService {
     private final ProviderIndentityDocumentRepository providerIdentityDocumentRepository;
     private final ProviderRegistrationRepository providerRegistrationRepository;
     private final ProviderRepository providerRepository;
+    private final WalletService walletService;
 
     @Autowired
     private  DatasetMapper datasetMapper;
     @Autowired
     private CommuneRepository communeRepository;
     @Autowired
-    public UserServiceImpl(ProviderRepository providerRepository,UserRepository userRepository, JwtUtil jwtUtil, TokenServiceImpl tokenService, RoleRepository roleRepository, ImageServiceImpl imageService, ProviderIndentityDocumentRepository providerIdentityDocumentRepository, ProviderRegistrationRepository providerRegistrationRepository, WalletRepository walletRepository) {
+    public UserServiceImpl(ProviderRepository providerRepository, UserRepository userRepository, JwtUtil jwtUtil, TokenServiceImpl tokenService, RoleRepository roleRepository, ImageServiceImpl imageService, ProviderIndentityDocumentRepository providerIdentityDocumentRepository, ProviderRegistrationRepository providerRegistrationRepository, WalletRepository walletRepository, WalletService walletService) {
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
         this.tokenService = tokenService;
@@ -74,6 +77,7 @@ public class UserServiceImpl implements UserService {
         this.providerRegistrationRepository = providerRegistrationRepository;
         this.walletRepository = walletRepository;
         this.providerRepository = providerRepository;
+        this.walletService = walletService;
     }
 
 
@@ -210,6 +214,8 @@ public class UserServiceImpl implements UserService {
         // lưu user
         try {
             userRepository.save(user);
+            walletService.createWallet(user);
+
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new ApiResponse(false, "Error", e.getMessage()));
         }
@@ -277,6 +283,7 @@ public class UserServiceImpl implements UserService {
             newUser.setAuthor(GOOGLEPROVIDER);
 
             userRepository.save(newUser);
+            walletService.createWallet(newUser);
             return newUser;
         }
 

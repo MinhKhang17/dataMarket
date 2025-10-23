@@ -4,6 +4,8 @@ import com.example.datasetapi.dto.request.ProcessWithdrawRequest;
 import com.example.datasetapi.dto.request.WithdrawRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.dto.response.WithdrawResponse;
+import com.example.datasetapi.enums.Datasets.BuyType;
+import com.example.datasetapi.enums.TransferType;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
 import com.example.datasetapi.model.paySystem.Wallet;
@@ -23,14 +25,14 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class WithdrawServiceImpl implements WithdrawService {
+public class WithdrawServiceImpl implements     WithdrawService {
     private final WithdrawRepository withdrawRepository;
-    private final WalletRepository walletRepository;
+    private final WalletService walletService;
     private final TokenService tokenService;
     private final JwtUtil jwtUtil;
     private final HttpServletRequest request;
     private final UserService userService;
-    private final ImageService imageService;
+    private final PaymentService paymentService;
 
     @Override
     public ResponseEntity<ApiResponse> withdrawRequest(WithdrawRequest withdrawRequest) {
@@ -43,17 +45,19 @@ public class WithdrawServiceImpl implements WithdrawService {
                 throw new CustomException(HttpStatus.UNAUTHORIZED,ErrorCode.INVALID_TOKEN);
             }
 
-            if (withdrawRequest.getAmount() == null || withdrawRequest.getAmount() <= 0) {
-                throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.INVALID_WITHDRAW_AMOUNT);
-            }
-            Wallet wallet = walletRepository.findById(withdrawRequest.getWalletId())
+
+            Wallet wallet = walletService.findWalletByUserId(userId)
                     .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.WALLET_NOT_FOUND));
 
-            if (wallet == null || !wallet.getUser().getId().equals(userId)) {
-                throw new CustomException(HttpStatus.NOT_FOUND,ErrorCode.WALLET_NOT_FOUND);
+            if (!wallet.getUser().getId().equals(userId)) {
+                throw new CustomException(HttpStatus.FORBIDDEN, ErrorCode.FORBIDDEN);
             }
-            if (wallet.getAmount() < withdrawRequest.getAmount()) {
-                throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.INSUFFICIENT_FUNDS);
+            Long amount = withdrawRequest.getAmount();
+            if (amount == null || amount <= 0) {
+                throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.INVALID_WITHDRAW_AMOUNT);
+            }
+            if (wallet.getAmount() < amount) {
+                throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.INSUFFICIENT_FUNDS);
             }
 
             Withdraw withdraw = new Withdraw();
@@ -97,28 +101,24 @@ public class WithdrawServiceImpl implements WithdrawService {
             throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.INVALID_INPUT);
         }
 
-        if (newStatus == Withdraw.Status.REJECT &&
-                (withdrawRequest.getReason() == null || withdrawRequest.getReason().trim().isEmpty())) {
-            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REASON);
+        if (newStatus == Withdraw.Status.REJECT) {
+            if (withdrawRequest.getReason() == null || withdrawRequest.getReason().trim().isEmpty()) {
+                throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REASON);
+            }
+            withdraw.setReason(withdrawRequest.getReason());
         }
 
         withdraw.setStatus(newStatus);
-        if (newStatus == Withdraw.Status.REJECT) {
-            withdraw.setReason(withdrawRequest.getReason());
-        }
         Wallet wallet = withdraw.getWallet();
 
         if (newStatus == Withdraw.Status.APPROVE) {
-            wallet.setAmount(wallet.getAmount() - withdraw.getAmount());
-            walletRepository.saveAndFlush(wallet);
+            paymentService.updateWallet(TransferType.WITHDRAW, withdraw.getAmount(), withdraw.getUser().getId(), BuyType.OTHER);
 
             withdraw.setProofImageUrl(withdrawRequest.getProofImageUrl());
 
             if (withdrawRequest.getReason() != null && !withdrawRequest.getReason().isBlank()) {
                 withdraw.setReason(withdrawRequest.getReason());
             }
-        } else if (newStatus == Withdraw.Status.REJECT) {
-            withdraw.setReason(withdrawRequest.getReason());
         }
 
         withdrawRepository.saveAndFlush(withdraw);

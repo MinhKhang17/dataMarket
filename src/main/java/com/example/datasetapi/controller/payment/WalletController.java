@@ -26,11 +26,11 @@ public class WalletController {
         this.userServiceImpl = userServiceImpl;
         this.userService = userService;
     }
-    @PreAuthorize("hasRole(USER)")
-    @PostMapping
-    public ResponseEntity<?> createWallet(HttpServletRequest request) {
-        return paymentService.createWallet(request);
-    }
+//    @PreAuthorize("hasRole(USER)")
+//    @PostMapping
+//    public ResponseEntity<?> createWallet(HttpServletRequest request) {
+//        return paymentService.createWallet(request);
+//    }
 
     @GetMapping("/me")
     public ResponseEntity<?> getMyWallet(HttpServletRequest request) {

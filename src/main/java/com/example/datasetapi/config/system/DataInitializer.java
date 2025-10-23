@@ -13,6 +13,8 @@ import com.example.datasetapi.model.location.Province;
 import com.example.datasetapi.model.userManager.*;
 import com.example.datasetapi.model.paySystem.Wallet;
 import com.example.datasetapi.repository.*;
+import com.example.datasetapi.service.payment.PaymentService;
+import com.example.datasetapi.service.payment.WalletService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.example.datasetapi.model.userManager.User;
@@ -62,8 +64,10 @@ private  DatasetInforRepository datasetInforRepository;
     private  ProvinceRepository provinceRepository;
     @Autowired
     private  CommuneRepository  communeRepository;
-@Autowired
-private WalletRepository walletRepository;
+    @Autowired
+    private WalletRepository walletRepository;
+    @Autowired
+    private WalletService walletService;
 
     @Override
     public void run(String... args) throws Exception {
@@ -613,6 +617,7 @@ private WalletRepository walletRepository;
 
         // 5️⃣ Lưu xuống database
         providerRepository.save(provider);
+        walletService.createWallet(user);
 
         System.out.println("✅ ProviderRegistration + Provider + User created successfully!");
     }
@@ -626,7 +631,8 @@ private WalletRepository walletRepository;
         user.setPassword(passwordEncoder.encode("password"));
         user.setRole(roleRepository.findByName("ADMIN").get());
         userRepository.save(user);
-        System.out.println("khoi tao admin ");
+        walletService.createWallet(user);
+        System.out.println("Create Admin Role");
     }
 
     private void  createConsumerRole() {

@@ -19,10 +19,13 @@ import java.io.IOException;
 public class WithdrawController {
     private final ImageService imageService;
     private final WithdrawService withdrawRequestService;
+
     @PostMapping("/request")
     public ResponseEntity<ApiResponse> withdrawRequest(@RequestBody WithdrawRequest withdrawRequest) {
         return withdrawRequestService.withdrawRequest(withdrawRequest);
     }
+
+
     @PostMapping("/process")
     public ResponseEntity<ApiResponse> processWithdrawRequest(
             @RequestPart("data") String dataJson,

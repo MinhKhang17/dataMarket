@@ -10,6 +10,7 @@ import com.example.datasetapi.exception.ErrorCode;
 import com.example.datasetapi.model.userManager.*;
 import com.example.datasetapi.repository.ProviderRegisReviewHistoryRepo;
 import com.example.datasetapi.repository.ProviderRegistrationRepository;
+import com.example.datasetapi.service.payment.WalletService;
 import com.example.datasetapi.util.PasswordUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +38,9 @@ public class AdminServiceImpl implements AdminService {
     private TokenService tokenService;
 @Autowired
     private ProviderRegisReviewHistoryRepo providerRegisReviewHistoryRepo;
+    @Autowired
+    private WalletService walletService;
+
 
     @Override
     public List<ProviderRegistrationResponseDTO> getProviderRegisPending(RegistrationStatus status) {
@@ -67,6 +71,8 @@ public class AdminServiceImpl implements AdminService {
             AtomicReference<String> tempPassword = new AtomicReference<>("");
 
             Provider provider = createProviderAccount(providerRegistration,tempUserName,tempPassword);
+
+            walletService.createWallet(provider.getUser());
 
             sendMail(tempPassword.get(),tempUserName.get(), "");
 

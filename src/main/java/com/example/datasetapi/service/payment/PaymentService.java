@@ -11,8 +11,12 @@ import org.springframework.stereotype.Service;
 @Service
 public interface PaymentService
 {
-    public ResponseEntity<ApiResponse> createWallet(HttpServletRequest request);
-     boolean updateWallet(TransferType type, double amount, long user_id, BuyType buyType);
+//    ResponseEntity<ApiResponse> createWallet(HttpServletRequest request);
+
+
+//    ResponseEntity<ApiResponse> createWallet(User user);
+
+    boolean updateWallet(TransferType type, double amount, long user_id, BuyType buyType);
 
     double calRemainingAmount(double price, User consumer);
 }
