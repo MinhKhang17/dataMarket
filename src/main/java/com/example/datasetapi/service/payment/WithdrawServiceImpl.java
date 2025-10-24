@@ -12,6 +12,7 @@ import com.example.datasetapi.model.paySystem.Wallet;
 import com.example.datasetapi.model.paySystem.Withdraw;
 import com.example.datasetapi.model.userManager.User;
 import com.example.datasetapi.repository.WithdrawRepository;
+import com.example.datasetapi.service.feature.ImageService;
 import com.example.datasetapi.service.user.TokenService;
 import com.example.datasetapi.service.user.UserService;
 import com.example.datasetapi.util.JwtUtil;
@@ -20,10 +21,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 @Service
 @RequiredArgsConstructor
-public class WithdrawServiceImpl implements     WithdrawService {
+public class WithdrawServiceImpl implements WithdrawService {
     private final WithdrawRepository withdrawRepository;
     private final WalletService walletService;
     private final TokenService tokenService;
@@ -31,6 +35,7 @@ public class WithdrawServiceImpl implements     WithdrawService {
     private final HttpServletRequest request;
     private final UserService userService;
     private final PaymentService paymentService;
+    private final ImageService imageService;
 
     @Override
     public ResponseEntity<ApiResponse> withdrawRequest(WithdrawRequest withdrawRequest) {
@@ -69,7 +74,7 @@ public class WithdrawServiceImpl implements     WithdrawService {
     }
 
     @Override
-    public ResponseEntity<ApiResponse> processWithdrawRequest(ProcessWithdrawRequest withdrawRequest) {
+    public ResponseEntity<ApiResponse> processWithdrawRequest(ProcessWithdrawRequest withdrawRequest, MultipartFile file) throws IOException {
         String token = tokenService.resolveToken(request);
         if (token == null) {
             throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED);
@@ -106,21 +111,35 @@ public class WithdrawServiceImpl implements     WithdrawService {
             withdraw.setReason(withdrawRequest.getReason());
         }
 
-        withdraw.setStatus(newStatus);
-        Wallet wallet = withdraw.getWallet();
-
         if (newStatus == Withdraw.Status.APPROVE) {
-            paymentService.updateWallet(TransferType.WITHDRAW, withdraw.getAmount(), withdraw.getUser().getId(), BuyType.OTHER);
+            if (file == null || file.isEmpty()) {
+                throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
+            }
 
-            withdraw.setProofImageUrl(withdrawRequest.getProofImageUrl());
+            String imageUrl = imageService.uploadImage(file);
+            withdraw.setProofImageUrl(imageUrl);
+
+            paymentService.updateWallet(
+                    TransferType.WITHDRAW,
+                    withdraw.getAmount(),
+                    withdraw.getUser().getId(),
+                    BuyType.OTHER
+            );
 
             if (withdrawRequest.getReason() != null && !withdrawRequest.getReason().isBlank()) {
                 withdraw.setReason(withdrawRequest.getReason());
             }
         }
 
+        withdraw.setStatus(newStatus);
         withdrawRepository.saveAndFlush(withdraw);
 
-        return ResponseEntity.ok(new ApiResponse(true, "Success", new WithdrawResponse(withdraw.getId(), withdraw.getStatus().name(), withdraw.getAmount(), withdraw.getCreatedAt(), withdraw.getUpdatedAt(), wallet.getId(), withdraw.getReason(), withdraw.getProofImageUrl())));
+        Wallet wallet = withdraw.getWallet();
+
+        return ResponseEntity.ok(new ApiResponse(true, "Success",
+                new WithdrawResponse(withdraw.getId(), withdraw.getStatus().name(), withdraw.getAmount(),
+                        withdraw.getCreatedAt(), withdraw.getUpdatedAt(), wallet.getId(),
+                        withdraw.getReason(), withdraw.getProofImageUrl())));
     }
+
 }

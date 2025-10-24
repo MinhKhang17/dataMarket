@@ -29,15 +29,12 @@ public class WithdrawController {
     @PostMapping("/process")
     public ResponseEntity<ApiResponse> processWithdrawRequest(
             @RequestPart("data") String dataJson,
-            @RequestPart("file") MultipartFile file) throws IOException {
+            @RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
 
         ObjectMapper objectMapper = new ObjectMapper();
         ProcessWithdrawRequest withdrawRequest = objectMapper.readValue(dataJson, ProcessWithdrawRequest.class);
 
-        String imageUrl = imageService.uploadImage(file);
-
-        withdrawRequest.setProofImageUrl(imageUrl);
-        return withdrawRequestService.processWithdrawRequest(withdrawRequest);
+        return withdrawRequestService.processWithdrawRequest(withdrawRequest, file);
     }
 
 }

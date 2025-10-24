@@ -227,42 +227,53 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public ResponseEntity<ApiResponse> updatePassword(UpdatePasswordRequest request) {
-            // check input
-            if (request == null || request.getNewPassword() == null ||
-                    request.getOldPassword() == null || request.getConfirmPassword() == null) {
-                throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.MISSING_REQUIRED_FIELD);
-            }
-            if (!request.getNewPassword().equals(request.getConfirmPassword())) {
-                throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.PASSWORD_MISMATCH);
-            }
-            if (request.getNewPassword().length() < 8) {
-                throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.PASSWORD_TOO_SHORT);
-            }
-            if (!Validator.isValidPassword(request.getNewPassword())) {
-                throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.PASSWORD_TOO_WEAK);
-            }
+        // check null
+        if (request == null) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
+        }
 
+        // check missing fields
+        if (request.getOldPassword() == null || request.getOldPassword().isBlank() ||
+                request.getNewPassword() == null || request.getNewPassword().isBlank() ||
+                request.getConfirmPassword() == null || request.getConfirmPassword().isBlank()) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
+        }
 
-            // check user
-            String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
-            Optional<User> userOptional = userRepository.findByUsername(currentUsername);
-            if (!userOptional.isPresent()) {
-                return ResponseEntity.badRequest().body(new ApiResponse(false, "User not found", currentUsername));
-            }
+        // check mismatch
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.PASSWORD_MISMATCH);
+        }
 
-            // check old password
-            if (!PasswordUtil.matches(request.getOldPassword(), userOptional.get().getPassword())) {
-                throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.OLD_PASSWORD_INCORRECT);
-            }
+        // check too short
+        if (request.getNewPassword().length() < 8) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.PASSWORD_TOO_SHORT);
+        }
 
-            //update password
-            User user = userOptional.get();
-            user.setPassword(PasswordUtil.encode(request.getNewPassword()));
-            userRepository.save(user);
+        // check too weak
+        if (!Validator.isValidPassword(request.getNewPassword())) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.PASSWORD_TOO_WEAK);
+        }
 
-            return ResponseEntity.ok().body(new ApiResponse(true, "Password update successfully", user.getUsername()));
+        // check user
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        Optional<User> userOptional = userRepository.findByUsername(currentUsername);
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, "User not found", currentUsername));
+        }
 
+        // check old password
+        if (!PasswordUtil.matches(request.getOldPassword(), userOptional.get().getPassword())) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.OLD_PASSWORD_INCORRECT);
+        }
+
+        // update password
+        User user = userOptional.get();
+        user.setPassword(PasswordUtil.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        return ResponseEntity.ok(new ApiResponse(true, "Password update successfully", user.getUsername()));
     }
+
 
 
     public User createUserForLoginByGoogleFlow(OAuth2User oAuth2User) {

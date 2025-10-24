@@ -10,5 +10,5 @@ import java.io.IOException;
 
 public interface WithdrawService {
     ResponseEntity<ApiResponse> withdrawRequest(WithdrawRequest withdrawRequest);
-    ResponseEntity<ApiResponse> processWithdrawRequest(ProcessWithdrawRequest withdrawRequest);
+    ResponseEntity<ApiResponse> processWithdrawRequest(ProcessWithdrawRequest withdrawRequest, MultipartFile file) throws IOException;
 }
