@@ -18,11 +18,11 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class WithdrawController {
     private final ImageService imageService;
-    private final WithdrawService withdrawRequestService;
+    private final WithdrawService withdrawService;
 
     @PostMapping("/request")
     public ResponseEntity<ApiResponse> withdrawRequest(@RequestBody WithdrawRequest withdrawRequest) {
-        return withdrawRequestService.withdrawRequest(withdrawRequest);
+        return withdrawService.withdrawRequest(withdrawRequest);
     }
 
 
@@ -35,28 +35,25 @@ public class WithdrawController {
         ProcessWithdrawRequest withdrawRequest = objectMapper.readValue(dataJson, ProcessWithdrawRequest.class);
 
 
-        return withdrawRequestService.processWithdrawApprove(withdrawRequest, file);
+        return withdrawService.processWithdrawApprove(withdrawRequest, file);
     }
 
     @PostMapping("/reject")
     public ResponseEntity<ApiResponse> processWithdrawRequest(@RequestBody ProcessWithdrawRequest withdrawRequest){
 
-        return withdrawRequestService.processWithdrawReject(withdrawRequest);
+        return withdrawService.processWithdrawReject(withdrawRequest);
     }
 
     @GetMapping("/list")
-    public ResponseEntity<ApiResponse> listRequest() {
-        return withdrawRequestService.listRequest();
-    }
-
-    @GetMapping("/list/{status}")
-    public ResponseEntity<ApiResponse> listRequestByStatus(@PathVariable("status") String status) {
-        return withdrawRequestService.listRequestByStatus(status);
+    public ResponseEntity<ApiResponse> listWithdraws(
+            @RequestParam(required = false) String status) {
+        return withdrawService.listWithdraws(status);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getWithdrawById(@PathVariable("id") Long id) {
-        return  withdrawRequestService.getWithdrawById(id);
+        return  withdrawService.getWithdrawById(id);
     }
+
 
 }

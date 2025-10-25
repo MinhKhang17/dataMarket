@@ -18,5 +18,7 @@ public class WithdrawResponse {
     private int walletId;
     private String reason;
     private String proofImageUrl;
+    private String bank;
+    private String accountNumber;
 
 }

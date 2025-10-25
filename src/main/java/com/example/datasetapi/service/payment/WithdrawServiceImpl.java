@@ -8,6 +8,7 @@ import com.example.datasetapi.enums.Datasets.BuyType;
 import com.example.datasetapi.enums.TransferType;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
+import com.example.datasetapi.model.paySystem.BankAccount;
 import com.example.datasetapi.model.paySystem.Wallet;
 import com.example.datasetapi.model.paySystem.Withdraw;
 import com.example.datasetapi.model.userManager.User;
@@ -37,6 +38,7 @@ public class WithdrawServiceImpl implements WithdrawService {
     private final UserService userService;
     private final PaymentService paymentService;
     private final ImageService imageService;
+    private final BankAccountService bankAccountService;
 
     @Override
     public ResponseEntity<ApiResponse> withdrawRequest(WithdrawRequest withdrawRequest) {
@@ -62,6 +64,12 @@ public class WithdrawServiceImpl implements WithdrawService {
             if (wallet.getAmount() < amount) {
                 throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.INSUFFICIENT_FUNDS);
             }
+            if(withdrawRequest.getBank() == null || withdrawRequest.getBank().isBlank()) {
+                throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
+            }
+            if(withdrawRequest.getAccountNumber() == null || withdrawRequest.getAccountNumber().isBlank()) {
+                throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
+            }
 
             Withdraw withdraw = new Withdraw();
             withdraw.setUser(wallet.getUser());
@@ -72,7 +80,8 @@ public class WithdrawServiceImpl implements WithdrawService {
             withdraw.setStatus(Withdraw.Status.PENDING);
             withdrawRepository.saveAndFlush(withdraw);
 
-            return ResponseEntity.ok(new ApiResponse(true, "Success", new WithdrawResponse(withdraw.getId(), withdraw.getStatus().name(), withdraw.getAmount(), withdraw.getCreatedAt(), withdraw.getUpdatedAt(), wallet.getId(), null, null)));
+            return ResponseEntity.ok(new ApiResponse(true, "Success", new WithdrawResponse(withdraw.getId(), withdraw.getStatus().name(), withdraw.getAmount(), withdraw.getCreatedAt(), withdraw.getUpdatedAt(), wallet.getId(), null, null, withdraw.getBank(),
+                    withdraw.getAccountNumber())));
     }
 
     @Override
@@ -98,7 +107,9 @@ public class WithdrawServiceImpl implements WithdrawService {
                 withdraw.getUpdatedAt(),
                 withdraw.getWallet().getId(),
                 withdraw.getReason(),
-                withdraw.getProofImageUrl()
+                withdraw.getProofImageUrl(),
+                withdraw.getBank(),
+                withdraw.getAccountNumber()
         )));
 
     }
@@ -121,47 +132,52 @@ public class WithdrawServiceImpl implements WithdrawService {
                 withdraw.getUpdatedAt(),
                 withdraw.getWallet().getId(),
                 withdraw.getReason(),
-                withdraw.getProofImageUrl()
+                withdraw.getProofImageUrl(),
+                withdraw.getBank(),
+                withdraw.getAccountNumber()
         )));
 
     }
 
 
     @Override
-    public ResponseEntity<ApiResponse> listRequest() {
-        User admin = validateAdmin();
-        List<Withdraw> withdraws = withdrawRepository.findAll();
-        return ResponseEntity.ok(new ApiResponse(true, "Success",
-                withdraws.stream().map(withdraw -> new WithdrawResponse(
-                        withdraw.getId(),
-                        withdraw.getStatus().name(),
-                        withdraw.getAmount(),
-                        withdraw.getCreatedAt(),
-                        withdraw.getUpdatedAt(),
-                        withdraw.getWallet().getId(),
-                        withdraw.getReason(),
-                        withdraw.getProofImageUrl()
-                )).toList()
-        ));
-    }
+    public ResponseEntity<ApiResponse> listWithdraws(String status) {
+        String token = tokenService.resolveToken(request);
+        if (token == null) throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED);
 
-    @Override
-    public ResponseEntity<ApiResponse> listRequestByStatus(String status) {
-        User admin = validateAdmin();
+        Long userId = jwtUtil.getUserIdFromToken(token);
+        if (userId == null) throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.INVALID_TOKEN);
 
-        Withdraw.Status enumStatus;
-        try{
-            enumStatus = Withdraw.Status.valueOf(status.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.INVALID_INPUT);
+        User currentUser = userService.findUserById(userId);
+
+        Withdraw.Status enumStatus = null;
+        if (status != null && !status.isBlank()) {
+            try {
+                enumStatus = Withdraw.Status.valueOf(status.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.INVALID_INPUT);
+            }
         }
 
-        List<Withdraw> withdraw = withdrawRepository.findWithdrawByStatus(enumStatus);
-        if (withdraw.isEmpty()) {
-            return ResponseEntity.ok(new ApiResponse(true, "No withdraws found for this status", List.of()));
+        List<Withdraw> withdraws;
+        if (currentUser.getRole().getName().contains("ADMIN")) {
+            if(enumStatus == null) {
+                withdraws = withdrawRepository.findAll();
+            } else {
+                withdraws = withdrawRepository.findWithdrawByStatus(enumStatus);
+            }
+        } else {
+            if(enumStatus == null) {
+                withdraws = withdrawRepository.findWithdrawByUserId(userId);
+            } else  {
+                withdraws = withdrawRepository.findWithdrawByUserIdAndStatus(userId, enumStatus);
+            }
+        }
+        if(withdraws == null) {
+            return ResponseEntity.ok(new ApiResponse(true, "There are not any request", null));
         }
 
-        List<WithdrawResponse> responseList = withdraw.stream()
+        List<WithdrawResponse> responses = withdraws.stream()
                 .map(w -> new WithdrawResponse(
                         w.getId(),
                         w.getStatus().name(),
@@ -170,18 +186,33 @@ public class WithdrawServiceImpl implements WithdrawService {
                         w.getUpdatedAt(),
                         w.getWallet().getId(),
                         w.getReason(),
-                        w.getProofImageUrl()
+                        w.getProofImageUrl(),
+                        w.getBank(),
+                        w.getAccountNumber()
                 )).toList();
 
-        return ResponseEntity.ok(new ApiResponse(true, "Success", responseList));
-
+        return ResponseEntity.ok(new ApiResponse(true, "Success", responses));
     }
 
     @Override
     public ResponseEntity<ApiResponse> getWithdrawById(Long id) {
-        User admin = validateAdmin();
+        String token = tokenService.resolveToken(request);
+        if(token == null) throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED);
+
+        Long userId = jwtUtil.getUserIdFromToken(token);
+        if(userId == null) throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.INVALID_TOKEN);
+
+
         Withdraw withdraw = withdrawRepository.findById(id).orElseThrow(()
                 ->new CustomException(HttpStatus.NOT_FOUND, ErrorCode.WITHDRAW_NOT_FOUND));
+
+        User requester = withdraw.getUser();
+        User currentUser = userService.findUserById(userId);
+
+        if (!currentUser.getRole().getName().contains("ADMIN")
+                && !requester.getId().equals(currentUser.getId())) {
+            throw new CustomException(HttpStatus.FORBIDDEN, ErrorCode.FORBIDDEN);
+        }
 
         return ResponseEntity.ok(new ApiResponse(true, "Withdraw detail retrieved successfully",
                 new WithdrawResponse(withdraw.getId(),
@@ -191,9 +222,13 @@ public class WithdrawServiceImpl implements WithdrawService {
                         withdraw.getUpdatedAt(),
                         withdraw.getWallet().getId(),
                         withdraw.getReason(),
-                        withdraw.getProofImageUrl())
+                        withdraw.getProofImageUrl(),
+                        withdraw.getBank(),
+                        withdraw.getAccountNumber()
+                )
         ));
     }
+
 
     private User validateAdmin() {
         String token = tokenService.resolveToken(request);
