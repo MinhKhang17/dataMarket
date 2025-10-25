@@ -54,6 +54,9 @@ public enum ErrorCode {
     ALREADY_PROCESSED("ALREADY_PROCESSED", "Withdraw request has already been processed"),
     MISSING_REASON("MISSING_REASON", "Reason is required"),
     WITHDRAW_NOT_FOUND("WITHDRAW_NOT_FOUND", "Withdraw request not found"),
+    FILE_UPLOAD_FAILED("FILE_UPLOAD_FAILED", "File upload failed"),
+    INVALID_FILE_TYPE("INVALID_FILE_TYPE", "Invalid file type"),
+    MISSING_FILE("MISSING_FILE", "File is required"),
 
     // Survey errors
     INVALID_TYPE_ID("INVALID_TYPE_ID", "One or more provided type IDs are invalid"),

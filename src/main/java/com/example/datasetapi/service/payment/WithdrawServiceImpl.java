@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -48,7 +49,6 @@ public class WithdrawServiceImpl implements WithdrawService {
                 throw new CustomException(HttpStatus.UNAUTHORIZED,ErrorCode.INVALID_TOKEN);
             }
 
-
             Wallet wallet = walletService.findWalletByUserId(userId)
                     .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.WALLET_NOT_FOUND));
 
@@ -67,6 +67,8 @@ public class WithdrawServiceImpl implements WithdrawService {
             withdraw.setUser(wallet.getUser());
             withdraw.setWallet(wallet);
             withdraw.setAmount(withdrawRequest.getAmount());
+            withdraw.setBank(withdrawRequest.getBank());
+            withdraw.setAccountNumber(withdrawRequest.getAccountNumber());
             withdraw.setStatus(Withdraw.Status.PENDING);
             withdrawRepository.saveAndFlush(withdraw);
 
@@ -74,72 +76,147 @@ public class WithdrawServiceImpl implements WithdrawService {
     }
 
     @Override
-    public ResponseEntity<ApiResponse> processWithdrawRequest(ProcessWithdrawRequest withdrawRequest, MultipartFile file) throws IOException {
-        String token = tokenService.resolveToken(request);
-        if (token == null) {
-            throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED);
+    public ResponseEntity<ApiResponse> processWithdrawApprove(ProcessWithdrawRequest withdrawRequest, MultipartFile file) throws IOException {
+        User admin = validateAdmin();
+        Withdraw withdraw = getPendingWithdraw(withdrawRequest.getId());
+        if(file == null || file.isEmpty()) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_FILE);
+        }
+        String fileUrl = imageService.uploadImage(file);
+        withdraw.setStatus(Withdraw.Status.APPROVE);
+        withdraw.setProofImageUrl(fileUrl);
+        if (withdrawRequest.getReason() != null && !withdrawRequest.getReason().isBlank()) {
+            withdraw.setReason(withdrawRequest.getReason());
+        }
+        paymentService.updateWallet(TransferType.WITHDRAW, withdraw.getAmount(), withdraw.getUser().getId(), BuyType.OTHER);
+        withdrawRepository.saveAndFlush(withdraw);
+        return ResponseEntity.ok(new ApiResponse(true, "Withdraw approved successfully", new WithdrawResponse(
+                withdraw.getId(),
+                withdraw.getStatus().name(),
+                withdraw.getAmount(),
+                withdraw.getCreatedAt(),
+                withdraw.getUpdatedAt(),
+                withdraw.getWallet().getId(),
+                withdraw.getReason(),
+                withdraw.getProofImageUrl()
+        )));
+
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse> processWithdrawReject(ProcessWithdrawRequest withdrawRequest) {
+        User admin = validateAdmin();
+        Withdraw withdraw = getPendingWithdraw(withdrawRequest.getId());
+        withdraw.setStatus(Withdraw.Status.REJECT);
+        if(withdrawRequest.getReason() == null || withdrawRequest.getReason().isBlank()) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REASON);
+        }
+        withdraw.setReason(withdrawRequest.getReason());
+        withdrawRepository.saveAndFlush(withdraw);
+        return ResponseEntity.ok(new ApiResponse(true, "Withdraw rejected successfully", new WithdrawResponse(
+                withdraw.getId(),
+                withdraw.getStatus().name(),
+                withdraw.getAmount(),
+                withdraw.getCreatedAt(),
+                withdraw.getUpdatedAt(),
+                withdraw.getWallet().getId(),
+                withdraw.getReason(),
+                withdraw.getProofImageUrl()
+        )));
+
+    }
+
+
+    @Override
+    public ResponseEntity<ApiResponse> listRequest() {
+        User admin = validateAdmin();
+        List<Withdraw> withdraws = withdrawRepository.findAll();
+        return ResponseEntity.ok(new ApiResponse(true, "Success",
+                withdraws.stream().map(withdraw -> new WithdrawResponse(
+                        withdraw.getId(),
+                        withdraw.getStatus().name(),
+                        withdraw.getAmount(),
+                        withdraw.getCreatedAt(),
+                        withdraw.getUpdatedAt(),
+                        withdraw.getWallet().getId(),
+                        withdraw.getReason(),
+                        withdraw.getProofImageUrl()
+                )).toList()
+        ));
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse> listRequestByStatus(String status) {
+        User admin = validateAdmin();
+
+        Withdraw.Status enumStatus;
+        try{
+            enumStatus = Withdraw.Status.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.INVALID_INPUT);
         }
 
-        Long adminId = jwtUtil.getUserIdFromToken(token);
-        if (adminId == null) {
-            throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.INVALID_TOKEN);
+        List<Withdraw> withdraw = withdrawRepository.findWithdrawByStatus(enumStatus);
+        if (withdraw.isEmpty()) {
+            return ResponseEntity.ok(new ApiResponse(true, "No withdraws found for this status", List.of()));
         }
+
+        List<WithdrawResponse> responseList = withdraw.stream()
+                .map(w -> new WithdrawResponse(
+                        w.getId(),
+                        w.getStatus().name(),
+                        w.getAmount(),
+                        w.getCreatedAt(),
+                        w.getUpdatedAt(),
+                        w.getWallet().getId(),
+                        w.getReason(),
+                        w.getProofImageUrl()
+                )).toList();
+
+        return ResponseEntity.ok(new ApiResponse(true, "Success", responseList));
+
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse> getWithdrawById(Long id) {
+        User admin = validateAdmin();
+        Withdraw withdraw = withdrawRepository.findById(id).orElseThrow(()
+                ->new CustomException(HttpStatus.NOT_FOUND, ErrorCode.WITHDRAW_NOT_FOUND));
+
+        return ResponseEntity.ok(new ApiResponse(true, "Withdraw detail retrieved successfully",
+                new WithdrawResponse(withdraw.getId(),
+                        withdraw.getStatus().name(),
+                        withdraw.getAmount(),
+                        withdraw.getCreatedAt(),
+                        withdraw.getUpdatedAt(),
+                        withdraw.getWallet().getId(),
+                        withdraw.getReason(),
+                        withdraw.getProofImageUrl())
+        ));
+    }
+
+    private User validateAdmin() {
+        String token = tokenService.resolveToken(request);
+        if (token == null) throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED);
+
+        Long adminId = jwtUtil.getUserIdFromToken(token);
+        if (adminId == null) throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.INVALID_TOKEN);
 
         User admin = userService.findUserById(adminId);
         if (!admin.getRole().getName().contains("ADMIN")) {
             throw new CustomException(HttpStatus.FORBIDDEN, ErrorCode.FORBIDDEN);
         }
+        return admin;
+    }
 
-        Withdraw withdraw = withdrawRepository.findById(withdrawRequest.getId())
+    private Withdraw getPendingWithdraw(Long id) {
+        Withdraw withdraw = withdrawRepository.findById(id)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.WITHDRAW_NOT_FOUND));
 
-        if (withdraw.getStatus() != Withdraw.Status.PENDING) {
+        if(withdraw.getStatus() != Withdraw.Status.PENDING) {
             throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.ALREADY_PROCESSED);
         }
-
-        Withdraw.Status newStatus;
-        try {
-            newStatus = Withdraw.Status.valueOf(withdrawRequest.getStatus().toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.INVALID_INPUT);
-        }
-
-        if (newStatus == Withdraw.Status.REJECT) {
-            if (withdrawRequest.getReason() == null || withdrawRequest.getReason().trim().isEmpty()) {
-                throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REASON);
-            }
-            withdraw.setReason(withdrawRequest.getReason());
-        }
-
-        if (newStatus == Withdraw.Status.APPROVE) {
-            if (file == null || file.isEmpty()) {
-                throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
-            }
-
-            String imageUrl = imageService.uploadImage(file);
-            withdraw.setProofImageUrl(imageUrl);
-
-            paymentService.updateWallet(
-                    TransferType.WITHDRAW,
-                    withdraw.getAmount(),
-                    withdraw.getUser().getId(),
-                    BuyType.OTHER
-            );
-
-            if (withdrawRequest.getReason() != null && !withdrawRequest.getReason().isBlank()) {
-                withdraw.setReason(withdrawRequest.getReason());
-            }
-        }
-
-        withdraw.setStatus(newStatus);
-        withdrawRepository.saveAndFlush(withdraw);
-
-        Wallet wallet = withdraw.getWallet();
-
-        return ResponseEntity.ok(new ApiResponse(true, "Success",
-                new WithdrawResponse(withdraw.getId(), withdraw.getStatus().name(), withdraw.getAmount(),
-                        withdraw.getCreatedAt(), withdraw.getUpdatedAt(), wallet.getId(),
-                        withdraw.getReason(), withdraw.getProofImageUrl())));
+        return withdraw;
     }
 
 }

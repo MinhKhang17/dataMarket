@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ProcessWithdrawRequest {
     private Long id;
-    private String status;
     private String reason;
     private String proofImageUrl;
 }

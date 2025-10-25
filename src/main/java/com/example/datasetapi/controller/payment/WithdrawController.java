@@ -26,7 +26,7 @@ public class WithdrawController {
     }
 
 
-    @PostMapping("/process")
+    @PostMapping("/approve")
     public ResponseEntity<ApiResponse> processWithdrawRequest(
             @RequestPart("data") String dataJson,
             @RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
@@ -34,7 +34,29 @@ public class WithdrawController {
         ObjectMapper objectMapper = new ObjectMapper();
         ProcessWithdrawRequest withdrawRequest = objectMapper.readValue(dataJson, ProcessWithdrawRequest.class);
 
-        return withdrawRequestService.processWithdrawRequest(withdrawRequest, file);
+
+        return withdrawRequestService.processWithdrawApprove(withdrawRequest, file);
+    }
+
+    @PostMapping("/reject")
+    public ResponseEntity<ApiResponse> processWithdrawRequest(@RequestBody ProcessWithdrawRequest withdrawRequest){
+
+        return withdrawRequestService.processWithdrawReject(withdrawRequest);
+    }
+
+    @GetMapping("/list")
+    public ResponseEntity<ApiResponse> listRequest() {
+        return withdrawRequestService.listRequest();
+    }
+
+    @GetMapping("/list/{status}")
+    public ResponseEntity<ApiResponse> listRequestByStatus(@PathVariable("status") String status) {
+        return withdrawRequestService.listRequestByStatus(status);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse> getWithdrawById(@PathVariable("id") Long id) {
+        return  withdrawRequestService.getWithdrawById(id);
     }
 
 }

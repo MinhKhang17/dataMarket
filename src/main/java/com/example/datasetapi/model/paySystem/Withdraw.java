@@ -46,6 +46,12 @@ public class Withdraw {
     @Column
     private String reason;
 
+    @Column(nullable = true)
+    private String bank;
+
+    @Column(nullable = true)
+    private String accountNumber;
+
     @Column
     private String proofImageUrl;
 }
