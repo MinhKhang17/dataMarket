@@ -27,11 +27,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -39,6 +47,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
+import software.amazon.awssdk.services.s3.model.*;
 
 @Slf4j
 @Service
@@ -109,6 +118,7 @@ public class DatasetServiceImpl implements DatasetService {
     private  DatasetPricingRepository datasetPricingRepository;
     @Autowired
     private ConsumerSubRepo consumerSubRepo;
+    @Autowired private DownloadTokenRepository downloadTokenRepository;
     @Value("${aws.bucket.name}")
     private String BUCKET_NAME;
 
@@ -197,7 +207,7 @@ public class DatasetServiceImpl implements DatasetService {
 
             // Upload file tạm
             File file = new File(datasetInformation.getFile_url());
-            uploadCSVFileToPendingFolder(file, dataset);
+//            uploadCSVFileToPendingFolder(file, dataset);
             logger.info("✅ Upload CSV file thành công cho dataset: {}", dataset.getTitle());
 
             //  Lưu dữ liệu
@@ -278,7 +288,6 @@ public class DatasetServiceImpl implements DatasetService {
         }
 
         Dataset dataset = datasetInformationOptional.get().getDataset();
-        dataset.setDatasetStatus(DatasetStatus.APPROVE);
         datasetInformationOptional.get().setStatus(DatasetInforStatus.APPROVED);
         //cập nhật thông tin của datasetGroup
         DatasetGroup child = dataset.getDatasetChildGroup();
@@ -299,9 +308,10 @@ public class DatasetServiceImpl implements DatasetService {
         reviewHistoryRepository.save(reviewHistory);
         ReviewHistoryDto reviewHistoryDto = datasetMapper.toReviewHistoryDto(reviewHistoryRepository.save(reviewHistory));
 
+//        moveFileFromPendingToApproveFolder(dataset);
+
         //tạo giá sau khi accept
         priceService.createPricingForDataset(dataset,datasetInformationOptional.get());
-
         return ResponseEntity.ok().body(new ApiResponse(true,"Dataset Accepted Successfully",reviewHistoryDto));
     }
 
@@ -519,7 +529,7 @@ public class DatasetServiceImpl implements DatasetService {
     }
 
     private ConsumerBuyResponseDTO createOneTimePayment(Dataset dataset, DatasetPricing datasetPricing, User consumer) {
-        DownloadToken downloadToken = jwtUtil.generateDowloadToken(consumer,dataset,30,5,null);
+        DownloadToken downloadToken = jwtUtil.generateDowloadToken(consumer,dataset,30,2,null);
         consumer.getDownloadTokens().add(downloadToken);
         userService.saveUser(consumer);
         return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.ONE_TIME,downloadToken.getId());
@@ -528,21 +538,81 @@ public class DatasetServiceImpl implements DatasetService {
 
     @Override
     public Dataset uploadCSVFileToPendingFolder(File file, Dataset dataset) {
-
         String fileName = file.getName();
-        String fileKey = "PENDING/"+ UUID.randomUUID()+fileName;
+        String fileKey = "PENDING/" + UUID.randomUUID() + "/" + fileName;
 
-//            s3Client.putObject(PutObjectRequest.builder()
-//                            .bucket(BUCKET_NAME)
-//                            .key(fileKey)
-//                            .build(),
-//                    RequestBody.fromBytes(file.getBytes()));
+        try {
+            byte[] fileContent = Files.readAllBytes(file.toPath());
 
+            s3Client.putObject(
+                    PutObjectRequest.builder()
+                            .bucket(BUCKET_NAME)
+                            .key(fileKey)
+                            .build(),
+                    RequestBody.fromBytes(fileContent)
+            );
 
-        dataset.setFileKey(fileKey);
-        dataset.setName(fileName);
-        dataset.setDatasetStatus(DatasetStatus.PENDING);
-        return datasetRepository.save(dataset);
+            dataset.setFileKey(fileKey);
+            dataset.setName(fileName);
+            dataset.setDatasetStatus(DatasetStatus.PENDING);
+
+            return datasetRepository.save(dataset);
+
+        } catch (IOException e) {
+            throw new RuntimeException("Error reading file: " + fileName, e);
+        } catch (S3Exception e) {
+            throw new RuntimeException("Error uploading to S3: " + e.awsErrorDetails().errorMessage(), e);
+        }
+    }
+    @Override
+    public Dataset moveFileFromPendingToApproveFolder(Dataset dataset) {
+        String oldKey = dataset.getFileKey(); // Ví dụ: PENDING/uuid/filename.csv
+        if (oldKey == null || !oldKey.startsWith("PENDING/")) {
+            throw new IllegalArgumentException("Dataset file is not in pending folder");
+        }
+
+        // Tạo key mới cho file trong folder APPROVE
+        String fileName = oldKey.substring(oldKey.lastIndexOf("/") + 1);
+        String newKey = "APPROVED/" + UUID.randomUUID() + "/" + fileName;
+
+        try {
+            // 1️⃣ Copy từ PENDING sang APPROVE
+            s3Client.copyObject(CopyObjectRequest.builder()
+                    .sourceBucket(BUCKET_NAME)
+                    .sourceKey(oldKey)
+                    .destinationBucket(BUCKET_NAME)
+                    .destinationKey(newKey)
+                    .build());
+
+            // 2️⃣ Xóa file cũ trong PENDING
+            s3Client.deleteObject(DeleteObjectRequest.builder()
+                    .bucket(BUCKET_NAME)
+                    .key(oldKey)
+                    .build());
+
+            // 3️⃣ Cập nhật dataset trong DB
+            dataset.setFileKey(newKey);
+            dataset.setDatasetStatus(DatasetStatus.APPROVE);
+            return datasetRepository.save(dataset);
+
+        } catch (S3Exception e) {
+            throw new RuntimeException("Error moving file in S3: " + e.awsErrorDetails().errorMessage(), e);
+        }
+    }
+
+    @Override
+    public String getDowloadTokenOfDatasetForConsumer(long datasetId, HttpServletRequest request) {
+        User user = userService.findUserById(tokenService.getUserIdFromRequest(request));
+        Dataset dataset = findById(datasetId);
+        Optional<DownloadToken> downloadTokenOptional = downloadTokenRepository.findByConsumerAndDataset(user,dataset);
+        if(downloadTokenOptional.isEmpty()){
+            throw new CustomException(HttpStatus.NOT_FOUND,ErrorCode.TOKEN_NOT_FOUND);
+        }
+        return downloadTokenOptional.get().getId().toString();
+    }
+
+    private Dataset findById(long datasetId) {
+    return datasetRepository.findById(datasetId).orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
     }
 
 
@@ -575,49 +645,45 @@ public class DatasetServiceImpl implements DatasetService {
             consumerSubscription.setRow_amount(rowCountConsumer-rowCount);
             consumerSubRepo.save(consumerSubscription);
     }
-//    @Transactional
-//    @Override
-//    public ResponseEntity<?> dowloadDataset(String dowloadToken) {
-//
-//        //lay dowload token tu request checck xem nguoi dung co permussion de su dung hay khong
-//        Optional<DownloadToken> downloadTokenOptional = dowloadTokenRepository.findById(UUID.fromString(dowloadToken));
-//
-//        //neu khong ton tai thi tra ve loi
-//        if(!downloadTokenOptional.isPresent()){
-//            return ResponseEntity.internalServerError().body(new ApiResponse(false,"token is not valid",null));
-//        }
-//
-//        long datasetId = downloadTokenOptional.get().getDatasetId();
-//
-//        Optional<Dataset> datasetGetFromToken = datasetRepository.findById(datasetId);
-//
-//        if(!datasetGetFromToken.isPresent()){
-//            return ResponseEntity.internalServerError().body(new ApiResponse(false,"can not find dataset with id + "+datasetId,null));
-//        }
-//
-//
-//        Dataset dataset = datasetGetFromToken.get();
-//
-//        String fileKey = dataset.getFileKey();
-//
-//        DownloadToken downloadToken = downloadTokenOptional.get();
-//        downloadToken.setUsed(true);
-//        dowloadTokenRepository.save(downloadToken);
-//
-//        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-//                .bucket(BUCKET_NAME)
-//                .key(fileKey)
-//                .build();
-//
-//        ResponseInputStream<GetObjectResponse> s3Object = s3Client.getObject(getObjectRequest);
-//        InputStreamResource resource = new InputStreamResource(s3Object);
-//
-//        return ResponseEntity.ok()
-//                .header(HttpHeaders.CONTENT_DISPOSITION,
-//                        "attachment; filename=\"" + Paths.get(fileKey).getFileName().toString() + "\"")
-//                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-//                .body(resource);
-//    }
+    @Transactional
+    @Override
+    public ResponseEntity<?> dowloadDataset(String dowloadToken, HttpServletRequest request) {
+
+        //lay dowload token tu request checck xem nguoi dung co permussion de su dung hay khong
+        Optional<DownloadToken> downloadTokenOptional = downloadTokenRepository.findById(UUID.fromString(dowloadToken));
+        User user = userService.findUserById(tokenService.getUserIdFromRequest(request));
+
+        if(downloadTokenOptional.isEmpty()){
+            throw new CustomException(HttpStatus.NOT_FOUND,ErrorCode.TOKEN_NOT_FOUND);
+        }
+        if(downloadTokenOptional.get().getConsumer()!= user) {
+            throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED);
+        }
+
+        Dataset dataset = downloadTokenOptional.get().getDataset();
+
+        String fileKey = dataset.getFileKey();
+
+        DownloadToken downloadToken = downloadTokenOptional.get();
+
+        if(downloadToken.getUse_amount()==0){
+            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.TOKEN_IS_EXPIRED);
+        }
+
+        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                .bucket(BUCKET_NAME)
+                .key(fileKey)
+                .build();
+
+        ResponseInputStream<GetObjectResponse> s3Object = s3Client.getObject(getObjectRequest);
+        InputStreamResource resource = new InputStreamResource(s3Object);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + Paths.get(fileKey).getFileName().toString() + "\"")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource);
+    }
 
 
 }

@@ -68,4 +68,9 @@ public interface DatasetService {
     ConsumerBuyResponseDTO buyGroupByAPI(long timeGroupId, HttpServletRequest request);
 
     ConsumerBuyResponseDTO buyApiPack(long apiPackId, HttpServletRequest request);
+    public Dataset moveFileFromPendingToApproveFolder(Dataset dataset);
+
+    String getDowloadTokenOfDatasetForConsumer(long datasetId, HttpServletRequest request);
+
+    ResponseEntity<?> dowloadDataset(String dowloadToken,HttpServletRequest request);
 }

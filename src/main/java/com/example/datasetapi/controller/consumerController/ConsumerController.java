@@ -55,9 +55,10 @@ public class ConsumerController {
         ConsumerBuyResponseDTO consumerBuyResponseDTO = datasetService.selectSubPack(consumerSubId,request);
         return ResponseEntity.ok().body(new ApiResponse(true,"sub selecting success",consumerBuyResponseDTO));
     }
-    @PostMapping("dowload/key")
+    @GetMapping("dataset/key")
     public ResponseEntity<ApiResponse> dowloadKey(@RequestParam long datasetId, HttpServletRequest request){
-        return ResponseEntity.ok().body(new ApiResponse(true,"Dowload token ",null));
+       String download_token = datasetService.getDowloadTokenOfDatasetForConsumer(datasetId,request);
+        return ResponseEntity.ok().body(new ApiResponse(true,"Dowload token ",download_token));
     }
     @PostMapping("group/buy")
     public ResponseEntity<ApiResponse> BuyGroup(@RequestParam long timeGroupId, HttpServletRequest request){

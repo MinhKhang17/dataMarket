@@ -20,16 +20,16 @@ public class AdminController {
         return ResponseEntity.ok().body(new ApiResponse(true, "Provider Pending status load success", adminService.getProviderRegisPending(RegistrationStatus.PENDING)));
     }
 
-    @PostMapping("poviderRegis/accept")
+    @PostMapping("providerRegis/accept")
     public ResponseEntity<?> acceptProviderRegis(@RequestParam("providerRegistrationId") long providerRegistrationId, HttpServletRequest request) {
         return adminService.acceptProviderRegis(providerRegistrationId, request);
     }
 
-    @PostMapping("poviderRegis/reject")
+    @PostMapping("providerRegis/reject")
     public ResponseEntity<?> rejectProviderRegis(@RequestParam("providerRegistrationId") long providerRegistrationId, @RequestParam("reason") String reason, HttpServletRequest request) {
     return adminService.rejectProviderRegis(providerRegistrationId,reason,request);
     }
-    @GetMapping("poviderRegis/getReview")
+    @GetMapping("providerRegis/getReview")
     public ResponseEntity<?> getProviderReview() {
         return adminService.getReviewProviderHistory();
     }
