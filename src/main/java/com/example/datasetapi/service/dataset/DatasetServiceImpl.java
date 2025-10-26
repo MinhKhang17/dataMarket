@@ -685,5 +685,14 @@ public class DatasetServiceImpl implements DatasetService {
                 .body(resource);
     }
 
+    @Override
+    public List<DatasetDTO> findAllConsumerDataset(HttpServletRequest request) {
+        User user = userService.findUserById(tokenService.getUserIdFromRequest(request));
+        return downloadTokenRepository.findByConsumer(user).stream()
+                .map(DownloadToken::getDataset)
+                .map(datasetMapper::toDatasetDTO)
+                .collect(Collectors.toList());
+    }
+
 
 }
