@@ -36,7 +36,7 @@ public class AdminServiceImpl implements AdminService {
     private UserService userService;
     @Autowired
     private TokenService tokenService;
-@Autowired
+    @Autowired
     private ProviderRegisReviewHistoryRepo providerRegisReviewHistoryRepo;
     @Autowired
     private WalletService walletService;

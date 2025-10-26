@@ -43,40 +43,12 @@ import org.slf4j.Logger;
 @Slf4j
 @Service
 public class DatasetServiceImpl implements DatasetService {
-    @Override
-    public ConsumerBuyResponseDTO buyGroupByAPI(long timeGroupId, HttpServletRequest request) {
-        return null;
-    }
-
-    @Override
-    public ConsumerBuyResponseDTO buyApiPack(long apiPackId, HttpServletRequest request) {
-        PricingRule pricingRule = priceService.findApiPricingRuleById(apiPackId);
-        User user = userService.findUserById(tokenService.getUserIdFromRequest(request));
-        double price = pricingRule.getBasePricePoint();
-
-        paymentService.updateWallet(TransferType.TODOWN,price,user.getId(),BuyType.BUY_API);
-
-        DownloadToken downloadToken = jwtUtil.generateDowloadToken(user,null,30,5,null);
-
-        return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.API,downloadToken);
-    }
-
     @Autowired
     private JwtUtil jwtUtil;
     @Autowired
     private DatasetPlanRepo datasetPlanRepo;
     @Autowired
     private WalletRepository walletRepository;
-
-    @Override
-    public ResponseEntity<?> getAllAllDataset() {
-            List<DatasetParentReposonseDto> datasetReposonseDtoList = datasetGroupRepository.findAll()
-                    .stream()
-                    .map(datasetMapper::toDatasetParentReposonseDto)
-                    .collect(Collectors.toList());
-            return ResponseEntity.ok().body(new ApiResponse(true,"load dataset success",datasetReposonseDtoList));
-    }
-
     @Autowired
     private DatasetRepository datasetRepository;
     @Autowired
@@ -109,12 +81,33 @@ public class DatasetServiceImpl implements DatasetService {
     private  DatasetPricingRepository datasetPricingRepository;
     @Autowired
     private ConsumerSubRepo consumerSubRepo;
+
     @Value("${aws.bucket.name}")
     private String BUCKET_NAME;
 
-
     private static final Logger logger =  LoggerFactory.getLogger(DatasetServiceImpl.class);
 
+
+    @Override
+    public ResponseEntity<ApiResponse> searchDatasetByName(String datasetName) {
+        if(datasetName==null || datasetName.trim().isEmpty()){
+            List<Dataset> datasets = datasetRepository.findAll();
+            return ResponseEntity.ok().body(new ApiResponse(true,"load all dataset success",
+                    datasets.stream()
+                            .map(datasetMapper::toDatasetDTO)
+                            .collect(Collectors.toList())
+            ));
+        }
+        List<Dataset> datasets = datasetRepository.searchByKeyword(datasetName);
+        if(datasets.isEmpty()){
+            return ResponseEntity.ok().body(new ApiResponse(false,"No Dataset found with the given name",datasetName));
+        }
+        return ResponseEntity.ok().body(new ApiResponse(true,"load Dataset success",
+                datasets.stream()
+                        .map(datasetMapper::toDatasetDTO)
+                        .collect(Collectors.toList())
+        ));
+    }
 
     @Override
     public ResponseEntity<ApiResponse> getAllCategories() {
@@ -545,6 +538,14 @@ public class DatasetServiceImpl implements DatasetService {
         return datasetRepository.save(dataset);
     }
 
+    @Override
+    public ResponseEntity<?> getAllAllDataset() {
+        List<DatasetParentReposonseDto> datasetReposonseDtoList = datasetGroupRepository.findAll()
+                .stream()
+                .map(datasetMapper::toDatasetParentReposonseDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok().body(new ApiResponse(true,"load dataset success",datasetReposonseDtoList));
+    }
 
     @Override
     public ConsumerBuyResponseDTO buyTimeGroupWithSub(long timeGroupId, HttpServletRequest request) {
@@ -564,7 +565,23 @@ public class DatasetServiceImpl implements DatasetService {
     }
 
 
+    @Override
+    public ConsumerBuyResponseDTO buyGroupByAPI(long timeGroupId, HttpServletRequest request) {
+        return null;
+    }
 
+    @Override
+    public ConsumerBuyResponseDTO buyApiPack(long apiPackId, HttpServletRequest request) {
+        PricingRule pricingRule = priceService.findApiPricingRuleById(apiPackId);
+        User user = userService.findUserById(tokenService.getUserIdFromRequest(request));
+        double price = pricingRule.getBasePricePoint();
+
+        paymentService.updateWallet(TransferType.TODOWN,price,user.getId(),BuyType.BUY_API);
+
+        DownloadToken downloadToken = jwtUtil.generateDowloadToken(user,null,30,5,null);
+
+        return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.API,downloadToken);
+    }
 
     public void buyWithSubProcess (ConsumerSubscription consumerSubscription,long rowCount){
             long rowCountConsumer = consumerSubscription.getRow_amount();

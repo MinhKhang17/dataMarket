@@ -32,5 +32,9 @@ public class DatasetController {
         return datasetService.getAllDatasetParent();
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse> searchByDatasetName(@RequestParam(required = false) String name){
+        return datasetService.searchDatasetByName(name);
+    }
 
 }

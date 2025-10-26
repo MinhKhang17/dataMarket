@@ -1,5 +1,6 @@
 package com.example.datasetapi.service.dataset;
 
+import com.cloudinary.Api;
 import com.example.datasetapi.dto.request.CheckoutRequestDTO;
 import com.example.datasetapi.dto.request.ConsumerBuyRequestDTO;
 import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
@@ -68,4 +69,6 @@ public interface DatasetService {
     ConsumerBuyResponseDTO buyGroupByAPI(long timeGroupId, HttpServletRequest request);
 
     ConsumerBuyResponseDTO buyApiPack(long apiPackId, HttpServletRequest request);
+
+    ResponseEntity<ApiResponse> searchDatasetByName(String datasetName);
 }
