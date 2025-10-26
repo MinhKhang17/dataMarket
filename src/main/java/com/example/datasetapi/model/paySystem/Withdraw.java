@@ -46,6 +46,16 @@ public class Withdraw {
     @Column
     private String reason;
 
+//    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+//    @JoinColumn(name = "bank_account_id")
+//    private BankAccount bankAccount;
+
+    @Column(length = 100)
+    private String bank;
+
+    @Column(length = 50)
+    private String accountNumber;
+
     @Column
     private String proofImageUrl;
 }

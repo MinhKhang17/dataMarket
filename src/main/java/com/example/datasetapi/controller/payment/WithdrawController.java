@@ -18,15 +18,15 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class WithdrawController {
     private final ImageService imageService;
-    private final WithdrawService withdrawRequestService;
+    private final WithdrawService withdrawService;
 
     @PostMapping("/request")
     public ResponseEntity<ApiResponse> withdrawRequest(@RequestBody WithdrawRequest withdrawRequest) {
-        return withdrawRequestService.withdrawRequest(withdrawRequest);
+        return withdrawService.withdrawRequest(withdrawRequest);
     }
 
 
-    @PostMapping("/process")
+    @PostMapping("/approve")
     public ResponseEntity<ApiResponse> processWithdrawRequest(
             @RequestPart("data") String dataJson,
             @RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
@@ -34,7 +34,26 @@ public class WithdrawController {
         ObjectMapper objectMapper = new ObjectMapper();
         ProcessWithdrawRequest withdrawRequest = objectMapper.readValue(dataJson, ProcessWithdrawRequest.class);
 
-        return withdrawRequestService.processWithdrawRequest(withdrawRequest, file);
+
+        return withdrawService.processWithdrawApprove(withdrawRequest, file);
     }
+
+    @PostMapping("/reject")
+    public ResponseEntity<ApiResponse> processWithdrawRequest(@RequestBody ProcessWithdrawRequest withdrawRequest){
+
+        return withdrawService.processWithdrawReject(withdrawRequest);
+    }
+
+    @GetMapping("/withdraws")
+    public ResponseEntity<ApiResponse> listWithdraws(
+            @RequestParam(required = false) String status) {
+        return withdrawService.listWithdraws(status);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse> getWithdrawById(@PathVariable("id") Long id) {
+        return  withdrawService.getWithdrawById(id);
+    }
+
 
 }
