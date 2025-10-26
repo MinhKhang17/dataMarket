@@ -44,7 +44,7 @@ public class WithdrawController {
         return withdrawService.processWithdrawReject(withdrawRequest);
     }
 
-    @GetMapping("/list")
+    @GetMapping("/withdraws")
     public ResponseEntity<ApiResponse> listWithdraws(
             @RequestParam(required = false) String status) {
         return withdrawService.listWithdraws(status);
