@@ -404,9 +404,7 @@ public class DatasetServiceImpl implements DatasetService {
         User consumer = userService.findUserById(tokenService.getUserIdFromRequest(request));
         switch (datasetPricing.getPricingMethod()){
             case ONE_TIME -> {
-               ConsumerBuyResponseDTO consumerBuyResponseDTO = createOneTimePayment(dataset,datasetPricing,consumer);
-                paymentService.updateWallet(TransferType.TODOWN,datasetPricing.getPrice(),consumer.getId(),BuyType.BUY_ONE_TIME_DATASET);
-               return consumerBuyResponseDTO;
+               return createOneTimePayment(dataset,datasetPricing,consumer);
             }
             case SUBSCRIPTION -> {
                 return   createSubPayment(dataset,consumer);
@@ -539,6 +537,7 @@ public class DatasetServiceImpl implements DatasetService {
         DownloadToken downloadToken = jwtUtil.generateDowloadToken(consumer,dataset,30,2,null);
         consumer.getDownloadTokens().add(downloadToken);
         userService.saveUser(consumer);
+        paymentService.updateWallet(TransferType.TODOWN,datasetPricing.getPrice(),consumer.getId(),BuyType.BUY_ONE_TIME_DATASET);
         return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.ONE_TIME,downloadToken.getId());
     }
 
