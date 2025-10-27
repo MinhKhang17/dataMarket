@@ -4,10 +4,16 @@
 FROM maven:3.9.6-eclipse-temurin-17 AS build
 WORKDIR /app
 
-# Copy toàn bộ code vào container
-COPY . .
+# Copy file pom.xml trước để tải dependency (cache tốt hơn)
+COPY pom.xml .
+ENV MAVEN_OPTS="-Dfile.encoding=UTF-8"
+# Tải toàn bộ dependency (để lần sau build nhanh hơn)
+RUN mvn dependency:go-offline -B
 
-# Build ứng dụng, bỏ qua test cho nhanh
+# Sau đó mới copy code
+COPY src ./src
+
+# Build ứng dụng (bỏ qua test)
 RUN mvn clean package -DskipTests
 
 # ===============================
@@ -19,7 +25,7 @@ WORKDIR /app
 # Copy file jar từ stage build sang
 COPY --from=build /app/target/*.jar app.jar
 
-# Mở port 8080
+# Mở port 8080 cho Spring Boot
 EXPOSE 8080
 
 # Lệnh chạy ứng dụng

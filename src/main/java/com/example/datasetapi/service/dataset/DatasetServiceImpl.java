@@ -207,7 +207,7 @@ public class DatasetServiceImpl implements DatasetService {
 
             // Upload file tạm
             File file = new File(datasetInformation.getFile_url());
-//            uploadCSVFileToPendingFolder(file, dataset);
+            uploadCSVFileToPendingFolder(file, dataset);
             logger.info("✅ Upload CSV file thành công cho dataset: {}", dataset.getTitle());
 
             //  Lưu dữ liệu
@@ -308,7 +308,7 @@ public class DatasetServiceImpl implements DatasetService {
         reviewHistoryRepository.save(reviewHistory);
         ReviewHistoryDto reviewHistoryDto = datasetMapper.toReviewHistoryDto(reviewHistoryRepository.save(reviewHistory));
 
-//        moveFileFromPendingToApproveFolder(dataset);
+        moveFileFromPendingToApproveFolder(dataset);
 
         //tạo giá sau khi accept
         priceService.createPricingForDataset(dataset,datasetInformationOptional.get());
