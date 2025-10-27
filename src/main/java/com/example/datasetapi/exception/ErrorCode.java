@@ -77,7 +77,8 @@ public enum ErrorCode {
     SUB_ROW_NOT_ENOUGH("SUB_ROW_NOT_ENOUGH", "Not enough remaining rows in the subscription"),
     SUB_EXPIRED("SUB_EXPIRED", "Subscription package has expired"),
     TIME_GROUP_NOT_FOUND("TIME_GROUP_NOT_FOUND", "Time group not found"),
-    TOKEN_IS_EXPIRED("TOKEN_IS_EXPIRED","Token Hết hạn" );
+    TOKEN_IS_EXPIRED("TOKEN_IS_EXPIRED","Token Hết hạn" ),
+    DATASET_BOUGHT("DATASET_BOUGHT","Dataset đã được mua" );
 
     private final String code;
     private final String message;

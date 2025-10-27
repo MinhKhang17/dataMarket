@@ -533,6 +533,9 @@ public class DatasetServiceImpl implements DatasetService {
     }
 
     private ConsumerBuyResponseDTO createOneTimePayment(Dataset dataset, DatasetPricing datasetPricing, User consumer) {
+        if(downloadTokenRepository.findByConsumerAndDatasetAndIsActive(consumer,dataset,true).isPresent()){
+            throw new  CustomException(HttpStatus.BAD_REQUEST,ErrorCode.DATASET_BOUGHT);
+        }
         DownloadToken downloadToken = jwtUtil.generateDowloadToken(consumer,dataset,30,2,null);
         consumer.getDownloadTokens().add(downloadToken);
         userService.saveUser(consumer);
@@ -608,7 +611,12 @@ public class DatasetServiceImpl implements DatasetService {
     public String getDowloadTokenOfDatasetForConsumer(long datasetId, HttpServletRequest request) {
         User user = userService.findUserById(tokenService.getUserIdFromRequest(request));
         Dataset dataset = findById(datasetId);
-        Optional<DownloadToken> downloadTokenOptional = downloadTokenRepository.findByConsumerAndDataset(user,dataset);
+        Optional<DownloadToken> downloadTokenOptional = downloadTokenRepository.findByConsumerAndDatasetAndIsActive(user,dataset,true);
+        if(downloadTokenOptional.isPresent()){
+            if(downloadTokenOptional.get().getUse_amount() <= 0||downloadTokenOptional.get().getExpiresAt().isBefore(LocalDateTime.now())) {
+                throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.TOKEN_IS_EXPIRED);
+            }
+        }
         if(downloadTokenOptional.isEmpty()){
             throw new CustomException(HttpStatus.NOT_FOUND,ErrorCode.TOKEN_NOT_FOUND);
         }
@@ -656,22 +664,23 @@ public class DatasetServiceImpl implements DatasetService {
         //lay dowload token tu request checck xem nguoi dung co permussion de su dung hay khong
         Optional<DownloadToken> downloadTokenOptional = downloadTokenRepository.findById(UUID.fromString(dowloadToken));
         User user = userService.findUserById(tokenService.getUserIdFromRequest(request));
-
         if(downloadTokenOptional.isEmpty()){
             throw new CustomException(HttpStatus.NOT_FOUND,ErrorCode.TOKEN_NOT_FOUND);
         }
         if(downloadTokenOptional.get().getConsumer()!= user) {
             throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED);
         }
-
+        if(downloadTokenOptional.get().getUse_amount()==0){
+            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.TOKEN_IS_EXPIRED);
+        }
         Dataset dataset = downloadTokenOptional.get().getDataset();
 
         String fileKey = dataset.getFileKey();
 
         DownloadToken downloadToken = downloadTokenOptional.get();
-
+        downloadToken.setUse_amount(downloadToken.getUse_amount()-1);
         if(downloadToken.getUse_amount()==0){
-            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.TOKEN_IS_EXPIRED);
+            downloadToken.setActive(false);
         }
 
         GetObjectRequest getObjectRequest = GetObjectRequest.builder()
