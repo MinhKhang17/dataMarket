@@ -10,6 +10,7 @@ import com.example.datasetapi.exception.ErrorCode;
 import com.example.datasetapi.mapper.DatasetMapper;
 import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
 import com.example.datasetapi.model.dataset.*;
+import com.example.datasetapi.model.paySystem.Wallet;
 import com.example.datasetapi.model.userManager.Provider;
 import com.example.datasetapi.model.userManager.User;
 import com.example.datasetapi.model.userManager.ConsumerSubscription;
@@ -424,6 +425,9 @@ public class DatasetServiceImpl implements DatasetService {
         if(consumerSubRepo.existsByPricingRuleAndConsumerAndIsActive(pricingRule,consumer,true)){
             throw new  CustomException(HttpStatus.BAD_REQUEST,ErrorCode.EXISTS_SUB);
         }
+
+        paymentService.updateWallet(TransferType.TODOWN,Double.parseDouble(String.valueOf(pricingRule.getBasePricePoint())),tokenService.getUserIdFromRequest(request),BuyType.BUY_SUB);
+
         List<ConsumerSubscription> consumerSubscriptionList = consumerSubRepo.findAllByConsumerAndIsUsing(consumer,true);
 
         for(ConsumerSubscription consumerSubscription : consumerSubscriptionList){
@@ -539,7 +543,7 @@ public class DatasetServiceImpl implements DatasetService {
     @Override
     public Dataset uploadCSVFileToPendingFolder(File file, Dataset dataset) {
         String fileName = file.getName();
-        String fileKey = "PENDING/" + UUID.randomUUID() + "/" + fileName;
+        String fileKey = "PENDING/" + UUID.randomUUID()  + fileName;
 
         try {
             byte[] fileContent = Files.readAllBytes(file.toPath());
@@ -573,7 +577,7 @@ public class DatasetServiceImpl implements DatasetService {
 
         // Tạo key mới cho file trong folder APPROVE
         String fileName = oldKey.substring(oldKey.lastIndexOf("/") + 1);
-        String newKey = "APPROVED/" + UUID.randomUUID() + "/" + fileName;
+        String newKey = "APPROVED/" + UUID.randomUUID()  + fileName;
 
         try {
             // 1️⃣ Copy từ PENDING sang APPROVE
