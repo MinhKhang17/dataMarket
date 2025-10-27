@@ -7,6 +7,7 @@ import com.example.datasetapi.model.userManager.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -20,4 +21,6 @@ public interface DownloadTokenRepository extends JpaRepository<DownloadToken, UU
     List<DownloadToken> findByConsumer(User consumer);
 
     Optional<DownloadToken> findByConsumerAndDatasetAndIsActive(User consumer, Dataset dataset, boolean b);
+
+    List<DownloadToken>findByConsumerAndIsActive(User user, boolean b);
 }
