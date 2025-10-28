@@ -147,6 +147,7 @@ public class DatasetMapperImpl implements DatasetMapper {
 
     private ConsumerSubResponseDTO toConsumerSubReponseDTO(ConsumerSubscription consumerSubscription) {
             ConsumerSubResponseDTO consumerSubResponseDTO = new ConsumerSubResponseDTO();
+            consumerSubResponseDTO.setConsumerSubId(consumerSubscription.getId());
             consumerSubResponseDTO.setConsumer(toUserDto(consumerSubscription.getConsumer()));
             consumerSubResponseDTO.setSubType(consumerSubscription.getSubType());
             consumerSubResponseDTO.setUsing(consumerSubscription.isUsing());
