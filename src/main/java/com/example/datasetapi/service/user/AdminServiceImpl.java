@@ -10,6 +10,7 @@ import com.example.datasetapi.exception.ErrorCode;
 import com.example.datasetapi.model.userManager.*;
 import com.example.datasetapi.repository.ProviderRegisReviewHistoryRepo;
 import com.example.datasetapi.repository.ProviderRegistrationRepository;
+import com.example.datasetapi.service.feature.EmailService;
 import com.example.datasetapi.service.payment.WalletService;
 import com.example.datasetapi.util.PasswordUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -40,7 +41,8 @@ public class AdminServiceImpl implements AdminService {
     private ProviderRegisReviewHistoryRepo providerRegisReviewHistoryRepo;
     @Autowired
     private WalletService walletService;
-
+@Autowired
+private EmailService emailService;
 
     @Override
     public List<ProviderRegistrationResponseDTO> getProviderRegisPending(RegistrationStatus status) {
@@ -74,7 +76,8 @@ public class AdminServiceImpl implements AdminService {
 
             walletService.createWallet(provider.getUser());
 
-            sendMail(tempPassword.get(),tempUserName.get(), "");
+            emailService.sendAccountInfoEmail(provider.getUser().getEmail(),tempUserName.toString(),tempPassword.toString(),"http://localhost:5173/");
+
 
             providerRegistration.setProvider(provider);
 
