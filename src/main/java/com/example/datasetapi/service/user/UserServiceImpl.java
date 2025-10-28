@@ -41,6 +41,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -483,8 +484,13 @@ public class UserServiceImpl implements UserService {
         providerIdentityDocument.setIdCardVerificationStatus(VerificationStatus.PENDING);
 
         // Upload image và set URL
-//            String imageUrl = imageService.uploadImage(dto.getFile());
-//            providerIdentityDocument.setImage_url(imageUrl);
+            String imageUrl = null;
+            try {
+                imageUrl = imageService.uploadImage(dto.getFile());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            providerIdentityDocument.setImage_url(imageUrl);
 
         // Set document type if available in DTO
         providerIdentityDocument.setDocumentType(DocumentType.valueOf(dto.getType()));

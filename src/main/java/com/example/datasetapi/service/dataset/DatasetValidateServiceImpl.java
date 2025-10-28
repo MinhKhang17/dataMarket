@@ -141,7 +141,7 @@ try {
     }
     @Override
     public ResponseEntity<?> getAllDatasetErrorWithDatasetInfor() {
-        List<DatasetInformation> datasetInformationList = datasetInforRepository.findAll();
+        List<DatasetInformation> datasetInformationList = datasetInforRepository.findAllByStatus(DatasetInforStatus.CONTENT_APPROVED);
         datasetInformationList.forEach(datasetInformation -> {
             datasetInformation.getDatasetType().getName();
             datasetInformation.getProvider().getId();
