@@ -439,6 +439,7 @@ public class DatasetServiceImpl implements DatasetService {
         consumerSubscription.setExpiresAt(LocalDateTime.now().plusDays(pricingRule.getTimeLimitDay()));
         consumerSubscription.setSubType(pricingRule.getSubType());
         consumerSubscription.setRow_amount(pricingRule.getRowLimit());
+        consumerSubscription.setActive(true);
         consumerSubscription.setUsing(true);
 
 

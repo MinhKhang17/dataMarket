@@ -19,6 +19,7 @@ public class UserMapper implements UserResponseDTOMapper {
         userInformationResponse.setEmail(user.getEmail());
         userInformationResponse.setUser_id(user.getId());
         userInformationResponse.setRole(user.getRole().getName());
+
         return userInformationResponse;
     }
 
