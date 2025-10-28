@@ -16,12 +16,9 @@ public class Provider {
     private long id; // id dùng chung với User
 
     @OneToOne(cascade = CascadeType.ALL)
-    @MapsId // dùng cùng primary key với User
-    @JoinColumn(name = "id") // tên cột khóa ngoại trùng với PK
+    @MapsId
+    @JoinColumn(name = "id")
     private User user;
-
-    @Column
-    private String bankAccount;
 
     @OneToOne(cascade = CascadeType.ALL)
     @JsonIgnore

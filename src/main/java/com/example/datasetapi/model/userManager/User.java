@@ -2,11 +2,13 @@ package com.example.datasetapi.model.userManager;
 
 import com.example.datasetapi.enums.UserStatus;
 import com.example.datasetapi.model.dataset.DownloadToken;
+import com.example.datasetapi.model.paySystem.BankAccount;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -57,4 +59,5 @@ public class User {
         this.token = token;
         if (token != null) token.setUser(this);
     }
+
 }

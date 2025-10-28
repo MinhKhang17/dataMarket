@@ -2,11 +2,8 @@ package com.example.datasetapi.controller.consumerController;
 
 import com.example.datasetapi.dto.request.CheckoutRequestDTO;
 import com.example.datasetapi.dto.request.ConsumerBuyRequestDTO;
-import com.example.datasetapi.dto.response.ApiResponse;
-import com.example.datasetapi.dto.response.CheckoutResponseDTO;
-import com.example.datasetapi.dto.response.ConsumerBuyResponseDTO;
+import com.example.datasetapi.dto.response.*;
 
-import com.example.datasetapi.dto.response.ConsumerSubResponseDTO;
 import com.example.datasetapi.service.dataset.DatasetService;
 import com.example.datasetapi.service.user.ConsumerService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -55,9 +52,10 @@ public class ConsumerController {
         ConsumerBuyResponseDTO consumerBuyResponseDTO = datasetService.selectSubPack(consumerSubId,request);
         return ResponseEntity.ok().body(new ApiResponse(true,"sub selecting success",consumerBuyResponseDTO));
     }
-    @PostMapping("dowload/key")
+    @GetMapping("dataset/key")
     public ResponseEntity<ApiResponse> dowloadKey(@RequestParam long datasetId, HttpServletRequest request){
-        return ResponseEntity.ok().body(new ApiResponse(true,"Dowload token ",null));
+       String download_token = datasetService.getDowloadTokenOfDatasetForConsumer(datasetId,request);
+        return ResponseEntity.ok().body(new ApiResponse(true,"Dowload token ",download_token));
     }
     @PostMapping("group/buy")
     public ResponseEntity<ApiResponse> BuyGroup(@RequestParam long timeGroupId, HttpServletRequest request){
@@ -74,7 +72,11 @@ public class ConsumerController {
         ConsumerBuyResponseDTO consumerBuyResponseDTO = datasetService.buyApiPack(apiPackId,request);
         return ResponseEntity.ok().body(new ApiResponse(true,"Dowload token ",consumerBuyResponseDTO));
     }
-
+    @GetMapping("dataset-history")
+    public ResponseEntity<ApiResponse> datasetHistory(HttpServletRequest request){
+        List<DatasetDTO> datasetDTOS = datasetService.findAllConsumerDataset(request);
+        return ResponseEntity.ok().body(new ApiResponse(true,"consumer dataset ",datasetDTOS));
+    }
 
 
 }

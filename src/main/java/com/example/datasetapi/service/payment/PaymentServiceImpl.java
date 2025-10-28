@@ -31,56 +31,6 @@ public class PaymentServiceImpl implements PaymentService{
         this.transactionService = transactionService;
     }
 
-//    @Override
-//    public ResponseEntity<ApiResponse> createWallet(HttpServletRequest request) {
-//        Wallet wallet = new Wallet();
-//
-//        String token = tokenServiceImpl.resolveToken(request);
-//        if(token == null) {
-//            throw new CustomException(HttpStatus.UNAUTHORIZED,ErrorCode.UNAUTHORIZED);
-//        }
-//        Long userId = jwtUtil.getUserIdFromToken(token);
-//        if (userId == null) {
-//            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.INVALID_TOKEN);
-//        }
-//        User user = userService.findUserById(userId);
-//
-//        wallet.setUser(user);
-//
-//        walletRepository.save(wallet);
-//return ResponseEntity.ok().body(new ApiResponse(true,"created wallet for" + userId,null));
-//    }
-
-//    @Override
-//    public ResponseEntity<ApiResponse> createWallet(User user) {
-//        if (user == null) {
-//            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
-//        }
-//
-//        long userId = user.getId();
-//
-//        if (userService.findUserById(userId) == null) {
-//            throw new CustomException(HttpStatus.NOT_FOUND, ErrorCode.USER_NOT_FOUND);
-//        }
-//
-//        if (walletRepository.findByUserId(userId).isPresent()) {
-//            return ResponseEntity.badRequest().body(
-//                    new ApiResponse(false, "Wallet already exists for user " + userId, null)
-//            );
-//        }
-//
-//        // Tạo mới wallet
-//        Wallet wallet = new Wallet();
-//        wallet.setUser(user);
-//        wallet.setAmount(0.0);
-//
-//        walletRepository.save(wallet);
-//
-//        return ResponseEntity.ok(
-//                new ApiResponse(true, "Wallet created successfully for user " + userId, null)
-//        );
-//    }
-
     @Override
     public boolean updateWallet(TransferType type, double amount, long user_id, BuyType buyType) {
         boolean isUpdateSuccess = false;

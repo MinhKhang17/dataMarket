@@ -22,8 +22,9 @@ public class Withdraw {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user; @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    private User user;
 
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "wallet_id", nullable = false)
     private Wallet wallet;
 
@@ -43,18 +44,13 @@ public class Withdraw {
 
     public enum Status {PENDING, APPROVE, REJECT}
 
+
     @Column
     private String reason;
 
-//    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-//    @JoinColumn(name = "bank_account_id")
-//    private BankAccount bankAccount;
-
-    @Column(length = 100)
-    private String bank;
-
-    @Column(length = 50)
-    private String accountNumber;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "bank_account_id")
+    private BankAccount bankAccount;
 
     @Column
     private String proofImageUrl;

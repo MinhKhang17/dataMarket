@@ -1,5 +1,6 @@
 package com.example.datasetapi.service.feature;
 
+import com.example.datasetapi.model.dataset.Dataset;
 import com.example.datasetapi.model.dataset.DatasetInformation;
 import com.example.datasetapi.model.dataset.DatasetValidationError;
 import com.example.datasetapi.model.userManager.Provider;
@@ -19,4 +20,5 @@ public interface FileService {
     void saveErrors(DatasetInformation datasetInformation, List<DatasetValidationError> errors);
 
     List<DatasetValidationError> getErrorsByDataset(DatasetInformation datasetInformation);
+
 }

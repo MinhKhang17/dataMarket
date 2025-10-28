@@ -10,6 +10,7 @@ import com.example.datasetapi.enums.Datasets.DatasetInforStatus;
 import com.example.datasetapi.model.dataset.*;
 import com.example.datasetapi.model.location.Commune;
 import com.example.datasetapi.model.location.Province;
+import com.example.datasetapi.model.paySystem.BankAccount;
 import com.example.datasetapi.model.userManager.*;
 import com.example.datasetapi.model.paySystem.Wallet;
 import com.example.datasetapi.repository.*;
@@ -59,7 +60,7 @@ private  ProviderRepository providerRepository;
 private  DatasetInforRepository datasetInforRepository;
     @Autowired
     private PricingRuleRepo pricingRuleRepo;
-@Autowired
+    @Autowired
     private  ProvinceRepository provinceRepository;
     @Autowired
     private  CommuneRepository  communeRepository;
@@ -67,6 +68,8 @@ private  DatasetInforRepository datasetInforRepository;
     private WalletRepository walletRepository;
     @Autowired
     private WalletService walletService;
+    @Autowired
+    private BankAccountRepository bankAccountRepository;
 
     @Override
     public void run(String... args) throws Exception {
@@ -675,7 +678,12 @@ private  DatasetInforRepository datasetInforRepository;
         Provider provider = new Provider();
         provider.setUser(user);
         provider.setProviderRegistration(registration);
-        provider.setBankAccount("123456789");
+
+        BankAccount bankAccount = new BankAccount();
+        bankAccount.setBankName("Vietcombank");
+        bankAccount.setAccountHolderName("Nguyen Van A");
+        bankAccount.setAccountNumber("123456789");
+        bankAccount.setUser(user);
 
         // Liên kết location (tùy model Provider của bạn)
         Commune commune = communeRepository.findById("00008")
@@ -686,7 +694,9 @@ private  DatasetInforRepository datasetInforRepository;
 
         // 5️⃣ Lưu xuống database
         providerRepository.save(provider);
+        bankAccountRepository.save(bankAccount);
         walletService.createWallet(user);
+
 
         System.out.println("✅ ProviderRegistration + Provider + User created successfully!");
     }
@@ -714,7 +724,13 @@ private  DatasetInforRepository datasetInforRepository;
         Wallet wallet = new Wallet();
         wallet.setUser(user);
         wallet.setAmount(10000);
+        BankAccount bankAccount = new BankAccount();
+        bankAccount.setBankName("Techcombank");
+        bankAccount.setAccountHolderName("Le Thi B");
+        bankAccount.setAccountNumber("987654321");
+        bankAccount.setUser(user);
         userRepository.save(user);
+        bankAccountRepository.save(bankAccount);
         walletRepository.save(wallet);
         System.out.println("Khoi tao consumer");
     }

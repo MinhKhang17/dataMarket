@@ -1,5 +1,6 @@
 package com.example.datasetapi.service.payment;
 
+import com.example.datasetapi.dto.request.BankRequest;
 import com.example.datasetapi.dto.request.ProcessWithdrawRequest;
 import com.example.datasetapi.dto.request.WithdrawRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
@@ -64,24 +65,34 @@ public class WithdrawServiceImpl implements WithdrawService {
             if (wallet.getAmount() < amount) {
                 throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.INSUFFICIENT_FUNDS);
             }
-            if(withdrawRequest.getBank() == null || withdrawRequest.getBank().isBlank()) {
-                throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
+
+            BankAccount bankAccount = null;
+            if(withdrawRequest.getBankAccountId() != null) {
+                bankAccount = bankAccountService.getBankAccount(withdrawRequest.getBankAccountId());
+                if(bankAccount == null) {
+                    throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.BANK_ACCOUNT_NOT_FOUND);
+                }
+                if (!bankAccount.getUser().getId().equals(userId))
+                    throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.NOT_OWNER_BANK_ACCOUNT);
+
+            } else {
+                if (withdrawRequest.getBankName() == null || withdrawRequest.getAccountNumber() == null
+                        || withdrawRequest.getAccountHolderName() == null) {
+                    throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
+                }
+                    bankAccount = bankAccountService.addBankAccount(new BankRequest(withdrawRequest.getBankName(), withdrawRequest.getAccountNumber(),withdrawRequest.getAccountHolderName()), userId);
             }
-            if(withdrawRequest.getAccountNumber() == null || withdrawRequest.getAccountNumber().isBlank()) {
-                throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
-            }
+
 
             Withdraw withdraw = new Withdraw();
             withdraw.setUser(wallet.getUser());
             withdraw.setWallet(wallet);
             withdraw.setAmount(withdrawRequest.getAmount());
-            withdraw.setBank(withdrawRequest.getBank());
-            withdraw.setAccountNumber(withdrawRequest.getAccountNumber());
+            withdraw.setBankAccount(bankAccount);
             withdraw.setStatus(Withdraw.Status.PENDING);
             withdrawRepository.saveAndFlush(withdraw);
 
-            return ResponseEntity.ok(new ApiResponse(true, "Success", new WithdrawResponse(withdraw.getId(), withdraw.getStatus().name(), withdraw.getAmount(), withdraw.getCreatedAt(), withdraw.getUpdatedAt(), wallet.getId(), null, null, withdraw.getBank(),
-                    withdraw.getAccountNumber())));
+            return ResponseEntity.ok(new ApiResponse(true, "Success", new WithdrawResponse(withdraw.getId(), withdraw.getStatus().name(), withdraw.getAmount(), withdraw.getCreatedAt(), withdraw.getUpdatedAt(), wallet.getId(),null, null,withdraw.getBankAccount().getBankName() , withdraw.getBankAccount().getAccountNumber())));
     }
 
     @Override
@@ -108,8 +119,8 @@ public class WithdrawServiceImpl implements WithdrawService {
                 withdraw.getWallet().getId(),
                 withdraw.getReason(),
                 withdraw.getProofImageUrl(),
-                withdraw.getBank(),
-                withdraw.getAccountNumber()
+                withdraw.getBankAccount().getBankName(),
+                withdraw.getBankAccount().getAccountNumber()
         )));
 
     }
@@ -133,8 +144,8 @@ public class WithdrawServiceImpl implements WithdrawService {
                 withdraw.getWallet().getId(),
                 withdraw.getReason(),
                 withdraw.getProofImageUrl(),
-                withdraw.getBank(),
-                withdraw.getAccountNumber()
+                withdraw.getBankAccount().getBankName(),
+                withdraw.getBankAccount().getAccountNumber()
         )));
 
     }
@@ -187,8 +198,8 @@ public class WithdrawServiceImpl implements WithdrawService {
                         w.getWallet().getId(),
                         w.getReason(),
                         w.getProofImageUrl(),
-                        w.getBank(),
-                        w.getAccountNumber()
+                        w.getBankAccount().getBankName(),
+                        w.getBankAccount().getAccountNumber()
                 )).toList();
 
         return ResponseEntity.ok(new ApiResponse(true, "Success", responses));
@@ -223,8 +234,8 @@ public class WithdrawServiceImpl implements WithdrawService {
                         withdraw.getWallet().getId(),
                         withdraw.getReason(),
                         withdraw.getProofImageUrl(),
-                        withdraw.getBank(),
-                        withdraw.getAccountNumber()
+                        withdraw.getBankAccount().getBankName(),
+                        withdraw.getBankAccount().getAccountNumber()
                 )
         ));
     }

@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Set;
 
 public interface DatasetPlanRepo extends JpaRepository<DatasetPlan, Integer> {
-    KeyValues findByDataset(Dataset dataset);
 
     List<DatasetPlan> findALlByDataset(Dataset dataset);
 

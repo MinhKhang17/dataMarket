@@ -2,7 +2,9 @@ package com.example.datasetapi.controller.download;
 
 import com.example.datasetapi.service.dataset.DatasetService;
 import com.example.datasetapi.service.user.TokenService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -26,14 +28,14 @@ public class DowloadController {
 //        return tokenService.getDownloadToken(datasetId,request);
 //        }
 
-//    @GetMapping("/download")
-//    public ResponseEntity<?> downloadFile(
-//            @RequestParam String dowloadToken
-//    ) {
-//
-//        return datasetService.dowloadDataset(dowloadToken);
-//
-//    }
+    @PostMapping("/download")
+    public ResponseEntity<?> downloadFile(
+            @RequestParam String dowloadToken, HttpServletRequest request
+    ) {
+
+        return datasetService.dowloadDataset(dowloadToken,request);
+
+    }
 
 
 

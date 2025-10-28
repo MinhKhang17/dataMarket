@@ -58,6 +58,11 @@ public enum ErrorCode {
     INVALID_FILE_TYPE("INVALID_FILE_TYPE", "Invalid file type"),
     MISSING_FILE("MISSING_FILE", "File is required"),
 
+    // BankAccount errors
+    BANK_ACCOUNT_NOT_FOUND("BANK_ACCOUNT_NOT_FOUND", "Bank account not found"),
+    NO_BANK_ACCOUNTS("NO_BANK_ACCOUNTS", "No bank accounts found for user"),
+    NOT_OWNER_BANK_ACCOUNT("NOT_OWNER_BANK_ACCOUNT", "User does not own this bank account"),
+
     // Survey errors
     INVALID_TYPE_ID("INVALID_TYPE_ID", "One or more provided type IDs are invalid"),
 
@@ -76,7 +81,8 @@ public enum ErrorCode {
     SUB_NOT_FOUND("SUB_NOT_FOUND", "Subscription package not found"),
     SUB_ROW_NOT_ENOUGH("SUB_ROW_NOT_ENOUGH", "Not enough remaining rows in the subscription"),
     SUB_EXPIRED("SUB_EXPIRED", "Subscription package has expired"),
-    TIME_GROUP_NOT_FOUND("TIME_GROUP_NOT_FOUND", "Time group not found");
+    TIME_GROUP_NOT_FOUND("TIME_GROUP_NOT_FOUND", "Time group not found"),
+    TOKEN_IS_EXPIRED("TOKEN_IS_EXPIRED","Token Hết hạn" );
 
     private final String code;
     private final String message;
