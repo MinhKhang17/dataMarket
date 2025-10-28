@@ -65,6 +65,7 @@ public class UserServiceImpl implements UserService {
     private  DatasetMapper datasetMapper;
     @Autowired
     private CommuneRepository communeRepository;
+    @Autowired private ConsumerSubRepo consumerSubRepo;
     @Autowired
     public UserServiceImpl(ProviderRepository providerRepository, UserRepository userRepository, JwtUtil jwtUtil, TokenServiceImpl tokenService, RoleRepository roleRepository, ImageServiceImpl imageService, ProviderIndentityDocumentRepository providerIdentityDocumentRepository, ProviderRegistrationRepository providerRegistrationRepository, WalletRepository walletRepository, WalletService walletService) {
         this.userRepository = userRepository;
@@ -527,6 +528,9 @@ public class UserServiceImpl implements UserService {
             User user = userOptional.get();
 
             UserInformationResponseForAuthMe userResponse = UserMapper.toUserInformationResponseForAuthMeDTO(user);
+            if(userOptional.get().getRole().getName().equalsIgnoreCase("CONSUMER") && !consumerSubRepo.existsByConsumerAndIsActiveAndIsUsing(user,true,true)){
+                userResponse.setHaveSub(false);
+            }
 
             return ResponseEntity.ok().body(new ApiResponse(true, "User Information", userResponse));
 

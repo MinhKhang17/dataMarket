@@ -91,6 +91,10 @@ public class DatasetMapperImpl implements DatasetMapper {
         datasetPricingDTO.setPrice(datasetPricing.getPrice());
         datasetPricingDTO.setPricingMethod(datasetPricing.getPricingRule().getMethod());
         datasetPricingDTO.setPricingId(datasetPricing.getId());
+        if(datasetPricing.getPricingMethod() == PricingMethod.SUBSCRIPTION){
+            datasetPricingDTO.setSubType(datasetPricing.getPricingRule().getSubType());
+        }
+
         return datasetPricingDTO;
     }
 

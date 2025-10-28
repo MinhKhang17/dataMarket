@@ -55,6 +55,8 @@ public class User {
     @OneToMany
     private List<DownloadToken> downloadTokens;
 
+
+
     public void setToken(Token token) {
         this.token = token;
         if (token != null) token.setUser(this);

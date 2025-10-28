@@ -35,4 +35,6 @@ public class DownloadToken {
 
     @ManyToOne
     private TimeGroup timeGroup;
+    @Column
+    private boolean isActive = true;
 }

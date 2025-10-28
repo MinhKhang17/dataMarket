@@ -28,7 +28,7 @@ public class DowloadController {
 //        return tokenService.getDownloadToken(datasetId,request);
 //        }
 
-    @PostMapping("/download")
+    @GetMapping("/download")
     public ResponseEntity<?> downloadFile(
             @RequestParam String dowloadToken, HttpServletRequest request
     ) {
