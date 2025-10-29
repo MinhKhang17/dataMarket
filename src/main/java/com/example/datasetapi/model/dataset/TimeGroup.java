@@ -1,5 +1,6 @@
 package com.example.datasetapi.model.dataset;
 
+import com.example.datasetapi.enums.Datasets.DatasetSourceType;
 import com.example.datasetapi.model.userManager.Provider;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -36,6 +37,8 @@ public class TimeGroup {
     @Column
     private long Row_Count;
 
+    @Enumerated(EnumType.STRING)
+    private DatasetSourceType datasetSourceType;
     public static TimeGroup fromDate(LocalDate date) {
         TimeGroup tg = new TimeGroup();
         tg.setYear(date.getYear());

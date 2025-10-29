@@ -6,6 +6,7 @@ import com.example.datasetapi.enums.Datasets.FileExtension;
 //import com.example.datasetapi.model.userManager.Address;
 import com.example.datasetapi.model.userManager.Provider;
 import com.example.datasetapi.model.location.Commune;
+import com.example.datasetapi.model.userManager.User;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -54,7 +55,7 @@ private DatasetType datasetType;
 @JsonIgnore
 @ManyToOne
     @JoinColumn(name = "provider_id")
-    private Provider provider;
+    private User provider;
 @ManyToOne
 @JsonIgnore
     @JoinColumn(name = "commune_id")

@@ -1,13 +1,15 @@
 package com.example.datasetapi.service.dataset;
 
-import com.cloudinary.Api;
 import com.example.datasetapi.dto.request.CheckoutRequestDTO;
 import com.example.datasetapi.dto.request.ConsumerBuyRequestDTO;
+import com.example.datasetapi.dto.request.ModeratorCreateNewDatasetGroupRequest;
 import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.dto.response.CheckoutResponseDTO;
 import com.example.datasetapi.dto.response.ConsumerBuyResponseDTO;
 import com.example.datasetapi.dto.response.DatasetParentReposonseDto;
+import com.example.datasetapi.dto.service.DatasetGroupInfor;
+import com.example.datasetapi.enums.Datasets.DatasetSourceType;
 import com.example.datasetapi.model.dataset.Dataset;
 import com.example.datasetapi.model.dataset.DatasetInformation;
 import com.example.datasetapi.model.userManager.ConsumerSubscription;
@@ -25,7 +27,7 @@ import java.util.List;
 public interface DatasetService {
 
 
-    public void checkExitsAndCreateDatasetGroupAndDateset(ProviderUploadDatasetRequest providerUploadDatasetRequest, long Provider_id, DatasetInformation datasetInformation);
+    public void checkExitsAndCreateDatasetGroupAndDateset(ProviderUploadDatasetRequest providerUploadDatasetRequest, long Provider_id, DatasetInformation datasetInformation, DatasetSourceType datasetSourceType);
 
 
     ResponseEntity<ApiResponse> getAllCategories();
@@ -79,4 +81,15 @@ public interface DatasetService {
     ResponseEntity<?> dowloadDataset(String dowloadToken,HttpServletRequest request);
 
     List<DatasetDTO> findAllConsumerDataset(HttpServletRequest request);
+
+    ConsumerBuyResponseDTO buyDatasetWithSub(long datasetId, HttpServletRequest request);
+
+    void moderatorCreateNewDatasetGroup(ModeratorCreateNewDatasetGroupRequest moderatorCreateNewDatasetGroupRequest);
+
+    List<DatasetParentReposonseDto> findAllSystamDatasetGroup();
+
+
+    List<DatasetParentReposonseDto>  findAllProviderDataset();
+
+    DatasetGroupInfor getDatasetGroupInfor(long datasetGroupId);
 }

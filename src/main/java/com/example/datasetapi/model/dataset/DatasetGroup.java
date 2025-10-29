@@ -1,6 +1,7 @@
 package com.example.datasetapi.model.dataset;
 
 import com.example.datasetapi.enums.Datasets.DatasetGroupType;
+import com.example.datasetapi.enums.Datasets.DatasetSourceType;
 import com.example.datasetapi.model.userManager.Provider;
 import com.example.datasetapi.model.location.Commune;
 import com.example.datasetapi.model.location.Province;
@@ -58,4 +59,6 @@ public class DatasetGroup {
     private boolean isHaveData =false;
     @OneToMany(mappedBy = "datasetGroupChild", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TimeGroup> timeGroups = new ArrayList<>();
+@Enumerated(EnumType.STRING)
+   private DatasetSourceType datasetSourceType;
 }

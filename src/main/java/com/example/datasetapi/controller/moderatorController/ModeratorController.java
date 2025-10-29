@@ -1,11 +1,24 @@
 package com.example.datasetapi.controller.moderatorController;
 
+import com.example.datasetapi.dto.request.ModeratorCreateNewDatasetGroupRequest;
+import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
+import com.example.datasetapi.dto.response.ApiResponse;
+import com.example.datasetapi.dto.response.DatasetDTO;
+import com.example.datasetapi.dto.response.DatasetParentReposonseDto;
+import com.example.datasetapi.dto.service.DatasetGroupInfor;
+import com.example.datasetapi.enums.Datasets.DatasetSourceType;
+import com.example.datasetapi.model.dataset.DatasetGroup;
 import com.example.datasetapi.service.dataset.DatasetService;
 import com.example.datasetapi.service.dataset.DatasetValidateService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
+import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("api/moderator/dataset")
@@ -27,5 +40,32 @@ public class ModeratorController {
         return datasetService.rejectDataset(datasetInforId,request,reason);
     }
 
+    @PostMapping("dataset-group")
+    public ResponseEntity<?> CreateDatasetGroup(@RequestParam ModeratorCreateNewDatasetGroupRequest moderatorCreateNewDatasetGroupRequest, HttpServletRequest request) {
+        datasetService.moderatorCreateNewDatasetGroup(moderatorCreateNewDatasetGroupRequest);
+        return ResponseEntity.ok().build();
+    }
+    @GetMapping("dataset-group")
+    public ResponseEntity<?> getDatasetGroup() {
+        List<DatasetParentReposonseDto> datasetParentReposonseDtos = datasetService.findAllSystamDatasetGroup();
+        return ResponseEntity.ok().body(new ApiResponse(true,"load succes",datasetParentReposonseDtos));
+    }
+    @PostMapping("system-dataset/update")
+    public ResponseEntity<?> uploadNewDatasetToDatasetGroup(@RequestParam MultipartFile file,
+                                                                      @RequestParam long datasetTypeId,
+                                                                      HttpServletRequest request,
+                                                                      @ModelAttribute ProviderUploadDatasetRequest providerUploadDatasetRequest) {
+        return datasetValidateService.uploadAndHeaderCheckCSVFile(file,datasetTypeId,request,providerUploadDatasetRequest, DatasetSourceType.SYSTEM_DATASET);
+    }
+    @GetMapping("dataset-provider")
+    public ResponseEntity<?> getDatasetProvider(HttpServletRequest request) {
+        return ResponseEntity.ok().body(new ApiResponse(true,"load succes",datasetService.findAllProviderDataset()));
+    }
+
+    @GetMapping("group/info")
+    public ResponseEntity<?> getGroupInfor(@RequestParam long datasetGroupId) {
+        DatasetGroupInfor datasetGroupInfor = datasetService.getDatasetGroupInfor(datasetGroupId);
+        return ResponseEntity.ok().body(new ApiResponse(true,"load succes",datasetGroupInfor));
+    }
 
 }

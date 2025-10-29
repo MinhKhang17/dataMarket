@@ -1,6 +1,7 @@
 package com.example.datasetapi.controller.provider;
 
 import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
+import com.example.datasetapi.enums.Datasets.DatasetSourceType;
 import com.example.datasetapi.service.dataset.DatasetValidateService;
 import com.example.datasetapi.service.user.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,7 +24,7 @@ public class providerController {
                                                  @RequestParam long datasetTypeId,
                                                  HttpServletRequest request,
                                                  @ModelAttribute ProviderUploadDatasetRequest providerUploadDatasetRequest) {
-        return datasetValidateService.uploadAndHeaderCheckCSVFile(file,datasetTypeId,request,providerUploadDatasetRequest);
+        return datasetValidateService.uploadAndHeaderCheckCSVFile(file,datasetTypeId,request,providerUploadDatasetRequest, DatasetSourceType.DATASET_PROVIDER);
     }
 //    @PostMapping("/validate-content-upload")
 //    public ResponseEntity<?> validateContentUpload(ProviderUploadDatasetRequest providerUploadDatasetRequest, HttpServletRequest request) {

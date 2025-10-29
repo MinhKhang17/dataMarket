@@ -1,6 +1,7 @@
 package com.example.datasetapi.mapper;
 
 import com.example.datasetapi.dto.response.*;
+import com.example.datasetapi.dto.service.DatasetGroupInfor;
 import com.example.datasetapi.dto.service.PricingRuleDTO;
 import com.example.datasetapi.enums.Datasets.PricingMethod;
 import com.example.datasetapi.model.dataset.*;
@@ -35,4 +36,6 @@ public interface DatasetMapper {
     PricingRuleDTO toPricingRuleDTO(PricingRule pricingRule);
 
     TimeGroupDTO toTimeGroupDTO(TimeGroup timeGroup);
+
+    DatasetGroupInfor toDatasetGroupInfor(DatasetGroup datasetGroup);
 }

@@ -2,7 +2,9 @@ package com.example.datasetapi.service.dataset;
 
 import com.example.datasetapi.dto.request.CheckoutRequestDTO;
 import com.example.datasetapi.dto.request.ConsumerBuyRequestDTO;
+import com.example.datasetapi.dto.request.ModeratorCreateNewDatasetGroupRequest;
 import com.example.datasetapi.dto.response.*;
+import com.example.datasetapi.dto.service.DatasetGroupInfor;
 import com.example.datasetapi.enums.Datasets.*;
 import com.example.datasetapi.enums.TransferType;
 import com.example.datasetapi.exception.CustomException;
@@ -10,12 +12,12 @@ import com.example.datasetapi.exception.ErrorCode;
 import com.example.datasetapi.mapper.DatasetMapper;
 import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
 import com.example.datasetapi.model.dataset.*;
-import com.example.datasetapi.model.paySystem.Wallet;
 import com.example.datasetapi.model.userManager.Provider;
 import com.example.datasetapi.model.userManager.User;
 import com.example.datasetapi.model.userManager.ConsumerSubscription;
 import com.example.datasetapi.model.location.Commune;
 import com.example.datasetapi.repository.*;
+import com.example.datasetapi.service.feature.FileService;
 import com.example.datasetapi.service.payment.PaymentService;
 import com.example.datasetapi.service.user.TokenService;
 import com.example.datasetapi.service.user.UserService;
@@ -96,6 +98,8 @@ public class DatasetServiceImpl implements DatasetService {
     private String BUCKET_NAME;
 
     private static final Logger logger =  LoggerFactory.getLogger(DatasetServiceImpl.class);
+    @Autowired
+    private FileService fileService;
 
 
     @Override
@@ -144,72 +148,72 @@ public class DatasetServiceImpl implements DatasetService {
     public void checkExitsAndCreateDatasetGroupAndDateset(
             ProviderUploadDatasetRequest request,
             long providerId,
-            DatasetInformation datasetInformation) {
+            DatasetInformation datasetInformation,
+            DatasetSourceType datasetSourceType) {
 
         try {
             logger.info("=== Start checking and creating Dataset Group and Dataset ===");
 
-            //  Lấy thông tin commune và provider
             Commune commune = communeRepository.findById(request.getCommune_id())
                     .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.COMMUNE_NOT_FOUND));
 
             Provider provider = userService.findProviderById(providerId);
 
-            //  Tìm hoặc tạo DatasetGroup parent
+            // 🔹 Tìm hoặc tạo DatasetGroup parent theo sourceType
             DatasetGroup parentGroup = datasetGroupRepository
-                    .findByDatasetGroupTypeAndProvinceAndDatasetType(
-                            DatasetGroupType.PARENT, commune.getProvince(), datasetInformation.getDatasetType()
+                    .findByDatasetGroupTypeAndProvinceAndDatasetTypeAndDatasetSourceType(
+                            DatasetGroupType.PARENT,
+                            commune.getProvince(),
+                            datasetInformation.getDatasetType(),
+                            datasetSourceType
                     )
-                    .orElseGet(() -> createParentDatasetGroup(commune, datasetInformation));
+                    .orElseGet(() -> createParentDatasetGroup(commune, datasetInformation, datasetSourceType));
 
             parentGroup.setUpdateAt(LocalDateTime.now());
 
-            //  Tìm hoặc tạo DatasetGroup con (theo commune)
+            // 🔹 Tìm hoặc tạo DatasetGroup con theo commune + sourceType
             DatasetGroup childGroup = parentGroup.getDatasetGroups().stream()
-                    .filter(group -> commune.equals(group.getCommune()))
+                    .filter(group -> commune.equals(group.getCommune()) &&
+                            group.getDatasetSourceType() == datasetSourceType)
                     .findFirst()
-                    .orElseGet(() -> createChildDatasetGroup(parentGroup, commune, datasetInformation));
+                    .orElseGet(() -> createChildDatasetGroup(parentGroup, commune, datasetInformation, datasetSourceType));
 
-            //  Tạo dataset mới
+            // 🔹 Tạo dataset mới
             Dataset dataset = new Dataset();
+            dataset.setDatasetSourceType(datasetSourceType);
             dataset.setDatasetStatus(DatasetStatus.PENDING);
             dataset.setDatasetChildGroup(childGroup);
+            dataset.setProvider(provider);
+            dataset.setTitle(request.getTitle());
+            dataset.setDescription(request.getDescription());
+            dataset.setRow_count(datasetInformation.getRowCount());
+            setDatasetPack(dataset, datasetInformation);
             childGroup.getDatasets().add(dataset);
 
-            //  Tìm hoặc tạo TimeGroup
+            // 🔹 Tìm hoặc tạo TimeGroup theo sourceType
             LocalDate datasetDate = DateUtil.parseToLocalDate(request.getDataset_time());
             TimeGroup timeGroup = timeGroupRepository
-                    .findByYearAndMonthAndDatasetGroupChildAndProvider(
+                    .findByYearAndMonthAndDatasetGroupChildAndProviderAndDatasetSourceType(
                             datasetDate.getYear(),
                             datasetDate.getMonthValue(),
                             childGroup,
-                            provider
+                            provider,
+                            datasetSourceType
                     )
-                    .orElseGet(() -> createTimeGroup(datasetDate, childGroup, provider));
+                    .orElseGet(() -> createTimeGroup(datasetDate, childGroup, provider, datasetSourceType));
 
-            //  Gán thông tin dataset
-            timeGroup.setRow_Count(timeGroup.getRow_Count()+datasetInformation.getRowCount());
+            timeGroup.setRow_Count(timeGroup.getRow_Count() + datasetInformation.getRowCount());
             dataset.setTimeGroup(timeGroup);
-            dataset.setDescription(request.getDescription());
-            dataset.setTitle(request.getTitle());
-            setDatasetPack(dataset, datasetInformation);
-            dataset.setRow_count(datasetInformation.getRowCount());
-            dataset.setProvider(provider);
+
             datasetInformation.setDataset(dataset);
             datasetInformation.setDataset_time(datasetDate);
 
             // Upload file tạm
-            File file = new File(datasetInformation.getFile_url());
-            uploadCSVFileToPendingFolder(file, dataset);
-            logger.info("✅ Upload CSV file thành công cho dataset: {}", dataset.getTitle());
+//        uploadCSVFileToPendingFolder(new File(datasetInformation.getFile_url()), dataset);
+            logger.info(" Dataset [{}] uploaded successfully (source: {})", dataset.getTitle(), datasetSourceType);
 
-            //  Lưu dữ liệu
-            datasetGroupRepository.save(childGroup);
-            datasetGroupRepository.save(parentGroup);
-            timeGroupRepository.save(timeGroup);
-            datasetInforRepository.save(datasetInformation);
+            // Lưu dữ liệu
             datasetRepository.save(dataset);
-            userService.saveProvider(provider);
 
             logger.info("=== Completed checkExitsAndCreateDatasetGroupAndDateset ===");
         } catch (Exception e) {
@@ -218,30 +222,34 @@ public class DatasetServiceImpl implements DatasetService {
         }
     }
 
-    private DatasetGroup createParentDatasetGroup(Commune commune, DatasetInformation info) {
+    private DatasetGroup createParentDatasetGroup(Commune commune, DatasetInformation info,DatasetSourceType datasetSourceType) {
         DatasetGroup parent = new DatasetGroup();
         parent.setDatasetGroupType(DatasetGroupType.PARENT);
         parent.setDatasetType(info.getDatasetType());
         parent.setProvince(commune.getProvince());
         parent.setUpdateAt(LocalDateTime.now());
+        parent.setDatasetSourceType(datasetSourceType);
+        parent.setCommune(commune);
         return datasetGroupRepository.save(parent);
     }
 
-    private DatasetGroup createChildDatasetGroup(DatasetGroup parent, Commune commune, DatasetInformation info) {
+    private DatasetGroup createChildDatasetGroup(DatasetGroup parent, Commune commune, DatasetInformation info,DatasetSourceType datasetSourceType) {
         DatasetGroup child = new DatasetGroup();
         child.setDatasetGroupType(DatasetGroupType.CHILD);
         child.setDatasetType(info.getDatasetType());
         child.setCommune(commune);
         child.setParent(parent);
+        child.setDatasetSourceType(datasetSourceType);
         parent.getDatasetGroups().add(child);
         return datasetGroupRepository.save(child);
     }
 
-    private TimeGroup createTimeGroup(LocalDate date, DatasetGroup group, Provider provider) {
+    private TimeGroup createTimeGroup(LocalDate date, DatasetGroup group, Provider provider,DatasetSourceType datasetSourceType) {
         TimeGroup tg = TimeGroup.fromDate(date);
         tg.setDatasetGroupChild(group);
         tg.setProvider(provider);
-        return tg;
+        tg.setDatasetSourceType(datasetSourceType);
+        return timeGroupRepository.save(tg);
     }
 
 
@@ -301,7 +309,7 @@ public class DatasetServiceImpl implements DatasetService {
         reviewHistoryRepository.save(reviewHistory);
         ReviewHistoryDto reviewHistoryDto = datasetMapper.toReviewHistoryDto(reviewHistoryRepository.save(reviewHistory));
 
-        moveFileFromPendingToApproveFolder(dataset);
+//        moveFileFromPendingToApproveFolder(dataset);
 
         //tạo giá sau khi accept
         priceService.createPricingForDataset(dataset,datasetInformationOptional.get());
@@ -337,7 +345,7 @@ public class DatasetServiceImpl implements DatasetService {
 
     @Override
     public ResponseEntity<?> getAllDatasetParent() {
-        List<DatasetParentReposonseDto> datasetReposonseDtoList = datasetGroupRepository.findByDatasetGroupType(DatasetGroupType.PARENT)
+        List<DatasetParentReposonseDto> datasetReposonseDtoList = datasetGroupRepository.findByDatasetGroupTypeAndDatasetSourceType(DatasetGroupType.PARENT,DatasetSourceType.SYSTEM_DATASET)
                 .stream()
                 .filter(datasetGroup -> datasetGroup.isHaveData())
                 .map(datasetMapper::toDatasetParentReposonseDto)
@@ -721,6 +729,55 @@ public class DatasetServiceImpl implements DatasetService {
                 .map(DownloadToken::getDataset)
                 .map(datasetMapper::toDatasetDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public ConsumerBuyResponseDTO buyDatasetWithSub(long datasetId, HttpServletRequest request) {
+        User user = userService.findUserById(tokenService.getUserIdFromRequest(request));
+
+        ConsumerSubscription consumerSubscription = consumerSubRepo.findByConsumerAndIsUsing(user,true).orElseThrow(
+                ()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.SUB_NOT_FOUND)
+        );
+        return null;
+    }
+
+    @Override
+    public void moderatorCreateNewDatasetGroup(ModeratorCreateNewDatasetGroupRequest moderatorCreateNewDatasetGroupRequest) {
+        DatasetGroup parentDatasetGroup = new DatasetGroup();
+        parentDatasetGroup.setDatasetType(datasetTypeRepository.findById(moderatorCreateNewDatasetGroupRequest.getDataset_type_id()).orElseThrow(
+                () -> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.INVALID_TYPE_ID)
+        ));
+
+        DatasetGroup childDatasetGroup = new DatasetGroup();
+        childDatasetGroup.setParent(parentDatasetGroup);
+        parentDatasetGroup.setDatasetSourceType(DatasetSourceType.SYSTEM_DATASET);
+        childDatasetGroup.setDatasetSourceType(DatasetSourceType.SYSTEM_DATASET);
+
+
+        datasetGroupRepository.save(childDatasetGroup);
+        datasetGroupRepository.save(parentDatasetGroup);
+    }
+
+    @Override
+    public List<DatasetParentReposonseDto> findAllSystamDatasetGroup() {
+        return datasetGroupRepository.findByDatasetGroupTypeAndDatasetSourceType(DatasetGroupType.PARENT,DatasetSourceType.SYSTEM_DATASET)
+                .stream()
+                .map(datasetMapper::toDatasetParentReposonseDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<DatasetParentReposonseDto> findAllProviderDataset() {
+        return datasetGroupRepository.findAllByDatasetGroupTypeAndDatasetSourceType(DatasetGroupType.PARENT,DatasetSourceType.DATASET_PROVIDER)
+                .stream()
+                .map(datasetMapper::toDatasetParentReposonseDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public DatasetGroupInfor getDatasetGroupInfor(long datasetGroupId) {
+        DatasetGroup datasetGroup = datasetGroupRepository.findById(datasetGroupId).orElseThrow();
+        return datasetMapper.toDatasetGroupInfor(datasetGroup);
     }
 
 

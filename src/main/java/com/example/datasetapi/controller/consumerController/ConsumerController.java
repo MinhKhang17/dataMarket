@@ -78,5 +78,9 @@ public class ConsumerController {
         return ResponseEntity.ok().body(new ApiResponse(true,"consumer dataset ",datasetDTOS));
     }
 
+//    @PostMapping("dataset/sub/buy")
+//    public ResponseEntity<ApiResponse> buyDatasetWithSub(@RequestBody long datasetId,HttpServletRequest request){
+//        ConsumerBuyResponseDTO consumerBuyResponseDTO = datasetService.buyDatasetWithSub(datasetId,request);
+//    }
 
 }

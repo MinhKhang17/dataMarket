@@ -1,6 +1,7 @@
 package com.example.datasetapi.model.dataset;
 
 import com.example.datasetapi.enums.Datasets.DatasetPack;
+import com.example.datasetapi.enums.Datasets.DatasetSourceType;
 import com.example.datasetapi.enums.Datasets.DatasetStatus;
 import com.example.datasetapi.model.userManager.Provider;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -71,5 +72,10 @@ private String title;
 
     private long row_count;
 
-    private long dowload_count; 
+    private long dowload_count;
+
+    //phân loại dataset của provider hay của hệ thống
+    private DatasetSourceType datasetSourceType;
+
+
 }

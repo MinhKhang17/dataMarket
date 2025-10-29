@@ -1,6 +1,7 @@
 package com.example.datasetapi.dto.response;
 
 //import com.example.datasetapi.model.userManager.Address;
+import com.example.datasetapi.enums.Datasets.DatasetSourceType;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -22,7 +23,7 @@ public class DatasetParentReposonseDto {
     private DatasetTypeDto datasetTypeDto;
 
     List<DatasetChildGroupDTO> datasetChildGroups;
-
+    private DatasetSourceType datasetSourceType;
 
 
 }

@@ -182,6 +182,17 @@ public class DatasetMapperImpl implements DatasetMapper {
         return timeGroupDTO;
     }
 
+    @Override
+    public DatasetGroupInfor toDatasetGroupInfor(DatasetGroup datasetGroup) {
+        DatasetGroupInfor datasetGroupInfor = new DatasetGroupInfor();
+        datasetGroupInfor.setDataset_Type_id(datasetGroup.getDatasetType().getId());
+        datasetGroupInfor.setCommune_name(datasetGroup.getCommune().getName());
+        datasetGroupInfor.setCommune_id(datasetGroup.getCommune().getIdCommune());
+        datasetGroupInfor.setProvine_id(datasetGroup.getProvince().getIdProvince());
+        datasetGroupInfor.setProvine_name(datasetGroup.getProvince().getName());
+        return datasetGroupInfor;
+    }
+
     private BuySubInfoDTO toBuySubInfoDTO(ConsumerSubscription infor) {
         BuySubInfoDTO buySubInfoDTO = new BuySubInfoDTO();
         buySubInfoDTO.setSubType(infor.getSubType());
@@ -234,6 +245,7 @@ public class DatasetMapperImpl implements DatasetMapper {
     public DatasetParentReposonseDto toDatasetParentReposonseDto(DatasetGroup group) {
     DatasetParentReposonseDto dto = new DatasetParentReposonseDto();
     dto.setDatasetGroupId(group.getId());
+    dto.setDatasetSourceType(group.getDatasetSourceType());
     dto.setProvinceDTO(toProvineDTO(group.getProvince()));
     dto.setLasted_upload(group.getUpdateAt());
         dto.setDatasetTypeDto(toDatasetTypeDto(group.getDatasetType()));

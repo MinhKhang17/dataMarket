@@ -1,6 +1,7 @@
 package com.example.datasetapi.repository;
 
 
+import com.example.datasetapi.enums.Datasets.DatasetSourceType;
 import com.example.datasetapi.model.dataset.DatasetGroup;
 import com.example.datasetapi.model.dataset.TimeGroup;
 import com.example.datasetapi.model.userManager.Provider;
@@ -19,5 +20,9 @@ public interface TimeGroupRepository extends JpaRepository<TimeGroup, Long> {
     List<TimeGroup> findAllByDatasetGroupChildId(long datasetGroupChildId);
 
     Optional<TimeGroup> findByYearAndMonthAndDatasetGroupChildAndProvider(int year, int monthValue, DatasetGroup childGroup, Provider provider);
+
+    Optional<TimeGroup> findByYearAndMonthAndDatasetGroupChild(int year, int monthValue, DatasetGroup childGroup);
+
+    Optional<TimeGroup> findByYearAndMonthAndDatasetGroupChildAndProviderAndDatasetSourceType(int year, int monthValue, DatasetGroup childGroup, Provider provider, DatasetSourceType datasetSourceType);
 }
 

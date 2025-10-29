@@ -103,7 +103,7 @@ private  DatasetInforRepository datasetInforRepository;
         assignColumnAndCategoryToDatasetType();
 
 //        createDatasetDemo();
-        createModerationTestData();
+//        createModerationTestData();
         createPricingRule();
 
     }
@@ -340,46 +340,46 @@ private  DatasetInforRepository datasetInforRepository;
         userRepository.save(user);
     }
 
-    private void createModerationTestData() {
-        String basePath = Paths.get("ev_station_mixed_errors.csv").toString();
-        if (Files.exists(Paths.get(basePath))) {
-            System.out.println("Found file at: " + basePath);
-        } else {
-            System.out.println("File not found!");
-        }
-
-        DatasetType marketOverview = datasetTypeRepository.findByName("EV_Station_Market_Overview");
-        if (marketOverview == null) return;
-
-        List<DatasetInformation> datasetList = new ArrayList<>();
-
-        DatasetInformation ds1 = new DatasetInformation();
-        ds1.setName("ev_station_mixed_errors");
-        ds1.setDatasetExtension(FileExtension.csv);
-        ds1.setStatus(DatasetInforStatus.PENDING);
-        ds1.setFile_url(basePath);
-        ds1.setRowCount(100L);
-        ds1.setDatasetType(marketOverview);
-
-        Provider provider = providerRepository.findById(4L).get();
-        ds1.setProvider(provider);
-
-        // ✅ Tạo Location mới (thay Address)
-
-
-        Commune commune = communeRepository.findById("00091")
-                .orElseThrow(() -> new RuntimeException("Commune not found"));
-        ds1.setCommune(commune);
-
-        // Gán location cho dataset
-        ds1.setCommune(commune);
-
-        datasetList.add(ds1);
-
-        datasetInforRepository.saveAll(datasetList);
-
-        System.out.println("✅ Seeded dataset_information test entries for moderation with Location.");
-    }
+//    private void createModerationTestData() {
+//        String basePath = Paths.get("ev_station_mixed_errors.csv").toString();
+//        if (Files.exists(Paths.get(basePath))) {
+//            System.out.println("Found file at: " + basePath);
+//        } else {
+//            System.out.println("File not found!");
+//        }
+//
+//        DatasetType marketOverview = datasetTypeRepository.findByName("EV_Station_Market_Overview");
+//        if (marketOverview == null) return;
+//
+//        List<DatasetInformation> datasetList = new ArrayList<>();
+//
+//        DatasetInformation ds1 = new DatasetInformation();
+//        ds1.setName("ev_station_mixed_errors");
+//        ds1.setDatasetExtension(FileExtension.csv);
+//        ds1.setStatus(DatasetInforStatus.PENDING);
+//        ds1.setFile_url(basePath);
+//        ds1.setRowCount(100L);
+//        ds1.setDatasetType(marketOverview);
+//
+//        Provider provider = providerRepository.findById(4L).get();
+//        ds1.setProvider(provider);
+//
+//        // ✅ Tạo Location mới (thay Address)
+//
+//
+//        Commune commune = communeRepository.findById("00091")
+//                .orElseThrow(() -> new RuntimeException("Commune not found"));
+//        ds1.setCommune(commune);
+//
+//        // Gán location cho dataset
+//        ds1.setCommune(commune);
+//
+//        datasetList.add(ds1);
+//
+//        datasetInforRepository.saveAll(datasetList);
+//
+//        System.out.println("✅ Seeded dataset_information test entries for moderation with Location.");
+//    }
 
 
     private void createDatasetDemo() {

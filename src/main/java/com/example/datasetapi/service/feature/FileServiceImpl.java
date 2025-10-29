@@ -10,6 +10,7 @@ import com.example.datasetapi.model.dataset.DatasetType;
 import com.example.datasetapi.model.dataset.DatasetTypeColumn;
 import com.example.datasetapi.model.dataset.DatasetValidationError;
 import com.example.datasetapi.model.userManager.Provider;
+import com.example.datasetapi.model.userManager.User;
 import com.example.datasetapi.repository.DatasetInforRepository;
 import com.example.datasetapi.repository.DatasetTypeRepository;
 import com.example.datasetapi.repository.DatasetValidationErrorRepository;
@@ -47,7 +48,7 @@ public class FileServiceImpl implements FileService {
 
 
     @Override
-    public boolean checkHeader(MultipartFile file, long datasetTypeId, DatasetInformation ds, Provider provider) {
+    public boolean checkHeader(MultipartFile file, long datasetTypeId, DatasetInformation ds, User provider) {
         try{
             System.out.println("-----------------------------------------\n" +
                     "Start reading Dataset\n" +
