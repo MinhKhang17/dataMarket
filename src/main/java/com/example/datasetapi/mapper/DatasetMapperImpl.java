@@ -188,8 +188,8 @@ public class DatasetMapperImpl implements DatasetMapper {
         datasetGroupInfor.setDataset_Type_id(datasetGroup.getDatasetType().getId());
         datasetGroupInfor.setCommune_name(datasetGroup.getCommune().getName());
         datasetGroupInfor.setCommune_id(datasetGroup.getCommune().getIdCommune());
-        datasetGroupInfor.setProvine_id(datasetGroup.getProvince().getIdProvince());
-        datasetGroupInfor.setProvine_name(datasetGroup.getProvince().getName());
+        datasetGroupInfor.setProvine_id(datasetGroup.getCommune().getIdCommune());
+        datasetGroupInfor.setProvine_name(datasetGroup.getCommune().getName());
         return datasetGroupInfor;
     }
 
@@ -296,7 +296,7 @@ private DatasetChildGroupDTO toDatasetChildGroupDTO(DatasetGroup datasetGroup){
             datasetDTO.setTitle(dataset.getTitle());
             datasetDTO.setDescription(dataset.getDescription());
             datasetDTO.setDatasetTime(TimeGroup.toDate(dataset.getTimeGroup()));
-            datasetDTO.setProvider(toProviderDto(dataset.getProvider()));
+//            datasetDTO.setProvider(toProviderDto(dataset.getProvider()));
             datasetDTO.setDatasetPLanWithPricingDTO(dataset.getDatasetPlans().stream().map(this::toDatasetPlanWithPricingDTO).collect(Collectors.toList()));
             return datasetDTO;
     }
