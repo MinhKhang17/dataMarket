@@ -600,7 +600,7 @@ public class DatasetServiceImpl implements DatasetService {
     }
 
     @Override
-    public String getDowloadTokenOfDatasetForConsumer(long datasetId, HttpServletRequest request) {
+    public String getDownloadTokenOfDatasetForConsumer(long datasetId, HttpServletRequest request) {
         User user = userService.findUserById(tokenService.getUserIdFromRequest(request));
         Dataset dataset = findById(datasetId);
         Optional<DownloadToken> downloadTokenOptional = downloadTokenRepository.findByConsumerAndDatasetAndIsActive(user,dataset,true);
@@ -675,7 +675,7 @@ public class DatasetServiceImpl implements DatasetService {
     }
     @Transactional
     @Override
-    public ResponseEntity<?> dowloadDataset(String dowloadToken, HttpServletRequest request) {
+    public ResponseEntity<?> downloadDataset(String dowloadToken, HttpServletRequest request) {
 
         //lay dowload token tu request checck xem nguoi dung co permussion de su dung hay khong
         Optional<DownloadToken> downloadTokenOptional = downloadTokenRepository.findById(UUID.fromString(dowloadToken));
@@ -706,7 +706,8 @@ public class DatasetServiceImpl implements DatasetService {
 
         ResponseInputStream<GetObjectResponse> s3Object = s3Client.getObject(getObjectRequest);
         InputStreamResource resource = new InputStreamResource(s3Object);
-
+        dataset.setDownload_count(dataset.getDownload_count()+1);
+        datasetRepository.save(dataset);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,
                         "attachment; filename=\"" + Paths.get(fileKey).getFileName().toString() + "\"")

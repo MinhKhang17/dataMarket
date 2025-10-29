@@ -77,12 +77,12 @@ public class UserMapper implements UserResponseDTOMapper {
         dto.setPhoneNumber(providerRegistration.getPhoneNumber());
         dto.setRegistrationStatus(providerRegistration.getRegistrationStatus().toString());
         dto.setCreatedAt(providerRegistration.getCreatedAt());
-        dto.setProviderIndentityDocumentDTOList(providerRegistration.getIdentityDocuments().stream().map(this::toProviderIdentityDocument).collect(Collectors.toList()));
+        dto.setProviderIdentityDocumentDTOList(providerRegistration.getIdentityDocuments().stream().map(this::toProviderIdentityDocument).collect(Collectors.toList()));
         return dto;
     }
 
-    private ProviderIndentityDocumentDTO toProviderIdentityDocument(ProviderIdentityDocument providerIdentityDocument) {
-            ProviderIndentityDocumentDTO dto = new ProviderIndentityDocumentDTO();
+    private ProviderIdentityDocumentDTO toProviderIdentityDocument(ProviderIdentityDocument providerIdentityDocument) {
+            ProviderIdentityDocumentDTO dto = new ProviderIdentityDocumentDTO();
             dto.setDocTypeName(providerIdentityDocument.getDocumentType().toString());
             dto.setImage_url(providerIdentityDocument.getImage_url());
             return dto;

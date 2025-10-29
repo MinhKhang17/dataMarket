@@ -1,6 +1,5 @@
 package com.example.datasetapi.service.dataset;
 
-import com.cloudinary.Api;
 import com.example.datasetapi.dto.request.CheckoutRequestDTO;
 import com.example.datasetapi.dto.request.ConsumerBuyRequestDTO;
 import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
@@ -74,9 +73,9 @@ public interface DatasetService {
 
     public Dataset moveFileFromPendingToApproveFolder(Dataset dataset);
 
-    String getDowloadTokenOfDatasetForConsumer(long datasetId, HttpServletRequest request);
+    String getDownloadTokenOfDatasetForConsumer(long datasetId, HttpServletRequest request);
 
-    ResponseEntity<?> dowloadDataset(String dowloadToken,HttpServletRequest request);
+    ResponseEntity<?> downloadDataset(String dowloadToken,HttpServletRequest request);
 
     List<DatasetDTO> findAllConsumerDataset(HttpServletRequest request);
 }

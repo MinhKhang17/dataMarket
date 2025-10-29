@@ -66,10 +66,10 @@ private String title;
 
 
     @OneToMany(mappedBy = "dataset", fetch = FetchType.LAZY)
-    @JsonManagedReference  // Phía parent - sẽ serialize
+    @JsonManagedReference
     private List<DatasetPlan> datasetPlans = new ArrayList<>();
 
     private long row_count;
 
-    private long dowload_count; 
+    private long download_count = 0;
 }

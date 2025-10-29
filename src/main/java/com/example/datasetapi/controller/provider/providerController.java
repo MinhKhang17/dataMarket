@@ -1,6 +1,8 @@
 package com.example.datasetapi.controller.provider;
 
+import com.example.datasetapi.dto.request.LocationRegistrationRequest;
 import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
+import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.service.dataset.DatasetValidateService;
 import com.example.datasetapi.service.user.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,5 +35,10 @@ public class providerController {
     @GetMapping("commune/get")
     public ResponseEntity<?> getCommune(HttpServletRequest request){
         return userService.getProviderCommune(request);
+    }
+
+    @PostMapping("send-location-registration-request")
+    public ResponseEntity<ApiResponse> sendLocationRegistrationRequest(@ModelAttribute LocationRegistrationRequest locationRegistrationRequest) {
+        return userService.locationRegistrationProcess(locationRegistrationRequest);
     }
 }

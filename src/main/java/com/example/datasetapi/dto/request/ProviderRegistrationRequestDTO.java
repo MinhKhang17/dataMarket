@@ -1,6 +1,6 @@
 package com.example.datasetapi.dto.request;
 
-import com.example.datasetapi.dto.service.ProvierIdentityDocumentDTO;
+import com.example.datasetapi.dto.service.ProviderIdentityDocumentDTO;
 import com.example.datasetapi.model.location.Province;
 import lombok.Data;
 
@@ -21,6 +21,6 @@ public class ProviderRegistrationRequestDTO {
     private String communeId;
 
     // Danh sách giấy tờ định danh
-    private List<ProvierIdentityDocumentDTO> identityDocuments;
+    private List<ProviderIdentityDocumentDTO> identityDocuments;
 
 }

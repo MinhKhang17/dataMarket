@@ -84,7 +84,7 @@ public class AdminServiceImpl implements AdminService {
             providerRegistrationRepository.save(providerRegistration);
             providerRegisReviewHistoryRepo.save(providerRegisReviewHistory);
 
-            return ResponseEntity.ok().body(new ApiResponse(true,"Accept Success Account will send to email username: "+tempUserName.get()+" Password= "+tempPassword.get(),providerRegistration.getEmail()));
+            return ResponseEntity.ok().body(new ApiResponse(true,"Accept. Account will send to email username: "+tempUserName.get()+" Password= "+tempPassword.get(),providerRegistration.getEmail()));
     }
 
     @Override
