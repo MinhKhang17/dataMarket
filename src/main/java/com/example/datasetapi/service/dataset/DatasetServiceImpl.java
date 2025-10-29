@@ -204,7 +204,7 @@ public class DatasetServiceImpl implements DatasetService {
 
             timeGroup.setRow_Count(timeGroup.getRow_Count() + datasetInformation.getRowCount());
             dataset.setTimeGroup(timeGroup);
-
+            dataset.setDatasetChildGroup(childGroup);
             datasetInformation.setDataset(dataset);
             datasetInformation.setDataset_time(datasetDate);
 
@@ -240,7 +240,7 @@ public class DatasetServiceImpl implements DatasetService {
         child.setCommune(commune);
         child.setParent(parent);
         child.setDatasetSourceType(datasetSourceType);
-        parent.getDatasetGroups().add(child);
+        child.setParent(parent);
         return datasetGroupRepository.save(child);
     }
 
@@ -299,7 +299,7 @@ public class DatasetServiceImpl implements DatasetService {
         if(!parent.isHaveData()){
             parent.setHaveData(true);
         }
-
+        dataset.setDatasetStatus(DatasetStatus.APPROVE);
         datasetRepository.save(dataset);
 
         ReviewHistory reviewHistory = new ReviewHistory();
@@ -347,7 +347,6 @@ public class DatasetServiceImpl implements DatasetService {
     public ResponseEntity<?> getAllDatasetParent() {
         List<DatasetParentReposonseDto> datasetReposonseDtoList = datasetGroupRepository.findByDatasetGroupTypeAndDatasetSourceType(DatasetGroupType.PARENT,DatasetSourceType.SYSTEM_DATASET)
                 .stream()
-                .filter(datasetGroup -> datasetGroup.isHaveData())
                 .map(datasetMapper::toDatasetParentReposonseDto)
                 .collect(Collectors.toList());
         return ResponseEntity.ok().body(new ApiResponse(true,"load dataset success",datasetReposonseDtoList));
