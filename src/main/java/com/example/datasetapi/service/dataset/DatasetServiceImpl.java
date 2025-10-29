@@ -186,7 +186,10 @@ public class DatasetServiceImpl implements DatasetService {
             dataset.setDatasetSourceType(datasetSourceType);
             dataset.setDatasetStatus(DatasetStatus.PENDING);
             dataset.setDatasetChildGroup(childGroup);
-
+            dataset.setTitle(request.getTitle());
+            dataset.setDescription(request.getDescription());
+            dataset.setRow_count(datasetInformation.getRowCount());
+            setDatasetPack(dataset, datasetInformation);
             if (datasetSourceType.equals(DatasetSourceType.DATASET_PROVIDER)) {
                 admin = null;
                 provider = userService.findProviderById(providerId);
@@ -195,12 +198,11 @@ public class DatasetServiceImpl implements DatasetService {
                 provider = null;
                 admin = userService.findUserById(providerId);
                 dataset.setModerator(admin);
+                dataset.setDatasetStatus(DatasetStatus.APPROVE);
+                priceService.createPricingForDataset(dataset,datasetInformation);
             }
 
-            dataset.setTitle(request.getTitle());
-            dataset.setDescription(request.getDescription());
-            dataset.setRow_count(datasetInformation.getRowCount());
-            setDatasetPack(dataset, datasetInformation);
+
 
             // Nếu relationship được mapping 2 chiều, thêm dataset vào childGroup để persist quan hệ
             if (childGroup.getDatasets() == null) {

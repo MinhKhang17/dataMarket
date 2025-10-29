@@ -120,7 +120,7 @@ public class PriceServiceImpl implements  PriceService {
             datasetPricing.setPrice(oneTimePricingCal(datasetPack,rowCount));
             datasetPricing.setDatasetPack(datasetPack);
             datasetPricing.setPricingMethod(PricingMethod.ONE_TIME);
-            dataset.getTimeGroup().setPrice(dataset.getTimeGroup().getPrice()+datasetPricing.getPrice());
+//            dataset.getTimeGroup().setPrice(dataset.getTimeGroup().getPrice()+datasetPricing.getPrice());
             list.add(datasetPricing);
             return list;
         }
