@@ -691,7 +691,7 @@ private  DatasetInforRepository datasetInforRepository;
         Commune commune2 = communeRepository.findById("00118")
                 .orElseThrow(() -> new RuntimeException("Commune not found"));
         provider.setCommunes(new ArrayList<>(List.of(commune, commune2)));
-
+        provider.setProviderRegistration(registration);
         // 5️⃣ Lưu xuống database
         providerRepository.save(provider);
         bankAccountRepository.save(bankAccount);

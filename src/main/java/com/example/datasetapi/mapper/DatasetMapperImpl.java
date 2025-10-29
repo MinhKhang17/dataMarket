@@ -226,7 +226,7 @@ public class DatasetMapperImpl implements DatasetMapper {
     private ProviderDto toProviderDto(Provider provider) {
         ProviderDto providerDto = new ProviderDto();
         providerDto.setId(provider.getId());
-        providerDto.setName(provider.getUser().getUsername());
+        providerDto.setName(provider.getProviderRegistration().getOrganizationName());
         return providerDto;
     }
 

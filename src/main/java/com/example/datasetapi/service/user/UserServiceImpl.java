@@ -484,13 +484,13 @@ public class UserServiceImpl implements UserService {
         providerIdentityDocument.setIdCardVerificationStatus(VerificationStatus.PENDING);
 
         // Upload image và set URL
-            String imageUrl = null;
-            try {
-                imageUrl = imageService.uploadImage(dto.getFile());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            providerIdentityDocument.setImage_url(imageUrl);
+//            String imageUrl = null;
+//            try {
+//                imageUrl = imageService.uploadImage(dto.getFile());
+//            } catch (IOException e) {
+//                throw new RuntimeException(e);
+//            }
+//            providerIdentityDocument.setImage_url(imageUrl);
 
         // Set document type if available in DTO
         providerIdentityDocument.setDocumentType(DocumentType.valueOf(dto.getType()));
@@ -534,15 +534,18 @@ public class UserServiceImpl implements UserService {
             User user = userOptional.get();
 
             UserInformationResponseForAuthMe userResponse = UserMapper.toUserInformationResponseForAuthMeDTO(user);
-            if(userOptional.get().getRole().getName().equalsIgnoreCase("CONSUMER") && !consumerSubRepo.existsByConsumerAndIsActiveAndIsUsing(user,true,true)){
-                userResponse.setHaveSub(false);
-            }
-            else{
-                userResponse.setHaveSub(true);
-                userResponse.setConsumerSubInfo(datasetMapper.toConsumerSubReponseDTO(consumerSubRepo.findByConsumerAndIsUsing(user,true).orElseThrow(
-                                ()-> new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.COMMUNE_NOT_FOUND)
-                        ))
-                );
+            if(userOptional.get().getRole().getName().equalsIgnoreCase("CONSUMER")){
+                if(!consumerSubRepo.existsByConsumerAndIsActiveAndIsUsing(user,true,true)) {
+                    userResponse.setHaveSub(false);
+                }
+                else{
+                    userResponse.setHaveSub(true);
+                    userResponse.setConsumerSubInfo(datasetMapper.toConsumerSubReponseDTO(consumerSubRepo.findByConsumerAndIsUsing(user,true).orElseThrow(
+                                    ()-> new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.COMMUNE_NOT_FOUND)
+                            ))
+                    );
+
+                }
             }
 
             return ResponseEntity.ok().body(new ApiResponse(true, "User Information", userResponse));

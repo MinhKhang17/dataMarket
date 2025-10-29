@@ -73,7 +73,7 @@ private EmailService emailService;
             AtomicReference<String> tempPassword = new AtomicReference<>("");
 
             Provider provider = createProviderAccount(providerRegistration,tempUserName,tempPassword);
-
+            provider.setProviderRegistration(providerRegistration);
             walletService.createWallet(provider.getUser());
 
             emailService.sendAccountInfoEmail(provider.getUser().getEmail(),tempUserName.toString(),tempPassword.toString(),"http://localhost:5173/loginm   ");
