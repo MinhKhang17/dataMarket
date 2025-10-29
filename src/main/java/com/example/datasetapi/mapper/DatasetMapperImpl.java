@@ -65,7 +65,7 @@ public class DatasetMapperImpl implements DatasetMapper {
             datasetDTO.setVersion(dataset.getVersion());
             datasetDTO.setDescription(dataset.getDescription());
             datasetDTO.setDatasetTime(TimeGroup.toDate(dataset.getTimeGroup()));
-            datasetDTO.setProvider(toProviderDto(dataset.getProvider()));
+//            datasetDTO.setProvider(toProviderDto(dataset.getProvider()));
             datasetDTO.setTitle(dataset.getTitle());
             return datasetDTO;
     }

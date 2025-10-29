@@ -441,6 +441,7 @@ public class DatasetServiceImpl implements DatasetService {
         CheckoutResponseDTO checkoutResponseDTO = new CheckoutResponseDTO();
 
         Dataset dataset = datasetRepository.findById(checkoutRequestDTO.getDatasetId()).orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
+
         DatasetDTO datasetDTO = datasetMapper.toDatasetForCheckoutDTO(dataset);
 
         DatasetPricing datasetPricing = datasetPricingRepository.findById(checkoutRequestDTO.getDatasetPricingId()).orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
