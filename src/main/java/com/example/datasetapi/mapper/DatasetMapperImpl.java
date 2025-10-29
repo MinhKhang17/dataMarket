@@ -145,7 +145,8 @@ public class DatasetMapperImpl implements DatasetMapper {
                 .collect(Collectors.toList());
     }
 
-    private ConsumerSubResponseDTO toConsumerSubReponseDTO(ConsumerSubscription consumerSubscription) {
+    @Override
+    public ConsumerSubResponseDTO toConsumerSubReponseDTO(ConsumerSubscription consumerSubscription) {
             ConsumerSubResponseDTO consumerSubResponseDTO = new ConsumerSubResponseDTO();
             consumerSubResponseDTO.setConsumerSubId(consumerSubscription.getId());
             consumerSubResponseDTO.setConsumer(toUserDto(consumerSubscription.getConsumer()));

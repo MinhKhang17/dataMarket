@@ -537,6 +537,13 @@ public class UserServiceImpl implements UserService {
             if(userOptional.get().getRole().getName().equalsIgnoreCase("CONSUMER") && !consumerSubRepo.existsByConsumerAndIsActiveAndIsUsing(user,true,true)){
                 userResponse.setHaveSub(false);
             }
+            else{
+                userResponse.setHaveSub(true);
+                userResponse.setConsumerSubInfo(datasetMapper.toConsumerSubReponseDTO(consumerSubRepo.findByConsumerAndIsUsing(user,true).orElseThrow(
+                                ()-> new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.COMMUNE_NOT_FOUND)
+                        ))
+                );
+            }
 
             return ResponseEntity.ok().body(new ApiResponse(true, "User Information", userResponse));
 

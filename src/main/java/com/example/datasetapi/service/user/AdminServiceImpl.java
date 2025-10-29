@@ -76,7 +76,7 @@ private EmailService emailService;
 
             walletService.createWallet(provider.getUser());
 
-            emailService.sendAccountInfoEmail(provider.getUser().getEmail(),tempUserName.toString(),tempPassword.toString(),"http://localhost:5173/");
+            emailService.sendAccountInfoEmail(provider.getUser().getEmail(),tempUserName.toString(),tempPassword.toString(),"http://localhost:5173/loginm   ");
 
 
             providerRegistration.setProvider(provider);

@@ -29,6 +29,9 @@ public interface DatasetMapper {
     ConsumerBuyResponseDTO toConsumerBuyResponseDTO(PricingMethod pricingMethod,Object Infor);
 
     List<ConsumerSubResponseDTO> toConsumerSubDTO(List<ConsumerSubscription> consumerSub);
+
+    ConsumerSubResponseDTO toConsumerSubReponseDTO(ConsumerSubscription consumerSubscription);
+
     PricingRuleDTO toPricingRuleDTO(PricingRule pricingRule);
 
     TimeGroupDTO toTimeGroupDTO(TimeGroup timeGroup);

@@ -8,5 +8,6 @@ public class UserInformationResponseForAuthMe {
     private String user_name;
     private String email;
     private String role;
-    private boolean isHaveSub = true;
+    private boolean isHaveSub = false;
+    private ConsumerSubResponseDTO consumerSubInfo;
 }
