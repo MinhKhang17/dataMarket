@@ -2,6 +2,7 @@ package com.example.datasetapi.model.dataset;
 
 import com.example.datasetapi.enums.Datasets.DatasetSourceType;
 import com.example.datasetapi.model.userManager.Provider;
+import com.example.datasetapi.model.userManager.User;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -27,6 +28,10 @@ public class TimeGroup {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "provider_id")
     private Provider provider;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "moderator_id")
+    private User moderator;
 
     @OneToMany(mappedBy = "timeGroup", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Dataset> datasets = new ArrayList<>();

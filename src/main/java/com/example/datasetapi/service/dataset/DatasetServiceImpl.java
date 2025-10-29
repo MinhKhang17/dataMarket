@@ -45,6 +45,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -157,7 +158,9 @@ public class DatasetServiceImpl implements DatasetService {
             Commune commune = communeRepository.findById(request.getCommune_id())
                     .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.COMMUNE_NOT_FOUND));
 
-            Provider provider = userService.findProviderById(providerId);
+            // Khai báo mà không khởi tạo ngay để đảm bảo biến là effectively final
+            Provider provider;
+            User admin;
 
             // 🔹 Tìm hoặc tạo DatasetGroup parent theo sourceType
             DatasetGroup parentGroup = datasetGroupRepository
@@ -178,42 +181,91 @@ public class DatasetServiceImpl implements DatasetService {
                     .findFirst()
                     .orElseGet(() -> createChildDatasetGroup(parentGroup, commune, datasetInformation, datasetSourceType));
 
-            // 🔹 Tạo dataset mới
+            // 🔹 Tạo dataset mới và set thông tin cơ bản
             Dataset dataset = new Dataset();
             dataset.setDatasetSourceType(datasetSourceType);
             dataset.setDatasetStatus(DatasetStatus.PENDING);
             dataset.setDatasetChildGroup(childGroup);
-            dataset.setProvider(provider);
+
+            if (datasetSourceType.equals(DatasetSourceType.DATASET_PROVIDER)) {
+                admin = null;
+                provider = userService.findProviderById(providerId);
+                dataset.setProvider(provider);
+            } else {
+                provider = null;
+                admin = userService.findUserById(providerId);
+                dataset.setModerator(admin);
+            }
+
             dataset.setTitle(request.getTitle());
             dataset.setDescription(request.getDescription());
             dataset.setRow_count(datasetInformation.getRowCount());
             setDatasetPack(dataset, datasetInformation);
+
+            // Nếu relationship được mapping 2 chiều, thêm dataset vào childGroup để persist quan hệ
+            if (childGroup.getDatasets() == null) {
+                childGroup.setDatasets(new ArrayList<>());
+            }
             childGroup.getDatasets().add(dataset);
 
             // 🔹 Tìm hoặc tạo TimeGroup theo sourceType
             LocalDate datasetDate = DateUtil.parseToLocalDate(request.getDataset_time());
-            TimeGroup timeGroup = timeGroupRepository
-                    .findByYearAndMonthAndDatasetGroupChildAndProviderAndDatasetSourceType(
-                            datasetDate.getYear(),
-                            datasetDate.getMonthValue(),
-                            childGroup,
-                            provider,
-                            datasetSourceType
-                    )
-                    .orElseGet(() -> createTimeGroup(datasetDate, childGroup, provider, datasetSourceType));
+            TimeGroup timeGroup;
 
-            timeGroup.setRow_Count(timeGroup.getRow_Count() + datasetInformation.getRowCount());
+            if (datasetSourceType.equals(DatasetSourceType.DATASET_PROVIDER)) {
+                // provider đã được gán ở trên
+                timeGroup = timeGroupRepository
+                        .findByYearAndMonthAndDatasetGroupChildAndProviderAndDatasetSourceType(
+                                datasetDate.getYear(),
+                                datasetDate.getMonthValue(),
+                                childGroup,
+                                provider,
+                                datasetSourceType
+                        )
+                        .orElseGet(() -> createTimeGroup(datasetDate, childGroup, provider, datasetSourceType));
+            } else {
+                // moderator case: dùng admin (User)
+                timeGroup = timeGroupRepository
+                        .findByYearAndMonthAndDatasetGroupChildAndModeratorAndDatasetSourceType(
+                                datasetDate.getYear(),
+                                datasetDate.getMonthValue(),
+                                childGroup,
+                                admin,
+                                datasetSourceType
+                        )
+                        .orElseGet(() -> createTimeGroup(datasetDate, childGroup, admin, datasetSourceType));
+            }
+
+            // đảm bảo row_Count không null trước khi cộng
+            long existingRows = timeGroup.getRow_Count();
+
+            timeGroup.setRow_Count(existingRows + datasetInformation.getRowCount());
+
+            // Liên kết dataset <-> timeGroup
             dataset.setTimeGroup(timeGroup);
             dataset.setDatasetChildGroup(childGroup);
+
+            // Liên kết datasetInformation
             datasetInformation.setDataset(dataset);
             datasetInformation.setDataset_time(datasetDate);
 
-            // Upload file tạm
-//        uploadCSVFileToPendingFolder(new File(datasetInformation.getFile_url()), dataset);
+            // (Upload file xử lý ở đây nếu cần — giữ nguyên như bạn muốn)
+            if (datasetSourceType.equals(DatasetSourceType.DATASET_PROVIDER)) {
+                // uploadCSVFileToPendingFolder(new File(datasetInformation.getFile_url()), dataset);
+            } else {
+                // uploadCSVFileToSytemFolder(new File(datasetInformation.getFile_url()), dataset);
+            }
+
             logger.info(" Dataset [{}] uploaded successfully (source: {})", dataset.getTitle(), datasetSourceType);
 
-            // Lưu dữ liệu
+            // Lưu dữ liệu (vì cascade có thể không set, lưu explicit dataset và timeGroup nếu cần)
+            // Tùy mapping bạn có thể cần lưu timeGroup và childGroup; ở đây save dataset (cascades nếu cấu hình)
             datasetRepository.save(dataset);
+
+            // Nếu timeGroup hoặc childGroup cần được lưu explicit (nếu không có cascade)
+            timeGroupRepository.save(timeGroup);
+            datasetGroupRepository.save(childGroup);
+            datasetGroupRepository.save(parentGroup);
 
             logger.info("=== Completed checkExitsAndCreateDatasetGroupAndDateset ===");
         } catch (Exception e) {
@@ -222,7 +274,9 @@ public class DatasetServiceImpl implements DatasetService {
         }
     }
 
-    private DatasetGroup createParentDatasetGroup(Commune commune, DatasetInformation info,DatasetSourceType datasetSourceType) {
+    /* --- Các helper overloads đã được chỉnh — đặt trong cùng class/service nếu chưa có --- */
+
+    private DatasetGroup createParentDatasetGroup(Commune commune, DatasetInformation info, DatasetSourceType datasetSourceType) {
         DatasetGroup parent = new DatasetGroup();
         parent.setDatasetGroupType(DatasetGroupType.PARENT);
         parent.setDatasetType(info.getDatasetType());
@@ -233,24 +287,34 @@ public class DatasetServiceImpl implements DatasetService {
         return datasetGroupRepository.save(parent);
     }
 
-    private DatasetGroup createChildDatasetGroup(DatasetGroup parent, Commune commune, DatasetInformation info,DatasetSourceType datasetSourceType) {
+    private DatasetGroup createChildDatasetGroup(DatasetGroup parent, Commune commune, DatasetInformation info, DatasetSourceType datasetSourceType) {
         DatasetGroup child = new DatasetGroup();
         child.setDatasetGroupType(DatasetGroupType.CHILD);
         child.setDatasetType(info.getDatasetType());
         child.setCommune(commune);
         child.setParent(parent);
         child.setDatasetSourceType(datasetSourceType);
-        child.setParent(parent);
         return datasetGroupRepository.save(child);
     }
 
-    private TimeGroup createTimeGroup(LocalDate date, DatasetGroup group, Provider provider,DatasetSourceType datasetSourceType) {
+    // overload cho Provider (owner)
+    private TimeGroup createTimeGroup(LocalDate date, DatasetGroup group, Provider provider, DatasetSourceType datasetSourceType) {
         TimeGroup tg = TimeGroup.fromDate(date);
         tg.setDatasetGroupChild(group);
         tg.setProvider(provider);
         tg.setDatasetSourceType(datasetSourceType);
         return timeGroupRepository.save(tg);
     }
+
+    // overload cho Moderator (User)
+    private TimeGroup createTimeGroup(LocalDate date, DatasetGroup group, User moderator, DatasetSourceType datasetSourceType) {
+        TimeGroup tg = TimeGroup.fromDate(date);
+        tg.setDatasetGroupChild(group);
+        tg.setModerator(moderator);
+        tg.setDatasetSourceType(datasetSourceType);
+        return timeGroupRepository.save(tg);
+    }
+
 
 
 
@@ -777,6 +841,35 @@ public class DatasetServiceImpl implements DatasetService {
     public DatasetGroupInfor getDatasetGroupInfor(long datasetGroupId) {
         DatasetGroup datasetGroup = datasetGroupRepository.findById(datasetGroupId).orElseThrow();
         return datasetMapper.toDatasetGroupInfor(datasetGroup);
+    }
+
+    @Override
+    public Dataset uploadCSVFileToSytemFolder(File file, Dataset dataset) {
+        String fileName = file.getName();
+        String fileKey = "SYSTEM/" + UUID.randomUUID()  + fileName;
+
+        try {
+            byte[] fileContent = Files.readAllBytes(file.toPath());
+
+            s3Client.putObject(
+                    PutObjectRequest.builder()
+                            .bucket(BUCKET_NAME)
+                            .key(fileKey)
+                            .build(),
+                    RequestBody.fromBytes(fileContent)
+            );
+
+            dataset.setFileKey(fileKey);
+            dataset.setName(fileName);
+            dataset.setDatasetStatus(DatasetStatus.PENDING);
+
+            return datasetRepository.save(dataset);
+
+        } catch (IOException e) {
+            throw new RuntimeException("Error reading file: " + fileName, e);
+        } catch (S3Exception e) {
+            throw new RuntimeException("Error uploading to S3: " + e.awsErrorDetails().errorMessage(), e);
+        }
     }
 
 

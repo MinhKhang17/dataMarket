@@ -92,4 +92,7 @@ public interface DatasetService {
     List<DatasetParentReposonseDto>  findAllProviderDataset();
 
     DatasetGroupInfor getDatasetGroupInfor(long datasetGroupId);
+
+
+    Dataset uploadCSVFileToSytemFolder(File file, Dataset dataset);
 }

@@ -4,6 +4,7 @@ import com.example.datasetapi.enums.Datasets.DatasetPack;
 import com.example.datasetapi.enums.Datasets.DatasetSourceType;
 import com.example.datasetapi.enums.Datasets.DatasetStatus;
 import com.example.datasetapi.model.userManager.Provider;
+import com.example.datasetapi.model.userManager.User;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
@@ -56,7 +57,12 @@ private String title;
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnore
     private Provider provider;
-@Column
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnore
+    private User moderator;
+
+    @Column
     @Enumerated(EnumType.STRING)
     private DatasetPack datasetPack=DatasetPack.UNDETERMINED;
 
