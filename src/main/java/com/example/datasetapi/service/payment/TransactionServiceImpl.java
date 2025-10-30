@@ -68,6 +68,9 @@ public class TransactionServiceImpl implements TransactionService {
         Wallet wallet = walletService.findWalletByUserId(userId).orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.WALLET_NOT_FOUND));
 
         List<Transaction> transactions = transactionRepository.findByWalletOrderByCreatedAtDesc(wallet.getId());
+        if(transactions == null || transactions.isEmpty()) {
+            return ResponseEntity.ok(new ApiResponse(false, "No transactions found", List.of()));
+        }
         List<TransactionResponse> response = transactions.stream()
                 .map(t -> new TransactionResponse(
                         t.getId(),
