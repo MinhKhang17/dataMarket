@@ -21,7 +21,7 @@ public class AuthController {
     @PostMapping("provider/sendFormRegister")
     public ResponseEntity<ApiResponse> sendFormRegister(@ModelAttribute ProviderRegistrationRequestDTO providerRegistrationDTO) {
         System.out.println(providerRegistrationDTO.getFullName());
-        return userService.ProviderRegistrationProcess(providerRegistrationDTO);
+        return userService.providerRegistrationProcess(providerRegistrationDTO);
     }
     @GetMapping("/me")
     public ResponseEntity<ApiResponse> GetUserInformationFromRequest(HttpServletRequest request) {

@@ -1,18 +1,17 @@
 package com.example.datasetapi.service.user;
 
+import com.example.datasetapi.dto.request.*;
+import com.example.datasetapi.dto.service.ProviderIdentityDocumentDTO;
 import com.example.datasetapi.mapper.DatasetMapper;
 import com.example.datasetapi.mapper.UserMapper;
-import com.example.datasetapi.dto.request.LoginRequest;
-import com.example.datasetapi.dto.request.ProviderRegistrationRequestDTO;
-import com.example.datasetapi.dto.request.RegisterRequest;
-import com.example.datasetapi.dto.request.UpdatePasswordRequest;
 import com.example.datasetapi.dto.response.*;
-import com.example.datasetapi.dto.service.ProvierIdentityDocumentDTO;
 import com.example.datasetapi.enums.DocumentType;
 import com.example.datasetapi.enums.VerificationStatus.RegistrationStatus;
 import com.example.datasetapi.enums.VerificationStatus.VerificationStatus;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
+import com.example.datasetapi.model.location.LocationRegistration;
+import com.example.datasetapi.model.location.Province;
 import com.example.datasetapi.model.userManager.*;
 import com.example.datasetapi.model.location.Commune;
 import com.example.datasetapi.repository.*;
@@ -34,6 +33,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
+import org.checkerframework.checker.units.qual.C;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -61,6 +61,8 @@ public class UserServiceImpl implements UserService {
     private final ProviderRegistrationRepository providerRegistrationRepository;
     private final ProviderRepository providerRepository;
     private final WalletService walletService;
+    private final HttpServletRequest request;
+    private final LocationRegistrationRepository locationRegistrationRepository;
 
     @Autowired
     private  DatasetMapper datasetMapper;
@@ -68,7 +70,7 @@ public class UserServiceImpl implements UserService {
     private CommuneRepository communeRepository;
     @Autowired private ConsumerSubRepo consumerSubRepo;
     @Autowired
-    public UserServiceImpl(ProviderRepository providerRepository, UserRepository userRepository, JwtUtil jwtUtil, TokenServiceImpl tokenService, RoleRepository roleRepository, ImageServiceImpl imageService, ProviderIndentityDocumentRepository providerIdentityDocumentRepository, ProviderRegistrationRepository providerRegistrationRepository, WalletRepository walletRepository, WalletService walletService) {
+    public UserServiceImpl(ProviderRepository providerRepository, UserRepository userRepository, JwtUtil jwtUtil, TokenServiceImpl tokenService, RoleRepository roleRepository, ImageServiceImpl imageService, ProviderIndentityDocumentRepository providerIdentityDocumentRepository, ProviderRegistrationRepository providerRegistrationRepository, WalletRepository walletRepository, WalletService walletService, HttpServletRequest request, LocationRegistrationRepository locationRegistrationRepository) {
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
         this.tokenService = tokenService;
@@ -79,6 +81,8 @@ public class UserServiceImpl implements UserService {
         this.walletRepository = walletRepository;
         this.providerRepository = providerRepository;
         this.walletService = walletService;
+        this.request = request;
+        this.locationRegistrationRepository = locationRegistrationRepository;
     }
 
 
@@ -355,7 +359,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ResponseEntity<ApiResponse> ProviderRegistrationProcess(ProviderRegistrationRequestDTO providerRegistrationDTO) {
+    public ResponseEntity<ApiResponse> providerRegistrationProcess(ProviderRegistrationRequestDTO providerRegistrationDTO) {
 
             System.out.println(providerRegistrationDTO.getFullName());
             // Validate input
@@ -452,7 +456,7 @@ public class UserServiceImpl implements UserService {
             ProviderRegistration providerRegistration) {
 
         List<ProviderIdentityDocument> providerIdentityDocuments = new ArrayList<>();
-        List<ProvierIdentityDocumentDTO> providerDocumentDTOs = providerRegistrationDTO.getIdentityDocuments();
+        List<ProviderIdentityDocumentDTO> providerDocumentDTOs = providerRegistrationDTO.getIdentityDocuments();
 
         // Kiểm tra danh sách document có tồn tại không
         if (providerDocumentDTOs == null || providerDocumentDTOs.isEmpty()) {
@@ -460,7 +464,7 @@ public class UserServiceImpl implements UserService {
         }
 
         // Xử lý từng document
-        for (ProvierIdentityDocumentDTO dto : providerDocumentDTOs) {
+        for (ProviderIdentityDocumentDTO dto : providerDocumentDTOs) {
             // Kiểm tra file có tồn tại không
             if (dto.getFile() == null || dto.getFile().isEmpty()) {
                 throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
@@ -518,6 +522,110 @@ public class UserServiceImpl implements UserService {
     @Override
     public void saveUser(User consumer) {
          userRepository.save(consumer);
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse> locationRegistrationProcess(LocationRegistrationRequest locationRegistrationRequest) {
+        String token = tokenService.resolveToken(request);
+        if(token == null){
+            throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED);
+        }
+
+        Long providerId = jwtUtil.getUserIdFromToken(token);
+        if(providerId == null){
+            throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.INVALID_TOKEN);
+        }
+
+        Provider provider = findProviderById(providerId);
+        if(provider == null){
+            throw new CustomException(HttpStatus.FORBIDDEN, ErrorCode.FORBIDDEN);
+        }
+
+
+        if(locationRegistrationRequest.getIdCommune() == null || locationRegistrationRequest.getIdCommune().trim().isEmpty()){
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
+        }
+
+        Commune commune = communeRepository.findById(locationRegistrationRequest.getIdCommune()).orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.COMMUNE_NOT_FOUND));
+
+        Province province = commune.getProvince();
+
+        LocationRegistration locationRegistration = registerLocation(locationRegistrationRequest, provider, commune);
+
+        LocationRegistrationResponse response = new LocationRegistrationResponse();
+        response.setId(locationRegistration.getId());
+        response.setName(provider.getUser().getUsername());
+        response.setEmail(provider.getUser().getEmail());
+        response.setCommuneName(commune.getName());
+        response.setProvinceName(province.getName());
+
+        return ResponseEntity.ok().body(new ApiResponse(true, "Location registration submitted successfully. Your application is under review.", response));
+    }
+
+    @Transactional
+    protected LocationRegistration registerLocation(LocationRegistrationRequest dto, Provider provider, Commune commune) {
+        List<ProviderIdentityDocument> identityDocuments = handleProviderDocument(dto);
+
+        LocationRegistration locationRegistration = new LocationRegistration();
+        locationRegistration.setProvider(provider);
+        locationRegistration.setCommune(commune);
+        locationRegistration.setProviderIdentityDocument(identityDocuments);
+        locationRegistration.setStatus(RegistrationStatus.PENDING);
+
+        locationRegistrationRepository.saveAndFlush(locationRegistration);
+        return locationRegistration;
+    }
+
+    private List<ProviderIdentityDocument> handleProviderDocument(
+            LocationRegistrationRequest locationRegistrationRequest) {
+
+        List<ProviderIdentityDocument> providerIdentityDocuments = new ArrayList<>();
+        List<ProviderIdentityDocumentDTO> providerDocumentDTOs = locationRegistrationRequest.getIdentityDocuments();
+
+        // Kiểm tra danh sách document có tồn tại không
+        if (providerDocumentDTOs == null || providerDocumentDTOs.isEmpty()) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
+        }
+
+        // Xử lý từng document
+        for (ProviderIdentityDocumentDTO dto : providerDocumentDTOs) {
+            // Kiểm tra file có tồn tại không
+            if (dto.getFile() == null || dto.getFile().isEmpty()) {
+                throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
+            }
+
+
+            // Validate file type (optional)
+            String contentType = dto.getFile().getContentType();
+            if (contentType == null || (!contentType.startsWith("image/"))) {
+                throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
+            }
+
+            // Validate file size (optional - 5MB limit)
+            if (dto.getFile().getSize() > 5 * 1024 * 1024) {
+                throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.FILE_TOO_BIG);
+            }
+
+            // Tạo ProviderIdentityDocument từ DTO
+            ProviderIdentityDocument providerIdentityDocument = new ProviderIdentityDocument();
+            providerIdentityDocument.setUploadedAt(Instant.now());
+            providerIdentityDocument.setIdCardVerificationStatus(VerificationStatus.PENDING);
+
+            // Upload image và set URL
+//            String imageUrl = imageService.uploadImage(dto.getFile());
+//            providerIdentityDocument.setImage_url(imageUrl);
+
+            // Set document type if available in DTO
+            providerIdentityDocument.setDocumentType(DocumentType.valueOf(dto.getType()));
+
+            // Thêm vào danh sách và lưu vào database
+            providerIdentityDocuments.add(providerIdentityDocument);
+
+            providerIdentityDocumentRepository.save(providerIdentityDocument);
+        }
+
+        return providerIdentityDocuments;
+
     }
 
 

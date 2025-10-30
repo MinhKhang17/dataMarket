@@ -76,9 +76,9 @@ public interface DatasetService {
 
     public Dataset moveFileFromPendingToApproveFolder(Dataset dataset);
 
-    String getDowloadTokenOfDatasetForConsumer(long datasetId, HttpServletRequest request);
+    String getDownloadTokenOfDatasetForConsumer(long datasetId, HttpServletRequest request);
 
-    ResponseEntity<?> dowloadDataset(String dowloadToken,HttpServletRequest request);
+    ResponseEntity<?> downloadDataset(String dowloadToken,HttpServletRequest request);
 
     List<DatasetDTO> findAllConsumerDataset(HttpServletRequest request);
 

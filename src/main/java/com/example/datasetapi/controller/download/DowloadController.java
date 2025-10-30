@@ -32,9 +32,7 @@ public class DowloadController {
     public ResponseEntity<?> downloadFile(
             @RequestParam String dowloadToken, HttpServletRequest request
     ) {
-
-        return datasetService.dowloadDataset(dowloadToken,request);
-
+        return datasetService.downloadDataset(dowloadToken,request);
     }
 
 

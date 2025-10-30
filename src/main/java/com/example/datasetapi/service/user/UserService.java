@@ -1,9 +1,6 @@
 package com.example.datasetapi.service.user;
 
-import com.example.datasetapi.dto.request.LoginRequest;
-import com.example.datasetapi.dto.request.ProviderRegistrationRequestDTO;
-import com.example.datasetapi.dto.request.RegisterRequest;
-import com.example.datasetapi.dto.request.UpdatePasswordRequest;
+import com.example.datasetapi.dto.request.*;
 import com.example.datasetapi.dto.response.ApiResponse;
 //import com.example.datasetapi.model.userManager.Address;
 import com.example.datasetapi.model.userManager.Provider;
@@ -28,11 +25,11 @@ public interface UserService {
 
     User findUserById(long userId);
 
-
     @Transactional
-    ResponseEntity<ApiResponse> ProviderRegistrationProcess(ProviderRegistrationRequestDTO providerRegistrationDTO);
+    ResponseEntity<ApiResponse> providerRegistrationProcess(ProviderRegistrationRequestDTO providerRegistrationDTO);
 
     ResponseEntity<ApiResponse> getUserInformationFromRequest(HttpServletRequest request);
+
     ResponseEntity<?> getWalletAmountFromToken(HttpServletRequest token);
 
     Provider findProviderById(long providerId);
@@ -46,4 +43,6 @@ public interface UserService {
     Provider saveProvider(Provider provider);
 
     void saveUser(User consumer);
+
+    ResponseEntity<ApiResponse> locationRegistrationProcess(LocationRegistrationRequest locationRegistrationRequest);
 }

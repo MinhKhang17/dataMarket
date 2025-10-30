@@ -1,6 +1,5 @@
 package com.example.datasetapi.dto.response;
 
-import com.example.datasetapi.repository.ProviderIndentityDocumentRepository;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -16,6 +15,6 @@ public class ProviderRegistrationResponseDTO {
     private String phoneNumber;
     private String registrationStatus;
     private LocalDateTime createdAt;
-    private List<ProviderIndentityDocumentDTO> providerIndentityDocumentDTOList;
+    private List<ProviderIdentityDocumentDTO> providerIdentityDocumentDTOList;
     private String location;
 }

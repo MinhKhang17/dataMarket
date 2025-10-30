@@ -78,7 +78,7 @@ private String title;
 
     private long row_count;
 
-    private long dowload_count;
+    private long dowload_count = 0;
 
     //phân loại dataset của provider hay của hệ thống
     private DatasetSourceType datasetSourceType;
