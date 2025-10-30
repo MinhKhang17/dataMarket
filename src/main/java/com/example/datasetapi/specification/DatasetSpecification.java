@@ -1,31 +1,36 @@
 package com.example.datasetapi.specification;
 
-
 import com.example.datasetapi.model.dataset.Dataset;
 import com.example.datasetapi.dto.request.DatasetFilterRequestDTO;
 import com.example.datasetapi.model.dataset.DatasetGroup;
 import com.example.datasetapi.model.dataset.TimeGroup;
+import com.example.datasetapi.enums.Datasets.DatasetSourceType;
 import jakarta.persistence.criteria.*;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.ArrayList;
 import java.util.List;
+
 public class DatasetSpecification {
     public static Specification<Dataset> filterDatasets(DatasetFilterRequestDTO request) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-
-
+            // Join Dataset -> DatasetGroup (child group)
             Join<Dataset, DatasetGroup> datasetGroupJoin = root.join("datasetChildGroup", JoinType.LEFT);
 
             // Join với TimeGroup
             Join<Dataset, TimeGroup> timeGroupJoin = root.join("timeGroup", JoinType.LEFT);
 
-
             // Join với DatasetGroup parent (province)
             Join<DatasetGroup, DatasetGroup> parentGroupJoin = datasetGroupJoin.join("parent", JoinType.LEFT);
 
+            // ===== ONLY SYSTEM-SOURCE DATASETGROUP =====
+            // Chỉ lấy dataset mà dataset group gắn với datasetSourceType = SYSTEM
+            predicates.add(criteriaBuilder.equal(
+                    datasetGroupJoin.get("datasetSourceType"),
+                    DatasetSourceType.SYSTEM_DATASET
+            ));
 
             // ===== LOCATION FILTERS =====
             if (request.getCommuneId() != null) {

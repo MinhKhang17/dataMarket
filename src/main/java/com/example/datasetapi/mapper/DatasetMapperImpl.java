@@ -52,7 +52,7 @@ public class DatasetMapperImpl implements DatasetMapper {
         if(dataset.getTimeGroup()!=null){
             datasetDTO.setDatasetTime(TimeGroup.toDate(dataset.getTimeGroup()));
         }
-        datasetDTO.setProvider(toProviderDto(dataset.getProvider()));
+//        datasetDTO.setProvider(toProviderDto(dataset.getProvider()));
         datasetDTO.setTitle(dataset.getTitle());
         datasetDTO.setDescription(dataset.getDescription());
         return datasetDTO;

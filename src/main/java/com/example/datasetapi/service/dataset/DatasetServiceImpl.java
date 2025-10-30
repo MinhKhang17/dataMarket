@@ -286,7 +286,6 @@ public class DatasetServiceImpl implements DatasetService {
         parent.setProvince(commune.getProvince());
         parent.setUpdateAt(LocalDateTime.now());
         parent.setDatasetSourceType(datasetSourceType);
-        parent.setCommune(commune);
         return datasetGroupRepository.save(parent);
     }
 
@@ -781,7 +780,7 @@ public class DatasetServiceImpl implements DatasetService {
 
         ResponseInputStream<GetObjectResponse> s3Object = s3Client.getObject(getObjectRequest);
         InputStreamResource resource = new InputStreamResource(s3Object);
-        dataset.setDownload_count(dataset.getDownload_count()+1);
+        dataset.setDowload_count(dataset.getDowload_count()+1);
         datasetRepository.save(dataset);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,
