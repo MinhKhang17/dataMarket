@@ -199,6 +199,7 @@ public class DatasetServiceImpl implements DatasetService {
                 admin = userService.findUserById(providerId);
                 dataset.setModerator(admin);
                 dataset.setDatasetStatus(DatasetStatus.APPROVE);
+                datasetInformation.setStatus(DatasetInforStatus.APPROVED);
                 priceService.createPricingForDataset(dataset,datasetInformation);
             }
 
