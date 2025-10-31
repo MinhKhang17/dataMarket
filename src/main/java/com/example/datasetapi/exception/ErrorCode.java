@@ -83,7 +83,8 @@ public enum ErrorCode {
     SUB_EXPIRED("SUB_EXPIRED", "Subscription package has expired"),
     TIME_GROUP_NOT_FOUND("TIME_GROUP_NOT_FOUND", "Time group not found"),
     TOKEN_IS_EXPIRED("TOKEN_IS_EXPIRED","Token Hết hạn" ),
-    DATASET_BOUGHT("DATASET_BOUGHT","Dataset đã được mua" );
+    DATASET_BOUGHT("DATASET_BOUGHT","Dataset đã được mua" ),
+    CONSUMER_SUB_NOT_FOUND("CONSUMER_SUB_NOT_FOUND","Không tìm thấy gói thuê bao của người dùng" );
 
     private final String code;
     private final String message;

@@ -434,31 +434,46 @@ public class DatasetServiceImpl implements DatasetService {
 
     @Override
     public CheckoutResponseDTO checkoutDatasetPayment(CheckoutRequestDTO checkoutRequestDTO, HttpServletRequest request) {
-
-
         User consumer = userService.findUserById(tokenService.getUserIdFromRequest(request));
 
         CheckoutResponseDTO checkoutResponseDTO = new CheckoutResponseDTO();
 
-        Dataset dataset = datasetRepository.findById(checkoutRequestDTO.getDatasetId()).orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
+        System.out.println("dừng ở lần tìm đầu tiên");
+        Dataset dataset = datasetRepository.findById(8).get();
+//        Dataset dataset = datasetRepository.findById(checkoutRequestDTO.getDatasetId()).orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
+        if(checkoutRequestDTO.getIsHaveSub()){
+            System.out.println("vao được condition have sub");
+            ConsumerSubscription consumerSubscription = consumerSubRepo.findByConsumerAndIsUsing(consumer,true).orElseThrow(
+                    ()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.CONSUMER_SUB_NOT_FOUND)
+            );
 
-        DatasetDTO datasetDTO = datasetMapper.toDatasetForCheckoutDTO(dataset);
+            checkoutResponseDTO.setDataset(datasetMapper.toDatasetForCheckoutDTO(dataset));
 
-        DatasetPricing datasetPricing = datasetPricingRepository.findById(checkoutRequestDTO.getDatasetPricingId()).orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
+            checkoutResponseDTO.setRow_amount_consumer_sub(consumerSubscription.getRow_amount());
 
-        DatasetPricingDTO datasetPricingDTO = datasetMapper.toDatasetPricingDTO(datasetPricing);
+            checkoutResponseDTO.setRow_dataset(dataset.getRow_count());
 
-        checkoutResponseDTO.setDatasetPricing(datasetPricingDTO);
-        checkoutResponseDTO.setDataset(datasetDTO);
-
-
-        double remaing_amount = paymentService.calRemainingAmount(datasetPricingDTO.getPrice(),consumer);
-
-        if(remaing_amount >= 0){
-            checkoutResponseDTO.setEnough(true);
         }
+else {
+            System.out.println("dừng ở lần tìm thứ hai");
 
-        checkoutResponseDTO.setRemaining_amount(remaing_amount);
+            DatasetDTO datasetDTO = datasetMapper.toDatasetForCheckoutDTO(dataset);
+
+            DatasetPricing datasetPricing = datasetPricingRepository.findById(checkoutRequestDTO.getDatasetPricingId()).orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_NOT_FOUND));
+            DatasetPricingDTO datasetPricingDTO = datasetMapper.toDatasetPricingDTO(datasetPricing);
+
+            checkoutResponseDTO.setDatasetPricing(datasetPricingDTO);
+            checkoutResponseDTO.setDataset(datasetDTO);
+
+
+            double remaing_amount = paymentService.calRemainingAmount(datasetPricingDTO.getPrice(), consumer);
+
+            if (remaing_amount >= 0) {
+                checkoutResponseDTO.setEnough(true);
+            }
+
+            checkoutResponseDTO.setRemaining_amount(remaing_amount);
+        }
 
         return checkoutResponseDTO;
     }
@@ -468,15 +483,13 @@ public class DatasetServiceImpl implements DatasetService {
         Dataset dataset = datasetRepository.findById(buyRequestDTO.getDatasetId()).orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
         DatasetPricing datasetPricing = datasetPricingRepository.findById(buyRequestDTO.getDatasetPricingId()).orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_PRICING_NOT_FOUND));
         User consumer = userService.findUserById(tokenService.getUserIdFromRequest(request));
-        switch (datasetPricing.getPricingMethod()){
-            case ONE_TIME -> {
-               return createOneTimePayment(dataset,datasetPricing,consumer);
-            }
-            case SUBSCRIPTION -> {
-                return   createSubPayment(dataset,consumer);
-            }
+
+        if(buyRequestDTO.getIsHaveSub()){
+            return createSubPayment(dataset,consumer);
         }
-        return null;
+        else{
+            return createOneTimePayment(dataset,datasetPricing,consumer);
+        }
     }
 
     @Override
@@ -593,8 +606,9 @@ public class DatasetServiceImpl implements DatasetService {
         DownloadToken downloadToken = jwtUtil.generateDowloadToken(consumer,dataset,30,10,null);
             consumer.getDownloadTokens().add(downloadToken);
             userService.saveUser(consumer);
-        return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.SUBSCRIPTION,consumerSubRepo.save(consumerSubscription));
-
+        ConsumerBuyResponseDTO consumerBuyResponseDTO =  datasetMapper.toConsumerBuyResponseDTO(PricingMethod.SUBSCRIPTION,consumerSubRepo.save(consumerSubscription));
+        consumerBuyResponseDTO.getBuySubInfoDTO().setDowloadToken(downloadToken.getId().toString());
+        return consumerBuyResponseDTO;
     }
 
     private ConsumerBuyResponseDTO createOneTimePayment(Dataset dataset, DatasetPricing datasetPricing, User consumer) {

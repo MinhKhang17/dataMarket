@@ -7,4 +7,6 @@ public class ConsumerBuyRequestDTO {
     private long datasetId;
     
     private long datasetPricingId;
+
+    private Boolean isHaveSub;
 }

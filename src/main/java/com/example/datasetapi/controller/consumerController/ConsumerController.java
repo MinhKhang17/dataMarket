@@ -21,14 +21,24 @@ public class ConsumerController {
     @Autowired
     private ConsumerService consumerService;
 
-    @PostMapping("dataset/checkout")
-    public ResponseEntity<ApiResponse> checkout(@ModelAttribute CheckoutRequestDTO checkoutRequestDTO, HttpServletRequest request){
-        CheckoutResponseDTO checkoutResponseDTO = datasetService.checkoutDatasetPayment(checkoutRequestDTO,request);
-        return ResponseEntity.ok().body(new ApiResponse(true,"Checkout loading success",checkoutResponseDTO));
+    @GetMapping("dataset/checkout")
+    public ResponseEntity<ApiResponse> checkout(
+            @ModelAttribute CheckoutRequestDTO checkoutRequestDTO,
+            @RequestParam(value = "isHaveSub", required = false) Boolean isHaveSub,
+            HttpServletRequest request) {
+
+            checkoutRequestDTO.setIsHaveSub(isHaveSub);
+
+
+        CheckoutResponseDTO checkoutResponseDTO = datasetService.checkoutDatasetPayment(checkoutRequestDTO, request);
+        return ResponseEntity.ok(new ApiResponse(true, "Checkout loading success", checkoutResponseDTO));
     }
 
     @PostMapping("dataset/buy")
-    public ResponseEntity<ApiResponse> buyDataset(@ModelAttribute ConsumerBuyRequestDTO buyRequestDTO, HttpServletRequest request){
+    public ResponseEntity<ApiResponse> buyDataset(@ModelAttribute ConsumerBuyRequestDTO buyRequestDTO,
+                                                  @RequestParam(value = "isHaveSub", required = false) boolean isHaveSub,
+                                                  HttpServletRequest request){
+        buyRequestDTO.setIsHaveSub(isHaveSub);
         ConsumerBuyResponseDTO consumerBuyResponseDTO = datasetService.buyDatasetRequest(buyRequestDTO,request);
         return ResponseEntity.ok().body(new ApiResponse(true,"Buy loading success",consumerBuyResponseDTO));
     }
