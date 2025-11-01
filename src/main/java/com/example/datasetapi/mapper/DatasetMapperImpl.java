@@ -55,6 +55,8 @@ public class DatasetMapperImpl implements DatasetMapper {
 //        datasetDTO.setProvider(toProviderDto(dataset.getProvider()));
         datasetDTO.setTitle(dataset.getTitle());
         datasetDTO.setDescription(dataset.getDescription());
+        datasetDTO.setProvince(dataset.getDatasetChildGroup().getParent().getProvince().getName());
+        datasetDTO.setCommune(dataset.getDatasetChildGroup().getCommune().getName());
         return datasetDTO;
         }
 

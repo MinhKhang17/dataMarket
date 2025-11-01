@@ -14,4 +14,6 @@ public class DatasetDTO {
     private LocalDate datasetTime;
     private String description;
     private String title;
+    private String province;
+    private String commune;
 }

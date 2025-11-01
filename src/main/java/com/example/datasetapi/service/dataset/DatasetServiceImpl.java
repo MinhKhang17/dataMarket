@@ -481,13 +481,13 @@ else {
     @Override
     public ConsumerBuyResponseDTO buyDatasetRequest(ConsumerBuyRequestDTO buyRequestDTO, HttpServletRequest request) {
         Dataset dataset = datasetRepository.findById(buyRequestDTO.getDatasetId()).orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
-        DatasetPricing datasetPricing = datasetPricingRepository.findById(buyRequestDTO.getDatasetPricingId()).orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_PRICING_NOT_FOUND));
         User consumer = userService.findUserById(tokenService.getUserIdFromRequest(request));
 
         if(buyRequestDTO.getIsHaveSub()){
             return createSubPayment(dataset,consumer);
         }
         else{
+            DatasetPricing datasetPricing = datasetPricingRepository.findById(buyRequestDTO.getDatasetPricingId()).orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_PRICING_NOT_FOUND));
             return createOneTimePayment(dataset,datasetPricing,consumer);
         }
     }
