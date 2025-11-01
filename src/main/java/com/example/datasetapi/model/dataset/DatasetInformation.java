@@ -55,7 +55,7 @@ private DatasetType datasetType;
 @JsonIgnore
 @ManyToOne
     @JoinColumn(name = "provider_id")
-    private User provider;
+    private User     provider;
 @ManyToOne
 @JsonIgnore
     @JoinColumn(name = "commune_id")
