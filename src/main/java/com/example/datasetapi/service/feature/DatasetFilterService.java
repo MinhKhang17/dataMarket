@@ -11,6 +11,7 @@ import org.springframework.data.domain.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.ModelAttribute;
 
 
 import java.util.List;
@@ -27,17 +28,29 @@ public class DatasetFilterService {
      * Filter datasets with pagination
      */
     public Page<DatasetDTO> filterDatasets(DatasetFilterRequestDTO request) {
-        Specification<Dataset> spec = DatasetSpecification.filterDatasets(request);
-        Pageable pageable = createPageable(request);
 
-        Page<Dataset> page = datasetRepository.findAll(spec, pageable);
+        // ✅ Nếu request null → tạo Pageable mặc định
+        Pageable pageable = (request != null) ? createPageable(request)
+                : PageRequest.of(0, 10); // size mặc định 10
+
+        Specification<Dataset> spec = null;
+        if (request != null) {
+            spec = DatasetSpecification.filterDatasets(request);
+        }
+
+        Page<Dataset> page;
+        if (spec == null) {
+            page = datasetRepository.findAll(pageable);
+        } else {
+            page = datasetRepository.findAll(spec, pageable);
+        }
 
         List<DatasetDTO> filteredList = page.getContent().stream()
                 .filter(dataset -> dataset.getDatasetStatus() == DatasetStatus.APPROVE)
                 .map(datasetMapper::toDatasetDTO)
                 .collect(Collectors.toList());
 
-        return new PageImpl<>(filteredList, pageable, filteredList.size());
+        return new PageImpl<>(filteredList, pageable, page.getTotalElements());
     }
 
     /**

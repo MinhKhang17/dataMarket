@@ -25,7 +25,7 @@ public class DatasetFilterController {
      */
     @PostMapping("/filter")
     public ResponseEntity<Page<DatasetDTO>> filterDatasets(
-            @RequestBody DatasetFilterRequestDTO request
+            @RequestBody(required = false) DatasetFilterRequestDTO request
     ) {
         Page<DatasetDTO> result = filterService.filterDatasets(request);
         return ResponseEntity.ok(result);
