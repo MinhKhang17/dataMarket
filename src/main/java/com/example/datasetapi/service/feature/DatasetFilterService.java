@@ -28,29 +28,28 @@ public class DatasetFilterService {
      * Filter datasets with pagination
      */
     public Page<DatasetDTO> filterDatasets(DatasetFilterRequestDTO request) {
+        Pageable pageable = (request != null) ? createPageable(request) : PageRequest.of(0, 10);
 
-        // ✅ Nếu request null → tạo Pageable mặc định
-        Pageable pageable = (request != null) ? createPageable(request)
-                : PageRequest.of(0, 10); // size mặc định 10
+        // Build specification — ensure not null when there are filters
+        Specification<Dataset> spec = DatasetSpecification.filterDatasets(request);
 
-        Specification<Dataset> spec = null;
-        if (request != null) {
-            spec = DatasetSpecification.filterDatasets(request);
-        }
-
-        Page<Dataset> page;
+        // Always ensure we only return APPROVE datasets (do it in spec so DB can count)
+        Specification<Dataset> statusSpec = (root, query, cb) ->
+                cb.equal(root.get("datasetStatus"), DatasetStatus.APPROVE);
         if (spec == null) {
-            page = datasetRepository.findAll(pageable);
+            spec = Specification.where(statusSpec);
         } else {
-            page = datasetRepository.findAll(spec, pageable);
+            spec = spec.and(statusSpec);
         }
 
-        List<DatasetDTO> filteredList = page.getContent().stream()
-                .filter(dataset -> dataset.getDatasetStatus() == DatasetStatus.APPROVE)
+        Page<Dataset> page = datasetRepository.findAll(spec, pageable);
+
+        List<DatasetDTO> dtoList = page.getContent().stream()
                 .map(datasetMapper::toDatasetDTO)
                 .collect(Collectors.toList());
 
-        return new PageImpl<>(filteredList, pageable, page.getTotalElements());
+        // Use page.getTotalElements() because DB already applied the status filter
+        return new PageImpl<>(dtoList, pageable, page.getTotalElements());
     }
 
     /**
