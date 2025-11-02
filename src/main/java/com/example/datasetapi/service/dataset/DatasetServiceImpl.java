@@ -439,8 +439,8 @@ public class DatasetServiceImpl implements DatasetService {
         CheckoutResponseDTO checkoutResponseDTO = new CheckoutResponseDTO();
 
         System.out.println("dừng ở lần tìm đầu tiên");
-        Dataset dataset = datasetRepository.findById(8).get();
-//        Dataset dataset = datasetRepository.findById(checkoutRequestDTO.getDatasetId()).orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
+//        Dataset dataset = datasetRepository.findById(8).get();
+        Dataset dataset = datasetRepository.findById(checkoutRequestDTO.getDatasetId()).orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
         if(checkoutRequestDTO.getIsHaveSub()){
             System.out.println("vao được condition have sub");
             ConsumerSubscription consumerSubscription = consumerSubRepo.findByConsumerAndIsUsing(consumer,true).orElseThrow(
