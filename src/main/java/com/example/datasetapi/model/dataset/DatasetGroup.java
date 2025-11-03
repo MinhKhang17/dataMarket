@@ -51,7 +51,7 @@ public class DatasetGroup {
     private Province province;
     //sẽ null khi là dataset group cha
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "comune_id")
+    @JoinColumn(name = "commune_id")
     private Commune commune;
 
     @Column

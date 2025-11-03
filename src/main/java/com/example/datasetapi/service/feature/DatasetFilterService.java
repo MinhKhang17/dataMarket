@@ -11,7 +11,6 @@ import org.springframework.data.domain.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.ModelAttribute;
 
 
 import java.util.List;
@@ -28,28 +27,17 @@ public class DatasetFilterService {
      * Filter datasets with pagination
      */
     public Page<DatasetDTO> filterDatasets(DatasetFilterRequestDTO request) {
-        Pageable pageable = (request != null) ? createPageable(request) : PageRequest.of(0, 10);
-
-        // Build specification — ensure not null when there are filters
         Specification<Dataset> spec = DatasetSpecification.filterDatasets(request);
-
-        // Always ensure we only return APPROVE datasets (do it in spec so DB can count)
-        Specification<Dataset> statusSpec = (root, query, cb) ->
-                cb.equal(root.get("datasetStatus"), DatasetStatus.APPROVE);
-        if (spec == null) {
-            spec = Specification.where(statusSpec);
-        } else {
-            spec = spec.and(statusSpec);
-        }
+        Pageable pageable = createPageable(request);
 
         Page<Dataset> page = datasetRepository.findAll(spec, pageable);
 
-        List<DatasetDTO> dtoList = page.getContent().stream()
+        List<DatasetDTO> filteredList = page.getContent().stream()
+                .filter(dataset -> dataset.getDatasetStatus() == DatasetStatus.APPROVE)
                 .map(datasetMapper::toDatasetDTO)
                 .collect(Collectors.toList());
 
-        // Use page.getTotalElements() because DB already applied the status filter
-        return new PageImpl<>(dtoList, pageable, page.getTotalElements());
+        return new PageImpl<>(filteredList, pageable, filteredList.size());
     }
 
     /**
@@ -83,7 +71,7 @@ public class DatasetFilterService {
         return filterDatasets(request);
     }
 
-    public Page<DatasetDTO> getDatasetsByCommune(Long communeId, int page, int size) {
+    public Page<DatasetDTO> getDatasetsByCommune(String communeId, int page, int size) {
         DatasetFilterRequestDTO request = DatasetFilterRequestDTO.builder()
                 .communeId(communeId)
                 .page(page)

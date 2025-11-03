@@ -19,4 +19,5 @@ public class DatasetDTO {
     private String commune;
     private List<Category> category;
     private LocalDate date;
+    private long row_amount;
 }

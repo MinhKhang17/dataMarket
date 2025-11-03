@@ -251,7 +251,7 @@ public class DatasetServiceImpl implements DatasetService {
             // Liên kết datasetInformation
             datasetInformation.setDataset(dataset);
             datasetInformation.setDataset_time(datasetDate);
-
+            dataset.setRow_count(datasetInformation.getRowCount());
             // (Upload file xử lý ở đây nếu cần — giữ nguyên như bạn muốn)
             if (datasetSourceType.equals(DatasetSourceType.DATASET_PROVIDER)) {
                 // uploadCSVFileToPendingFolder(new File(datasetInformation.getFile_url()), dataset);
