@@ -1,5 +1,6 @@
 package com.example.datasetapi.dto.response;
 
+import com.example.datasetapi.model.dataset.Category;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -14,4 +15,9 @@ public class DatasetDTO {
     private LocalDate datasetTime;
     private String description;
     private String title;
+    private String province;
+    private String commune;
+    private List<Category> category;
+    private LocalDate date;
+    private long row_amount;
 }

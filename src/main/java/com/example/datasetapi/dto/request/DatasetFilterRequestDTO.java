@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 public class DatasetFilterRequestDTO {
     // Location filters
     private String provinceId;
-    private Long communeId;
+    private String communeId;
 
     // Time filters
     private Integer year;

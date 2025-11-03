@@ -71,7 +71,7 @@ public class DatasetFilterService {
         return filterDatasets(request);
     }
 
-    public Page<DatasetDTO> getDatasetsByCommune(Long communeId, int page, int size) {
+    public Page<DatasetDTO> getDatasetsByCommune(String communeId, int page, int size) {
         DatasetFilterRequestDTO request = DatasetFilterRequestDTO.builder()
                 .communeId(communeId)
                 .page(page)

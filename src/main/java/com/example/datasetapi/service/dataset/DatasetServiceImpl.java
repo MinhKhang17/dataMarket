@@ -235,7 +235,7 @@ public class DatasetServiceImpl implements DatasetService {
             // Liên kết datasetInformation
             datasetInformation.setDataset(dataset);
             datasetInformation.setDataset_time(datasetDate);
-
+            dataset.setRow_count(datasetInformation.getRowCount());
             // (Upload file xử lý ở đây nếu cần — giữ nguyên như bạn muốn)
             if (datasetSourceType.equals(DatasetSourceType.DATASET_PROVIDER)) {
                 // uploadCSVFileToPendingFolder(new File(datasetInformation.getFile_url()), dataset);
@@ -423,8 +423,8 @@ public class DatasetServiceImpl implements DatasetService {
         CheckoutResponseDTO checkoutResponseDTO = new CheckoutResponseDTO();
 
         System.out.println("dừng ở lần tìm đầu tiên");
-        Dataset dataset = datasetRepository.findById(8).get();
-//        Dataset dataset = datasetRepository.findById(checkoutRequestDTO.getDatasetId()).orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
+//        Dataset dataset = datasetRepository.findById(8).get();
+        Dataset dataset = datasetRepository.findById(checkoutRequestDTO.getDatasetId()).orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
         if(checkoutRequestDTO.getIsHaveSub()){
             System.out.println("vao được condition have sub");
             ConsumerSubscription consumerSubscription = consumerSubRepo.findByConsumerAndIsUsing(consumer,true).orElseThrow(
@@ -467,15 +467,13 @@ else {
         Dataset dataset = datasetRepository.findById(buyRequestDTO.getDatasetId())
                 .orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
 
-        DatasetPricing datasetPricing = datasetPricingRepository.findById(buyRequestDTO.getDatasetPricingId())
-                .orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_PRICING_NOT_FOUND));
-
         User consumer = userService.findUserById(tokenService.getUserIdFromRequest(request));
 
         if(buyRequestDTO.getIsHaveSub()){
             return createSubPayment(dataset,consumer);
         }
         else{
+            DatasetPricing datasetPricing = datasetPricingRepository.findById(buyRequestDTO.getDatasetPricingId()).orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_PRICING_NOT_FOUND));
             return createOneTimePayment(dataset,datasetPricing,consumer);
         }
     }

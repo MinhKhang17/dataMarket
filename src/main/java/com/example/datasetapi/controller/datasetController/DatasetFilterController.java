@@ -23,9 +23,9 @@ public class DatasetFilterController {
      * Main filter endpoint - supports all filter combinations
      * POST /api/datasets/filter
      */
-    @PostMapping("/filter")
+    @GetMapping("/filter")
     public ResponseEntity<Page<DatasetDTO>> filterDatasets(
-            @RequestBody DatasetFilterRequestDTO request
+            @ModelAttribute DatasetFilterRequestDTO request
     ) {
         Page<DatasetDTO> result = filterService.filterDatasets(request);
         return ResponseEntity.ok(result);
@@ -38,7 +38,7 @@ public class DatasetFilterController {
     @GetMapping("/search")
     public ResponseEntity<Page<DatasetDTO>> searchDatasets(
             @RequestParam(required = false) String provinceId,
-            @RequestParam(required = false) Long communeId,
+            @RequestParam(required = false) String communeId,
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) Integer month,
             @RequestParam(required = false) Integer day,
@@ -94,7 +94,7 @@ public class DatasetFilterController {
 
     @GetMapping("/by-commune/{communeId}")
     public ResponseEntity<Page<DatasetDTO>> getByCommune(
-            @PathVariable Long communeId,
+            @PathVariable String communeId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
