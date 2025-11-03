@@ -127,7 +127,7 @@ public class DatasetMapperImpl implements DatasetMapper {
 
     private BuyApiInforDTO toBuyApiInfoDTO(DownloadToken infor) {
         BuyApiInforDTO buyApiInforDTO = new BuyApiInforDTO();
-        buyApiInforDTO.setDowLoadToken(infor.getId().toString());
+        buyApiInforDTO.setDownLoadToken(infor.getId().toString());
         return  buyApiInforDTO;
     }
 
@@ -205,7 +205,7 @@ public class DatasetMapperImpl implements DatasetMapper {
 
     private BuyOnTimeInfoDTO toBuyOneTimeInfoDTO(UUID infor) {
         BuyOnTimeInfoDTO buyOnTimeInfoDTO = new BuyOnTimeInfoDTO();
-        buyOnTimeInfoDTO.setDowloadToken(infor.toString());
+        buyOnTimeInfoDTO.setDownloadToken(infor.toString());
         return buyOnTimeInfoDTO;
     }
 

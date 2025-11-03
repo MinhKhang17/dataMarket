@@ -74,7 +74,7 @@ public class TransactionServiceImpl implements TransactionService {
                         t.getTxnRef(),
                         t.getType().name(),
                         t.getAmount(),
-                        t.getBuyType() != null ? t.getBuyType().name() : null,
+                        t.getBuyType() != null ? t.getBuyType() : null,
                         t.getCreatedAt().toString()
                 )).toList();
 

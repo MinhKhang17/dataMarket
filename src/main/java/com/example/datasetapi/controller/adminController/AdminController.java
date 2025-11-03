@@ -2,6 +2,7 @@ package com.example.datasetapi.controller.adminController;
 
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.enums.VerificationStatus.RegistrationStatus;
+import com.example.datasetapi.service.order.OrderService;
 import com.example.datasetapi.service.user.AdminService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,8 +13,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("api/admin")
 public class AdminController {
 
-    @Autowired
-    private AdminService adminService;
+    @Autowired private AdminService adminService;
+    @Autowired private OrderService orderService;
 
     @GetMapping("providerRegis/getPending")
     public ResponseEntity<?> getProviderRegisPending() {
@@ -34,8 +35,19 @@ public class AdminController {
     public ResponseEntity<?> getProviderReview() {
         return adminService.getReviewProviderHistory();
     }
+
     @GetMapping("providerRegis/get")
     public ResponseEntity<?> getProviderRegisAcc() {
         return ResponseEntity.ok().body(new ApiResponse(true, "Provider Pending status load success", adminService.getProviderRegisPending(RegistrationStatus.APPROVED)));
+    }
+
+    @GetMapping("orders/get")
+    public ResponseEntity<ApiResponse> getAllOrders() {
+        return orderService.getAllOrders();
+    }
+
+    @GetMapping("orders/get/{orderId}")
+    public ResponseEntity<?> getOrderById(@PathVariable Long orderId) {
+        return orderService.getOrderById(orderId);
     }
 }

@@ -45,11 +45,11 @@ public class WithdrawServiceImpl implements WithdrawService {
     public ResponseEntity<ApiResponse> withdrawRequest(WithdrawRequest withdrawRequest) {
             String token = tokenService.resolveToken(request);
             if(token == null) {
-                throw new CustomException(HttpStatus.UNAUTHORIZED,ErrorCode.UNAUTHORIZED);
+                throw new CustomException(HttpStatus.UNAUTHORIZED,ErrorCode.INVALID_TOKEN);
             }
             Long userId = jwtUtil.getUserIdFromToken(token);
             if (userId == null) {
-                throw new CustomException(HttpStatus.UNAUTHORIZED,ErrorCode.INVALID_TOKEN);
+                throw new CustomException(HttpStatus.UNAUTHORIZED,ErrorCode.UNAUTHORIZED);
             }
 
             Wallet wallet = walletService.findWalletByUserId(userId)
@@ -74,13 +74,6 @@ public class WithdrawServiceImpl implements WithdrawService {
                 }
                 if (!bankAccount.getUser().getId().equals(userId))
                     throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.NOT_OWNER_BANK_ACCOUNT);
-
-            } else {
-                if (withdrawRequest.getBankName() == null || withdrawRequest.getAccountNumber() == null
-                        || withdrawRequest.getAccountHolderName() == null) {
-                    throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
-                }
-                    bankAccount = bankAccountService.addBankAccount(new BankRequest(withdrawRequest.getBankName(), withdrawRequest.getAccountNumber(),withdrawRequest.getAccountHolderName()), userId);
             }
 
 
@@ -154,10 +147,10 @@ public class WithdrawServiceImpl implements WithdrawService {
     @Override
     public ResponseEntity<ApiResponse> listWithdraws(String status) {
         String token = tokenService.resolveToken(request);
-        if (token == null) throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED);
+        if (token == null) throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.INVALID_TOKEN);
 
         Long userId = jwtUtil.getUserIdFromToken(token);
-        if (userId == null) throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.INVALID_TOKEN);
+        if (userId == null) throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED);
 
         User currentUser = userService.findUserById(userId);
 
@@ -208,10 +201,10 @@ public class WithdrawServiceImpl implements WithdrawService {
     @Override
     public ResponseEntity<ApiResponse> getWithdrawById(Long id) {
         String token = tokenService.resolveToken(request);
-        if(token == null) throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED);
+        if(token == null) throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.INVALID_TOKEN);
 
         Long userId = jwtUtil.getUserIdFromToken(token);
-        if(userId == null) throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.INVALID_TOKEN);
+        if(userId == null) throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED);
 
 
         Withdraw withdraw = withdrawRepository.findById(id).orElseThrow(()
@@ -243,10 +236,10 @@ public class WithdrawServiceImpl implements WithdrawService {
 
     private User validateAdmin() {
         String token = tokenService.resolveToken(request);
-        if (token == null) throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED);
+        if (token == null) throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.INVALID_TOKEN);
 
         Long adminId = jwtUtil.getUserIdFromToken(token);
-        if (adminId == null) throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.INVALID_TOKEN);
+        if (adminId == null) throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED);
 
         User admin = userService.findUserById(adminId);
         if (!admin.getRole().getName().contains("ADMIN")) {

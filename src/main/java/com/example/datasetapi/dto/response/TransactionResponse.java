@@ -1,5 +1,6 @@
 package com.example.datasetapi.dto.response;
 
+import com.example.datasetapi.enums.Datasets.BuyType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,6 +13,6 @@ public class TransactionResponse {
     private String txnRef;
     private String transferType;
     private double amount;
-    private String buyType;
+    private BuyType buyType;
     private String createdAt;
 }

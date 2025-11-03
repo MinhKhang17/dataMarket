@@ -37,6 +37,7 @@ public enum ErrorCode {
     DATASET_GROUP_CONFLICT("DATASET_GROUP_CONFLICT", "Dataset is already assigned to this group"),
     DATASET_NOT_PENDING("DATASET_NOT_PENDING", "Dataset is not in pending status"),
     DATASET_INFO_NOT_APPROVED("DATASET_INFO_NOT_APPROVED", "Dataset information is not approved yet"),
+    INVALID_AMOUNT("INVALID_AMOUNT", "Amount must be greater than 0"),
 
     //
     INTERNAL_SERVER_ERROR("INTERNAL_SERVER_ERROR", "Internal server error. Please try again later"),
@@ -49,6 +50,9 @@ public enum ErrorCode {
     INVALID_WITHDRAW_AMOUNT("INVALID_WITHDRAW_AMOUNT", "Withdraw amount must be greater than 0"),
     INSUFFICIENT_FUNDS("INSUFFICIENT_FUNDS", "Not enough balance in wallet"),
     AMOUNT_NOT_ENOUGH("AMOUNT_NOT_ENOUGH", "Insufficient balance"),
+
+    //Order errors
+    ORDER_NOT_FOUND("ORDER_NOT_FOUND", "Order not found"),
 
     // Withdraw errors
     ALREADY_PROCESSED("ALREADY_PROCESSED", "Withdraw request has already been processed"),
