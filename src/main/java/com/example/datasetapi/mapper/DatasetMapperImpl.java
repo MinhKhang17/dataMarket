@@ -59,6 +59,7 @@ public class DatasetMapperImpl implements DatasetMapper {
         datasetDTO.setCommune(dataset.getDatasetChildGroup().getCommune().getName());
         datasetDTO.setDatasetTime(TimeGroup.toDate(dataset.getTimeGroup()));
         datasetDTO.setCategory(dataset.getDatasetChildGroup().getParent().getDatasetType().getCategories());
+datasetDTO.setRow_amount(dataset.getRow_count());
         return datasetDTO;
         }
 
