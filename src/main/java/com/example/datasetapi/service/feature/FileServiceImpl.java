@@ -256,6 +256,9 @@ public class FileServiceImpl implements FileService {
 
                 for (int i = 0; i < rows.size(); i++) {
                     for (String col : numericCols) {
+                        // Skip datetime columns
+                        if (col.toLowerCase().contains("time") || col.toLowerCase().contains("date")) continue;
+
                         String val = safeGet(rows.get(i), col);
                         if (val == null || val.isBlank()) continue;
                         try {

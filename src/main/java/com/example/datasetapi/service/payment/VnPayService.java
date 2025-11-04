@@ -131,7 +131,7 @@ public class VnPayService {
 
             // 3. Quy đổi point
             long amountVnd = Long.parseLong(params.getOrDefault("vnp_Amount", "0")) / 100;
-            long points = amountVnd / 1000;
+            long points = amountVnd;
 
             Long uid = extractUserId(params.get("vnp_OrderInfo"));
             if (uid != null) {
