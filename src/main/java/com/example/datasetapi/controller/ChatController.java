@@ -4,6 +4,7 @@ import com.example.datasetapi.service.ChatService;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -11,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ChatController {
     @Autowired private ChatService chatService;
     @PostMapping("/chat")
-    public ChatResponse chat(@RequestParam String message){
+    public ChatResponse chat(@RequestBody String message){
         return chatService.response(message);
     }
 }
