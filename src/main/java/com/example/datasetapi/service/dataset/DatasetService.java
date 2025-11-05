@@ -36,8 +36,7 @@ public interface DatasetService {
 
 
     ResponseEntity<?> acceptDataset(long datasetInforId, HttpServletRequest request);
-    Dataset uploadCSVFileToPendingFolder(File file, Dataset dataset);
-
+    Dataset uploadCSVFileToSytemFolder(File file, Dataset dataset);
     ResponseEntity<?> getAllAllDataset();
 
     ResponseEntity<?> rejectDataset(long datasetInforId, HttpServletRequest request,String reason);
@@ -74,6 +73,8 @@ public interface DatasetService {
 
     ResponseEntity<ApiResponse> searchDatasetByName(String datasetName);
 
+    Dataset uploadCSVFileToPendingFolder(File file, Dataset dataset);
+
     public Dataset moveFileFromPendingToApproveFolder(Dataset dataset);
 
     String getDownloadTokenOfDatasetForConsumer(long datasetId, HttpServletRequest request);
@@ -94,5 +95,5 @@ public interface DatasetService {
     DatasetGroupInfor getDatasetGroupInfor(long datasetChilGroupId);
 
 
-    Dataset uploadCSVFileToSystemFolder(File file, Dataset dataset);
+
 }

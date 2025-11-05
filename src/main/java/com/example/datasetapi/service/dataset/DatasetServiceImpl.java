@@ -12,7 +12,6 @@ import com.example.datasetapi.exception.ErrorCode;
 import com.example.datasetapi.mapper.DatasetMapper;
 import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
 import com.example.datasetapi.model.dataset.*;
-import com.example.datasetapi.model.paySystem.Wallet;
 import com.example.datasetapi.model.userManager.Provider;
 import com.example.datasetapi.model.userManager.User;
 import com.example.datasetapi.model.userManager.ConsumerSubscription;
@@ -478,69 +477,6 @@ else {
         }
     }
 
-    private ConsumerBuyResponseDTO createSubPayment(Dataset dataset, User consumer) {
-        ConsumerSubscription sub = consumerSubRepo.findByConsumerAndIsUsing(consumer, true)
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.SUB_NOT_FOUND));
-
-        long datasetRow = dataset.getRow_count();
-
-        if (sub.getExpiresAt().isBefore(LocalDateTime.now()))
-            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.SUB_EXPIRED);
-
-        if (sub.getRow_amount() < datasetRow)
-            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.SUB_ROW_NOT_ENOUGH);
-
-        buyWithSubProcess(sub, datasetRow);
-        consumerSubRepo.save(sub);
-
-        DownloadToken token = jwtUtil.generateDowloadToken(consumer, dataset, 30, 10, null);
-        consumer.getDownloadTokens().add(token);
-        userService.saveUser(consumer);
-
-        Wallet wallet  = walletRepository.findByUserId(consumer.getId()).orElse(null);
-
-        transactionService.createTransaction(TransferType.TODOWN, (double) datasetRow, consumer.getId(), wallet, BuyType.BUY_SUB);
-
-        ConsumerDatasetOrderResponse order = orderService.createOrder(
-                consumer.getId(),
-                List.of(dataset.getId()),
-                datasetRow,
-                PricingMethod.SUBSCRIPTION
-        );
-
-        // Build response
-        ConsumerBuyResponseDTO dto = datasetMapper.toConsumerBuyResponseDTO(PricingMethod.SUBSCRIPTION, sub);
-        dto.getBuySubInfoDTO().setDownloadToken(token.getId().toString());
-        dto.setOrderId(order.getId());
-        return dto;
-    }
-
-    private ConsumerBuyResponseDTO createOneTimePayment(Dataset dataset, DatasetPricing pricing, User consumer) {
-        if (downloadTokenRepository.findByConsumerAndDatasetAndIsActive(consumer, dataset, true).isPresent()) {
-            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.DATASET_BOUGHT);
-        }
-
-        DownloadToken token = jwtUtil.generateDowloadToken(consumer, dataset, 30, 2, null);
-        consumer.getDownloadTokens().add(token);
-        userService.saveUser(consumer);
-
-        paymentService.updateWallet(TransferType.TODOWN, pricing.getPrice(), consumer.getId(), BuyType.BUY_ONE_TIME_DATASET);
-
-        Wallet wallet  = walletRepository.findByUserId(consumer.getId()).orElse(null);
-
-        transactionService.createTransaction(TransferType.TODOWN, pricing.getPrice(), consumer.getId(), wallet, BuyType.BUY_ONE_TIME_DATASET);
-
-        ConsumerDatasetOrderResponse order = orderService.createOrder(
-                consumer.getId(),
-                List.of(dataset.getId()),
-                (long) pricing.getPrice(),
-                PricingMethod.ONE_TIME
-        );
-
-        ConsumerBuyResponseDTO dto = datasetMapper.toConsumerBuyResponseDTO(PricingMethod.ONE_TIME, token.getId());
-        dto.setOrderId(order.getId());
-        return dto;
-    }
 
     @Override
     public ConsumerBuyResponseDTO subRegister(long pricingSubRuleId, HttpServletRequest request) {
@@ -657,7 +593,7 @@ else {
             consumer.getDownloadTokens().add(downloadToken);
             userService.saveUser(consumer);
         ConsumerBuyResponseDTO consumerBuyResponseDTO =  datasetMapper.toConsumerBuyResponseDTO(PricingMethod.SUBSCRIPTION,consumerSubRepo.save(consumerSubscription));
-        consumerBuyResponseDTO.getBuySubInfoDTO().setDowloadToken(downloadToken.getId().toString());
+        consumerBuyResponseDTO.getBuySubInfoDTO().setDownloadToken(downloadToken.getId().toString());
         return consumerBuyResponseDTO;
     }
 
@@ -910,6 +846,8 @@ else {
         DatasetGroup datasetGroup = datasetGroupRepository.findById(datasetGroupId).orElseThrow();
         return datasetMapper.toDatasetGroupInfor(datasetGroup);
     }
+
+
 
     @Override
     public Dataset uploadCSVFileToSytemFolder(File file, Dataset dataset) {
