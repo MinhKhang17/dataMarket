@@ -36,35 +36,35 @@ import java.util.stream.Collectors;
 public class DataInitializer implements CommandLineRunner {
 
     @Autowired
-    private  RoleRepository roleRepository;
+    private RoleRepository roleRepository;
     @Autowired
-    private  PasswordEncoder passwordEncoder;
+    private PasswordEncoder passwordEncoder;
     @Autowired
-    private  UserRepository userRepository;
+    private UserRepository userRepository;
     @Autowired
-    private  ConsumerTypeRepository consumerTypeRepository;
-@Autowired
-    private  ProviderRegistrationRepository providerRegistrationRepository;
-@Autowired
-private  ProviderIndentityDocumentRepository providerIndentityDocumentRepository;
-@Autowired
-private  CategoryRepository categoryRepository;
-@Autowired
-private  DatasetTypeRepository datasetTypeRepository;
-@Autowired
-private  Dataset_Type_Column_Repository datasetTypeColumnRepository;
-@Autowired
-private  DatasetRepository datasetRepository;
-@Autowired
-private  ProviderRepository providerRepository;
-@Autowired
-private  DatasetInforRepository datasetInforRepository;
+    private ConsumerTypeRepository consumerTypeRepository;
+    @Autowired
+    private ProviderRegistrationRepository providerRegistrationRepository;
+    @Autowired
+    private ProviderIndentityDocumentRepository providerIndentityDocumentRepository;
+    @Autowired
+    private CategoryRepository categoryRepository;
+    @Autowired
+    private DatasetTypeRepository datasetTypeRepository;
+    @Autowired
+    private Dataset_Type_Column_Repository datasetTypeColumnRepository;
+    @Autowired
+    private DatasetRepository datasetRepository;
+    @Autowired
+    private ProviderRepository providerRepository;
+    @Autowired
+    private DatasetInforRepository datasetInforRepository;
     @Autowired
     private PricingRuleRepo pricingRuleRepo;
     @Autowired
-    private  ProvinceRepository provinceRepository;
+    private ProvinceRepository provinceRepository;
     @Autowired
-    private  CommuneRepository  communeRepository;
+    private CommuneRepository communeRepository;
     @Autowired
     private WalletRepository walletRepository;
     @Autowired
@@ -74,45 +74,35 @@ private  DatasetInforRepository datasetInforRepository;
 
     @Override
     public void run(String... args) throws Exception {
-    if(userRepository.count()==0){
-        roleRepository.save(new Role("ADMIN"));
-        roleRepository.save(new Role("PROVIDER"));
-        roleRepository.save(new Role("CONSUMER"));
-        roleRepository.save(new Role("MODERATOR"));
-        System.out.println("Roles & permissions initialized.");
-        initVietnamLocations();
-        createConsumerRole();
+        if (userRepository.count() == 0) {
+            roleRepository.save(new Role("ADMIN"));
+            roleRepository.save(new Role("PROVIDER"));
+            roleRepository.save(new Role("CONSUMER"));
+            roleRepository.save(new Role("MODERATOR"));
+            System.out.println("Roles & permissions initialized.");
+            initVietnamLocations();
+            createConsumerRole();
+            createAdminRole();
+            createConsumerTypes();
+            createModerator();
+            System.out.println("Seeded roles, users, and consumer types.");
 
-        createAdminRole();
+            // tao va gan provider dang ky mau tranh trung lap thong tin khi create-drop db
+            createProviderRegistration();
 
-        createConsumerTypes();
+            createCategory();
+            createDatasetType();
+            createDataset_Type_Columns();
+            assignColumnAndCategoryToDatasetType();
 
-        createModerator();
-        System.out.println("Seeded roles, users, and consumer types.");
-        //tao va gan provider dang ky mau tranh trung lap thong tin khi create-drop db
-        createProviderRegistration();
+            // createDatasetDemo();
+            // createModerationTestData();
+            createPricingRule();
 
-
-
-        createCategory();
-
-
-        createDatasetType();
-
-        createDataset_Type_Columns();
-
-        assignColumnAndCategoryToDatasetType();
-
-//        createDatasetDemo();
-//        createModerationTestData();
-        createPricingRule();
-
-    }
-    else {
-        System.out.println("Data already Init............" +
-                "======================================Stop Init Data========================================\n");
-
-    }
+        } else {
+            System.out.println("Data already Init............" +
+                    "======================================Stop Init Data========================================\n");
+        }
         System.out.println("===========================Load Data success===========================\n");
     }
 
@@ -125,7 +115,7 @@ private  DatasetInforRepository datasetInforRepository;
         r1.setPlanName("Small Pack");
         r1.setMinRow(1000L);
         r1.setMaxRow(50000L);
-        //giá tính theo 1 row
+        // giá tính theo 1 row
         r1.setBasePricePerRowPoint(15.0);
         r1.setAllowOverage(false);
         r1.setProviderShare(40);
@@ -140,7 +130,7 @@ private  DatasetInforRepository datasetInforRepository;
         r2.setPlanName("Medium Pack");
         r2.setMinRow(50001L);
         r2.setMaxRow(200000L);
-        //giá tính theo row
+        // giá tính theo row
         r2.setBasePricePerRowPoint(1.5);
         r2.setDiscountPercent(5);
         r2.setAllowOverage(false);
@@ -156,7 +146,7 @@ private  DatasetInforRepository datasetInforRepository;
         r3.setPlanName("Large Pack");
         r3.setMinRow(200001L);
         r3.setMaxRow(600000L);
-        //giá tính theo row
+        // giá tính theo row
         r3.setBasePricePerRowPoint(1.5);
         r3.setDiscountPercent(10);
         r3.setAllowOverage(false);
@@ -166,13 +156,11 @@ private  DatasetInforRepository datasetInforRepository;
         r3.setNote("Gói lớn cho nhu cầu cao");
         rules.add(r3);
 
-
-        // SUBSCRIPTION - Small
+        // SUBSCRIPTION - Free tier
         PricingRule r4 = new PricingRule();
         r4.setMethod(PricingMethod.SUBSCRIPTION);
         r4.setPlanName("Free tier");
-        //điều chỉnh để thành giá tính theo sub
-        r4.setBasePricePoint(0.0); // 200 point = 200.000 VNĐ
+        r4.setBasePricePoint(0.0);
         r4.setRowLimit(50000L);
         r4.setTimeLimitDay(30);
         r4.setExtraCostPer1rowpoint(4.0);
@@ -181,16 +169,13 @@ private  DatasetInforRepository datasetInforRepository;
         r4.setPlatformShare(60);
         r4.setSubType(SubType.SMALL);
         r4.setNote("Gói cơ bản");
-
         rules.add(r4);
 
-
-        // SUBSCRIPTION - Small
+        // SUBSCRIPTION - Basic Monthly
         PricingRule r5 = new PricingRule();
         r5.setMethod(PricingMethod.SUBSCRIPTION);
         r5.setPlanName("Basic Monthly");
-        //điều chỉnh để thành giá tính theo sub
-        r5.setBasePricePoint(1500000.0); // 200 point = 200.000 VNĐ
+        r5.setBasePricePoint(1500000.0);
         r5.setRowLimit(50000L);
         r5.setTimeLimitDay(30);
         r5.setExtraCostPer1rowpoint(4.0);
@@ -198,14 +183,13 @@ private  DatasetInforRepository datasetInforRepository;
         r5.setProviderShare(40);
         r5.setPlatformShare(60);
         r5.setSubType(SubType.MEDIUM);
-        r5.setNote("Gói thuê bao 1 tháng \n Thoải mái download dataset không giới hạn" );
+        r5.setNote("Gói thuê bao 1 tháng \n Thoải mái download dataset không giới hạn");
         rules.add(r5);
 
-        // SUBSCRIPTION - Medium
+        // SUBSCRIPTION - Premium
         PricingRule r6 = new PricingRule();
         r6.setMethod(PricingMethod.SUBSCRIPTION);
         r6.setPlanName("Premium");
-        //điều chỉnh để thành giá tính theo sub
         r6.setBasePricePoint(2500000.0);
         r6.setRowLimit(200000L);
         r6.setTimeLimitDay(60);
@@ -218,140 +202,8 @@ private  DatasetInforRepository datasetInforRepository;
         r6.setNote("Gói thuê bao 3 tháng \nThoải mái tải dataset\n Có dashboard thể hiện thông tin được tổng hợp bằng AI ");
         rules.add(r6);
 
-       
-
-
-//        // SUBSCRIPTION - Large
-//        PricingRule r6 = new PricingRule();
-//        r6.setMethod(PricingMethod.SUBSCRIPTION);
-//        r6.setPlanName("Premium Yearly");
-//        //điều chỉnh để thành giá tính theo sub
-//        r6.setBasePricePoint(1200.0);
-//        r6.setRowLimit(600000L);
-//        r6.setTimeLimitDay(365);
-//        r6.setExtraCostPer1rowpoint(1.5);
-//        r6.setDiscountPercent(10);
-//        r6.setAllowOverage(true);
-//        r6.setProviderShare(30);
-//        r6.setPlatformShare(70);
-//        r6.setSubType(SubType.LARGE);
-//        r6.setNote("Gói thuê bao 1 năm");
-//        rules.add(r6);
-//
-//        // API Package (Giữ nguyên cấu hình cũ)
-//        PricingRule r7 = new PricingRule();
-//        r7.setMethod(PricingMethod.API);
-//        r7.setPlanName("EV_Station_Location_Basic API");
-//        r7.setBasePricePoint(500.0);
-//        r7.setRequestLimit(10000L);
-//        r7.setAllowOverage(false);
-//        r7.setProviderShare(40);
-//        r7.setPlatformShare(60);
-//        r7.setSubType(SubType.SMALL);
-//        r7.setDatasetType(datasetTypeRepository.findByName("EV_Station_Location_Basic"));
-//        r7.setNote("API package with 10K requests");
-//        rules.add(r7);
-//
-//        PricingRule r8 = new PricingRule();
-//        r8.setMethod(PricingMethod.API);
-//        r8.setPlanName("Pro 100K Call");
-//        r8.setBasePricePoint(3000.0);
-//        r8.setRequestLimit(100000L);
-//        r8.setSubType(SubType.MEDIUM);
-//        r8.setDiscountPercent(5);
-//        r8.setAllowOverage(false);
-//        r8.setProviderShare(35);
-//        r8.setPlatformShare(65);
-//        r8.setNote("API package with 100K requests");
-//        r8.setDatasetType(datasetTypeRepository.findByName("EV_Station_Geo_Usage"));
-//        rules.add(r8);
-//
-//        PricingRule r9 = new PricingRule();
-//        r9.setMethod(PricingMethod.API);
-//        r9.setPlanName("Enterprise 1M Call");
-//        r9.setBasePricePoint(20000.0);
-//        r9.setRequestLimit(1000000L);
-//        r9.setDiscountPercent(10);
-//        r9.setSubType(SubType.LARGE);
-//        r9.setAllowOverage(false);
-//        r9.setProviderShare(30);
-//        r9.setPlatformShare(70);
-//        r9.setDatasetType(datasetTypeRepository.findByName("EV_Tech_Capacity"));
-//        r9.setNote("API package with 1M requests");
-//        rules.add(r9);
-//
-//        PricingRule r10 = new PricingRule();
-//        r10.setMethod(PricingMethod.API);
-//        r10.setPlanName("Market Overview 10K Call");
-//        r10.setBasePricePoint(600.0);
-//        r10.setRequestLimit(10000L);
-//        r10.setAllowOverage(false);
-//        r10.setProviderShare(40);
-//        r10.setPlatformShare(60);
-//        r10.setSubType(SubType.SMALL);
-//        r10.setDatasetType(datasetTypeRepository.findByName("EV_Station_Market_Overview"));
-//        r10.setNote("API package with 10K requests for Market Overview");
-//        rules.add(r10);
-//
-//        PricingRule r11 = new PricingRule();
-//        r11.setMethod(PricingMethod.API);
-//        r11.setPlanName("User Behavior 100K Call");
-//        r11.setBasePricePoint(3500.0);
-//        r11.setRequestLimit(100000L);
-//        r11.setSubType(SubType.MEDIUM);
-//        r11.setDiscountPercent(5);
-//        r11.setAllowOverage(false);
-//        r11.setProviderShare(35);
-//        r11.setPlatformShare(65);
-//        r11.setDatasetType(datasetTypeRepository.findByName("EV_User_Behavior_Summary"));
-//        r11.setNote("API package with 100K requests for User Behavior Summary");
-//        rules.add(r11);
-//
-//        PricingRule r12 = new PricingRule();
-//        r12.setMethod(PricingMethod.API);
-//        r12.setPlanName("Pricing Analytics 1M Call");
-//        r12.setBasePricePoint(21000.0);
-//        r12.setRequestLimit(1000000L);
-//        r12.setDiscountPercent(10);
-//        r12.setSubType(SubType.LARGE);
-//        r12.setAllowOverage(false);
-//        r12.setProviderShare(30);
-//        r12.setPlatformShare(70);
-//        r12.setDatasetType(datasetTypeRepository.findByName("EV_Pricing_Analytics"));
-//        r12.setNote("API package with 1M requests for Pricing Analytics");
-//        rules.add(r12);
-//
-//        PricingRule r13 = new PricingRule();
-//        r13.setMethod(PricingMethod.API);
-//        r13.setPlanName("Performance Trend 10K Call");
-//        r13.setBasePricePoint(700.0);
-//        r13.setRequestLimit(10000L);
-//        r13.setAllowOverage(false);
-//        r13.setProviderShare(40);
-//        r13.setPlatformShare(60);
-//        r13.setSubType(SubType.SMALL);
-//        r13.setDatasetType(datasetTypeRepository.findByName("EV_Station_Performance_Trend"));
-//        r13.setNote("API package with 10K requests for Performance Trend");
-//        rules.add(r13);
-//
-//        PricingRule r14 = new PricingRule();
-//        r14.setMethod(PricingMethod.API);
-//        r14.setPlanName("All in One 1M Call");
-//        r14.setBasePricePoint(25000.0);
-//        r14.setRequestLimit(1000000L);
-//        r14.setDiscountPercent(10);
-//        r14.setSubType(SubType.LARGE);
-//        r14.setAllowOverage(false);
-//        r14.setProviderShare(30);
-//        r14.setPlatformShare(70);
-//        r14.setDatasetType(datasetTypeRepository.findByName("EV_All_in_One"));
-//        r14.setNote("API package with 1M requests for All in One dataset");
-//        rules.add(r14);
-
         pricingRuleRepo.saveAll(rules);
     }
-
-
 
     private void createModerator() {
         User user = new User();
@@ -363,66 +215,27 @@ private  DatasetInforRepository datasetInforRepository;
         userRepository.save(user);
     }
 
-//    private void createModerationTestData() {
-//        String basePath = Paths.get("ev_station_mixed_errors.csv").toString();
-//        if (Files.exists(Paths.get(basePath))) {
-//            System.out.println("Found file at: " + basePath);
-//        } else {
-//            System.out.println("File not found!");
-//        }
-//
-//        DatasetType marketOverview = datasetTypeRepository.findByName("EV_Station_Market_Overview");
-//        if (marketOverview == null) return;
-//
-//        List<DatasetInformation> datasetList = new ArrayList<>();
-//
-//        DatasetInformation ds1 = new DatasetInformation();
-//        ds1.setName("ev_station_mixed_errors");
-//        ds1.setDatasetExtension(FileExtension.csv);
-//        ds1.setStatus(DatasetInforStatus.PENDING);
-//        ds1.setFile_url(basePath);
-//        ds1.setRowCount(100L);
-//        ds1.setDatasetType(marketOverview);
-//
-//        Provider provider = providerRepository.findById(4L).get();
-//        ds1.setProvider(provider);
-//
-//        // ✅ Tạo Location mới (thay Address)
-//
-//
-//        Commune commune = communeRepository.findById("00091")
-//                .orElseThrow(() -> new RuntimeException("Commune not found"));
-//        ds1.setCommune(commune);
-//
-//        // Gán location cho dataset
-//        ds1.setCommune(commune);
-//
-//        datasetList.add(ds1);
-//
-//        datasetInforRepository.saveAll(datasetList);
-//
-//        System.out.println("✅ Seeded dataset_information test entries for moderation with Location.");
-//    }
-
+    // private void createModerationTestData() { ... } // giữ nguyên comment nếu cần
 
     private void createDatasetDemo() {
         DatasetGroup datasetGroup = new DatasetGroup();
         datasetGroup.setDatasetType(datasetTypeRepository.getOne(1L));
 
         Dataset dataset = new Dataset();
-
-
         dataset.setFileKey("testUpload.txt");
         dataset.setName("testDataset");
         dataset.setFileKey("testUpload.txt");
         dataset.setDescription("testDatasetDescription");
         dataset.setDatasetChildGroup(datasetGroup);
-
-        // Save first to get the ID
         datasetRepository.save(dataset);
-
     }
 
+    /**
+     * ✅ Gán lại columns cho 3 dataset type đúng theo schema bạn yêu cầu
+     * - STATION_ENERGY
+     * - TRANSACTION_BILLING
+     * - VEHICLE_DATA_SAMPLE
+     */
     private void assignColumnAndCategoryToDatasetType() {
         // Load toàn bộ cột và đưa về lowercase để dễ so khớp
         List<DatasetTypeColumn> allCols = datasetTypeColumnRepository.findAll();
@@ -447,9 +260,9 @@ private  DatasetInforRepository datasetInforRepository;
             return result;
         };
 
-        // Dataset 1: STATION_ENERGY
-        DatasetType locationBasic = datasetTypeRepository.findByName("STATION_ENERGY");
-        if (locationBasic != null) {
+        // === STATION_ENERGY ===
+        DatasetType stationEnergy = datasetTypeRepository.findByName("STATION_ENERGY");
+        if (stationEnergy != null) {
             List<String> needed = Arrays.asList(
                     "session_id", "station_id", "start_time", "end_time", "duration_min",
                     "charging_mode", "voltage_avg", "current_avg", "power_peak_kw",
@@ -457,35 +270,34 @@ private  DatasetInforRepository datasetInforRepository;
                     "created_at", "updated_at"
             );
             List<DatasetTypeColumn> cols = resolveCols.apply(needed);
-            locationBasic.setDatasetTypeColumnList(cols);
-            datasetTypeRepository.save(locationBasic);
+            stationEnergy.setDatasetTypeColumnList(cols);
+            datasetTypeRepository.save(stationEnergy);
             System.out.println("Assigned " + cols.size() + " columns to STATION_ENERGY");
         }
 
-        // Dataset 2: TRANSACTION_BILLING
-        DatasetType geoUsage = datasetTypeRepository.findByName("TRANSACTION_BILLING");
-        if (geoUsage != null) {
+        // === TRANSACTION_BILLING ===
+        DatasetType transactionBilling = datasetTypeRepository.findByName("TRANSACTION_BILLING");
+        if (transactionBilling != null) {
             List<String> needed = Arrays.asList(
                     "transaction_id", "session_id", "pricing_plan", "unit_price",
-                    "energy_kwh_billed", "total_cost", "payment_method", "payment_status",
-                    "customer_id", "created_at"
+                    "energy_kwh_billed", "total_cost", "payment_method", "created_at"
             );
             List<DatasetTypeColumn> cols = resolveCols.apply(needed);
-            geoUsage.setDatasetTypeColumnList(cols);
-            datasetTypeRepository.save(geoUsage);
+            transactionBilling.setDatasetTypeColumnList(cols);
+            datasetTypeRepository.save(transactionBilling);
             System.out.println("Assigned " + cols.size() + " columns to TRANSACTION_BILLING");
         }
 
-        // Dataset 3: VEHICLE_DATA_SAMPLE
-        DatasetType techCapacity = datasetTypeRepository.findByName("VEHICLE_DATA_SAMPLE");
-        if (techCapacity != null) {
+        // === VEHICLE_DATA_SAMPLE ===
+        DatasetType vehicleSample = datasetTypeRepository.findByName("VEHICLE_DATA_SAMPLE");
+        if (vehicleSample != null) {
             List<String> needed = Arrays.asList(
-                    "vehicle_id", "battery_soc_start", "battery_soc_end",
-                    "battery_capacity_kwh", "requested_energy", "vehicle_model", "session_id"
+                    "session_id", "vehicle_id", "battery_soc_start", "battery_soc_end",
+                    "battery_capacity_kwh", "requested_energy", "vehicle_model"
             );
             List<DatasetTypeColumn> cols = resolveCols.apply(needed);
-            techCapacity.setDatasetTypeColumnList(cols);
-            datasetTypeRepository.save(techCapacity);
+            vehicleSample.setDatasetTypeColumnList(cols);
+            datasetTypeRepository.save(vehicleSample);
             System.out.println("Assigned " + cols.size() + " columns to VEHICLE_DATA_SAMPLE");
         }
     }
@@ -496,58 +308,25 @@ private  DatasetInforRepository datasetInforRepository;
         return s.trim().replaceAll("\\s+", "_").toLowerCase();
     }
 
-
-
-
+    /**
+     * ✅ Tạo đúng (và chỉ) các cột thuộc 3 schema bạn yêu cầu
+     * - Bỏ toàn bộ cột ngoài 3 block đã nêu
+     */
     private void createDataset_Type_Columns() {
-        // Danh sách tên cột mong muốn
+        // Union các cột từ 3 schema bạn cung cấp
         List<String> rawColumnNames = Arrays.asList(
-                "station_id",
-                "latitude_longitude",
-                "address",
-                "daily_sessions",
-                "energy_delivered_kwh",
-                "connector_type",
-                "max_power_kw",
-                "provider",
-                "pricing_model",
-                "price_per_kwh",
-                "user_id_hash",
-                "vehicle_type",
-                "charging_frequency",
-                "avg_charging_time",
-                "preferred_station_id",
-                "payment_methods",
-                "monthly_sessions",
-                "monthly_energy_kwh",
-                "peak_hours",
-                "session_id",
-                "start_time",
-                "end_time",
-                "duration_min",
-                "charging_mode",
-                "voltage_avg",
-                "current_avg",
-                "power_peak_kw",
-                "energy_kwh",
-                "charging_efficiency",
-                "temperature_max",
-                "power_factor",
-                "created_at",
-                "updated_at",
-                "transaction_id",
-                "pricing_plan",
-                "unit_price",
-                "energy_kwh_billed",
-                "total_cost",
-                "payment_status",
-                "customer_id",
-                "vehicle_id",
-                "battery_soc_start",
-                "battery_soc_end",
-                "battery_capacity_kwh",
-                "requested_energy",
-                "vehicle_model"
+                // VEHICLE_DATA_SAMPLE
+                "session_id", "vehicle_id", "battery_soc_start", "battery_soc_end",
+                "battery_capacity_kwh", "requested_energy", "vehicle_model",
+
+                // TRANSACTION_BILLING
+                "transaction_id", "session_id", "pricing_plan", "unit_price",
+                "energy_kwh_billed", "total_cost", "payment_method", "created_at",
+
+                // STATION_ENERGY
+                "session_id", "station_id", "start_time", "end_time", "duration_min",
+                "charging_mode", "voltage_avg", "current_avg", "power_peak_kw", "energy_kwh",
+                "charging_efficiency", "temperature_max", "power_factor", "created_at", "updated_at"
         );
 
         // Chuẩn hoá & loại bỏ trùng (chuyển toàn bộ về chữ thường)
@@ -563,7 +342,7 @@ private  DatasetInforRepository datasetInforRepository;
             return;
         }
 
-        // Lấy tất cả các cột đã có
+        // Lấy tất cả các cột đã có (trong tập normalized)
         List<DatasetTypeColumn> existingCols = datasetTypeColumnRepository.findByColumnNameIn(normalized);
         Set<String> existingNames = existingCols.stream()
                 .map(DatasetTypeColumn::getColumnName)
@@ -582,34 +361,30 @@ private  DatasetInforRepository datasetInforRepository;
 
         if (!toCreate.isEmpty()) {
             datasetTypeColumnRepository.saveAll(toCreate);
-            System.out.println("Created " + toCreate.size() + " new dataset type columns (lowercase).");
+            System.out.println("Created " + toCreate.size() + " new dataset type columns (from 3 schemas).");
         } else {
             System.out.println("No new dataset type columns to create (all exist).");
         }
     }
 
-
-
-
     private void createDatasetType() {
+        List<Category> categories;
 
-        List<Category> categories = new ArrayList<>();
-
-        // 🟢 1. EV_Station_Location_Basic
+        // 1. STATION_ENERGY
         DatasetType datasetType1 = new DatasetType();
         datasetType1.setName("STATION_ENERGY");
         categories = categoryRepository.findAllByNameIn(List.of("Location"));
         datasetType1.setCategories(categories);
         datasetTypeRepository.save(datasetType1);
 
-        // 🟢 2. EV_Station_Geo_Usage
+        // 2. TRANSACTION_BILLING
         DatasetType datasetType2 = new DatasetType();
         datasetType2.setName("TRANSACTION_BILLING");
         categories = categoryRepository.findAllByNameIn(List.of("Location", "Operation"));
         datasetType2.setCategories(categories);
         datasetTypeRepository.save(datasetType2);
 
-        // 🟢 3. EV_Tech_Capacity
+        // 3. VEHICLE_DATA_SAMPLE
         DatasetType datasetType3 = new DatasetType();
         datasetType3.setName("VEHICLE_DATA_SAMPLE");
         categories = categoryRepository.findAllByNameIn(List.of("Technical", "Operational"));
@@ -628,14 +403,13 @@ private  DatasetInforRepository datasetInforRepository;
         categories.add("Pricing & Payment");
         categories.add("All");
 
-        for(String cate : categories){
+        for (String cate : categories) {
             Category newCategory = new Category();
             newCategory.setName(cate);
             categoryRepository.save(newCategory);
         }
         System.out.println("khoi tao category");
     }
-
 
     private void createProviderRegistration() {
         // 1️⃣ Tạo ProviderRegistration
@@ -653,7 +427,6 @@ private  DatasetInforRepository datasetInforRepository;
         // Trạng thái + thời gian
         registration.setRegistrationStatus(RegistrationStatus.PENDING);
 
-
         // 2️⃣ Tạo các giấy tờ định danh (3 loại)
         ProviderIdentityDocument docFront = new ProviderIdentityDocument();
         docFront.setDocumentType(DocumentType.CCCD_FRONT);
@@ -665,7 +438,7 @@ private  DatasetInforRepository datasetInforRepository;
 
         ProviderIdentityDocument docBack = new ProviderIdentityDocument();
         docBack.setDocumentType(DocumentType.CCCD_BACK);
-        docBack.setImage_url("https://res.cloudinary.com/dofuoy88z/image/upload/v1758869861/oegnzrkytqhvfexxfdrf.jpg");
+        docBack.setImage_url("https://res.cloudinary.com/dofuoy88z/image_upload/v1758869861/oegnzrkytqhvfexxfdrf.jpg".replace("upload/",""));
         docBack.setUploadedAt(Instant.now());
         docBack.setIdCardVerificationStatus(VerificationStatus.PENDING);
         docBack.setManager_id(0L);
@@ -690,6 +463,7 @@ private  DatasetInforRepository datasetInforRepository;
         user.setUserStatus(UserStatus.ACTIVE);
         user.setRole(roleRepository.getRolesByName("PROVIDER"));
         user.setActive(true);
+
         // 4️⃣ Tạo Provider entity
         Provider provider = new Provider();
         provider.setUser(user);
@@ -701,22 +475,21 @@ private  DatasetInforRepository datasetInforRepository;
         bankAccount.setAccountNumber("123456789");
         bankAccount.setUser(user);
 
-        // Liên kết location (tùy model Provider của bạn)
+        // Liên kết location
         Commune commune = communeRepository.findById("00008")
                 .orElseThrow(() -> new RuntimeException("Commune not found"));
         Commune commune2 = communeRepository.findById("00118")
                 .orElseThrow(() -> new RuntimeException("Commune not found"));
         provider.setCommunes(new ArrayList<>(List.of(commune, commune2)));
         provider.setProviderRegistration(registration);
+
         // 5️⃣ Lưu xuống database
         providerRepository.save(provider);
         bankAccountRepository.save(bankAccount);
         walletService.createWallet(user);
 
-
         System.out.println("✅ ProviderRegistration + Provider + User created successfully!");
     }
-
 
     private void createAdminRole() {
         User user = new User();
@@ -730,21 +503,24 @@ private  DatasetInforRepository datasetInforRepository;
         System.out.println("Create Admin Role");
     }
 
-    private void  createConsumerRole() {
+    private void createConsumerRole() {
         User user = new User();
         user.setUsername("consumer");
         user.setActive(true);
         user.setPassword(passwordEncoder.encode("password"));
         user.setEmail("consumer@gmail.com");
         user.setRole(roleRepository.findByName("CONSUMER").get());
+
         Wallet wallet = new Wallet();
         wallet.setUser(user);
         wallet.setAmount(1000000000);
+
         BankAccount bankAccount = new BankAccount();
         bankAccount.setBankName("Techcombank");
         bankAccount.setAccountHolderName("Le Thi B");
         bankAccount.setAccountNumber("987654321");
         bankAccount.setUser(user);
+
         userRepository.save(user);
         bankAccountRepository.save(bankAccount);
         walletRepository.save(wallet);
@@ -773,6 +549,7 @@ private  DatasetInforRepository datasetInforRepository;
         consumerTypeRepository.save(t5);
         System.out.println("Khoi tao consumer type");
     }
+
     private void initVietnamLocations() {
         try {
             InputStream is = getClass().getClassLoader().getResourceAsStream("location.json");
@@ -822,5 +599,4 @@ private  DatasetInforRepository datasetInforRepository;
             e.printStackTrace();
         }
     }
-
 }
