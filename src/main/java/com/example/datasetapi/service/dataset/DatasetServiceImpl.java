@@ -12,13 +12,16 @@ import com.example.datasetapi.exception.ErrorCode;
 import com.example.datasetapi.mapper.DatasetMapper;
 import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
 import com.example.datasetapi.model.dataset.*;
+import com.example.datasetapi.model.paySystem.Wallet;
 import com.example.datasetapi.model.userManager.Provider;
 import com.example.datasetapi.model.userManager.User;
 import com.example.datasetapi.model.userManager.ConsumerSubscription;
 import com.example.datasetapi.model.location.Commune;
 import com.example.datasetapi.repository.*;
 import com.example.datasetapi.service.feature.FileService;
+import com.example.datasetapi.service.order.OrderService;
 import com.example.datasetapi.service.payment.PaymentService;
+import com.example.datasetapi.service.payment.TransactionService;
 import com.example.datasetapi.service.user.TokenService;
 import com.example.datasetapi.service.user.UserService;
 import com.example.datasetapi.util.DateUtil;
@@ -56,51 +59,32 @@ import software.amazon.awssdk.services.s3.model.*;
 @Slf4j
 @Service
 public class DatasetServiceImpl implements DatasetService {
-    @Autowired
-    private JwtUtil jwtUtil;
-    @Autowired
-    private DatasetPlanRepo datasetPlanRepo;
-    @Autowired
-    private WalletRepository walletRepository;
-    @Autowired
-    private DatasetRepository datasetRepository;
-    @Autowired
-    private CategoryRepository categoryRepository;
-    @Autowired
-    private DatasetTypeRepository datasetTypeRepository;
-    @Autowired
-    private TokenService tokenService;
-    @Autowired
-    private UserService userService;
-    @Autowired
-    private DatasetInforRepository datasetInforRepository;
-    @Autowired
-    private DatasetGroupRepository datasetGroupRepository;
-    @Autowired
-    private S3Client s3Client;
-    @Autowired
-    private ReviewHistoryRepository reviewHistoryRepository;
-    @Autowired
-    private DatasetMapper datasetMapper;
-    @Autowired
-    private PriceService priceService;
-    @Autowired
-    private CommuneRepository communeRepository;
-    @Autowired
-    TimeGroupRepository timeGroupRepository;
-    @Autowired
-    private PaymentService paymentService;
-    @Autowired
-    private  DatasetPricingRepository datasetPricingRepository;
-    @Autowired
-    private ConsumerSubRepo consumerSubRepo;
+    @Autowired private JwtUtil jwtUtil;
+    @Autowired private DatasetPlanRepo datasetPlanRepo;
+    @Autowired private WalletRepository walletRepository;
+    @Autowired private DatasetRepository datasetRepository;
+    @Autowired private CategoryRepository categoryRepository;
+    @Autowired private DatasetTypeRepository datasetTypeRepository;
+    @Autowired private TokenService tokenService;
+    @Autowired private UserService userService;
+    @Autowired private DatasetInforRepository datasetInforRepository;
+    @Autowired private DatasetGroupRepository datasetGroupRepository;
+    @Autowired private S3Client s3Client;
+    @Autowired private ReviewHistoryRepository reviewHistoryRepository;
+    @Autowired private DatasetMapper datasetMapper;
+    @Autowired private PriceService priceService;
+    @Autowired private CommuneRepository communeRepository;
+    @Autowired private TimeGroupRepository timeGroupRepository;
+    @Autowired private PaymentService paymentService;
+    @Autowired private DatasetPricingRepository datasetPricingRepository;
+    @Autowired private ConsumerSubRepo consumerSubRepo;
     @Autowired private DownloadTokenRepository downloadTokenRepository;
-    @Value("${aws.bucket.name}")
-    private String BUCKET_NAME;
+    @Autowired private OrderService orderService;
+    @Autowired private TransactionService transactionService;
+    @Value("${aws.bucket.name}") private String BUCKET_NAME;
 
     private static final Logger logger =  LoggerFactory.getLogger(DatasetServiceImpl.class);
-    @Autowired
-    private FileService fileService;
+    @Autowired private FileService fileService;
 
 
     @Override
@@ -480,7 +464,9 @@ else {
 
     @Override
     public ConsumerBuyResponseDTO buyDatasetRequest(ConsumerBuyRequestDTO buyRequestDTO, HttpServletRequest request) {
-        Dataset dataset = datasetRepository.findById(buyRequestDTO.getDatasetId()).orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
+        Dataset dataset = datasetRepository.findById(buyRequestDTO.getDatasetId())
+                .orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
+
         User consumer = userService.findUserById(tokenService.getUserIdFromRequest(request));
 
         if(buyRequestDTO.getIsHaveSub()){
@@ -490,6 +476,70 @@ else {
             DatasetPricing datasetPricing = datasetPricingRepository.findById(buyRequestDTO.getDatasetPricingId()).orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_PRICING_NOT_FOUND));
             return createOneTimePayment(dataset,datasetPricing,consumer);
         }
+    }
+
+    private ConsumerBuyResponseDTO createSubPayment(Dataset dataset, User consumer) {
+        ConsumerSubscription sub = consumerSubRepo.findByConsumerAndIsUsing(consumer, true)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.SUB_NOT_FOUND));
+
+        long datasetRow = dataset.getRow_count();
+
+        if (sub.getExpiresAt().isBefore(LocalDateTime.now()))
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.SUB_EXPIRED);
+
+        if (sub.getRow_amount() < datasetRow)
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.SUB_ROW_NOT_ENOUGH);
+
+        buyWithSubProcess(sub, datasetRow);
+        consumerSubRepo.save(sub);
+
+        DownloadToken token = jwtUtil.generateDowloadToken(consumer, dataset, 30, 10, null);
+        consumer.getDownloadTokens().add(token);
+        userService.saveUser(consumer);
+
+        Wallet wallet  = walletRepository.findByUserId(consumer.getId()).orElse(null);
+
+        transactionService.createTransaction(TransferType.TODOWN, (double) datasetRow, consumer.getId(), wallet, BuyType.BUY_SUB);
+
+        ConsumerDatasetOrderResponse order = orderService.createOrder(
+                consumer.getId(),
+                List.of(dataset.getId()),
+                datasetRow,
+                PricingMethod.SUBSCRIPTION
+        );
+
+        // Build response
+        ConsumerBuyResponseDTO dto = datasetMapper.toConsumerBuyResponseDTO(PricingMethod.SUBSCRIPTION, sub);
+        dto.getBuySubInfoDTO().setDownloadToken(token.getId().toString());
+        dto.setOrderId(order.getId());
+        return dto;
+    }
+
+    private ConsumerBuyResponseDTO createOneTimePayment(Dataset dataset, DatasetPricing pricing, User consumer) {
+        if (downloadTokenRepository.findByConsumerAndDatasetAndIsActive(consumer, dataset, true).isPresent()) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.DATASET_BOUGHT);
+        }
+
+        DownloadToken token = jwtUtil.generateDowloadToken(consumer, dataset, 30, 2, null);
+        consumer.getDownloadTokens().add(token);
+        userService.saveUser(consumer);
+
+        paymentService.updateWallet(TransferType.TODOWN, pricing.getPrice(), consumer.getId(), BuyType.BUY_ONE_TIME_DATASET);
+
+        Wallet wallet  = walletRepository.findByUserId(consumer.getId()).orElse(null);
+
+        transactionService.createTransaction(TransferType.TODOWN, pricing.getPrice(), consumer.getId(), wallet, BuyType.BUY_ONE_TIME_DATASET);
+
+        ConsumerDatasetOrderResponse order = orderService.createOrder(
+                consumer.getId(),
+                List.of(dataset.getId()),
+                (long) pricing.getPrice(),
+                PricingMethod.ONE_TIME
+        );
+
+        ConsumerBuyResponseDTO dto = datasetMapper.toConsumerBuyResponseDTO(PricingMethod.ONE_TIME, token.getId());
+        dto.setOrderId(order.getId());
+        return dto;
     }
 
     @Override
@@ -568,7 +618,7 @@ else {
 
     @Override
     public ConsumerBuyResponseDTO buyWithTimeGroup(long timeGroupId, HttpServletRequest request) {
-        TimeGroup timeGroup = timeGroupRepository.findById(timeGroupId)        .orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.TIME_GROUP_NOT_FOUND));
+        TimeGroup timeGroup = timeGroupRepository.findById(timeGroupId).orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.TIME_GROUP_NOT_FOUND));
 
         double price = timeGroup.getPrice() ;
         System.out.println(price);

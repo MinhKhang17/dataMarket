@@ -132,7 +132,7 @@ datasetDTO.setRow_amount(dataset.getRow_count());
 
     private BuyApiInforDTO toBuyApiInfoDTO(DownloadToken infor) {
         BuyApiInforDTO buyApiInforDTO = new BuyApiInforDTO();
-        buyApiInforDTO.setDowLoadToken(infor.getId().toString());
+        buyApiInforDTO.setDownLoadToken(infor.getId().toString());
         return  buyApiInforDTO;
     }
 
@@ -210,7 +210,7 @@ datasetDTO.setRow_amount(dataset.getRow_count());
 
     private BuyOnTimeInfoDTO toBuyOneTimeInfoDTO(UUID infor) {
         BuyOnTimeInfoDTO buyOnTimeInfoDTO = new BuyOnTimeInfoDTO();
-        buyOnTimeInfoDTO.setDowloadToken(infor.toString());
+        buyOnTimeInfoDTO.setDownloadToken(infor.toString());
         return buyOnTimeInfoDTO;
     }
 

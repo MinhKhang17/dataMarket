@@ -94,5 +94,5 @@ public interface DatasetService {
     DatasetGroupInfor getDatasetGroupInfor(long datasetChilGroupId);
 
 
-    Dataset uploadCSVFileToSytemFolder(File file, Dataset dataset);
+    Dataset uploadCSVFileToSystemFolder(File file, Dataset dataset);
 }

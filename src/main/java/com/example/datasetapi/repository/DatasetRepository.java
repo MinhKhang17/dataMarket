@@ -15,4 +15,6 @@ public interface DatasetRepository extends JpaRepository<Dataset, Long>, JpaSpec
 
     @Query("SELECT d FROM Dataset d WHERE LOWER(d.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(d.title) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     List<Dataset> searchByKeyword(String keyword);
+    @Query("SELECT d FROM Dataset d WHERE d.id IN :ids")
+    List<Dataset> findAllByIdIn( List<Long> ids);
 }
