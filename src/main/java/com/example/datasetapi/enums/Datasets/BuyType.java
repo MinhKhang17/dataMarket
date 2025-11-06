@@ -5,5 +5,6 @@ public enum BuyType {
     BUY_SUB,
     BUY_API,
     BUY_WITH_TIME_GROUP,
+    PROVIDER_REVENUE,
     OTHER
 }

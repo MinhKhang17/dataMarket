@@ -1,5 +1,7 @@
 package com.example.datasetapi.service.dataset;
 
+import com.example.datasetapi.enums.Datasets.BuyType;
+import com.example.datasetapi.enums.TransferType;
 import com.example.datasetapi.mapper.DatasetMapper;
 import com.example.datasetapi.dto.service.PricingRuleDTO;
 import com.example.datasetapi.enums.Datasets.DatasetPack;
@@ -8,9 +10,12 @@ import com.example.datasetapi.enums.Datasets.SubType;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
 import com.example.datasetapi.model.dataset.*;
+import com.example.datasetapi.model.userManager.Provider;
 import com.example.datasetapi.repository.DatasetPlanRepo;
 import com.example.datasetapi.repository.DatasetPricingRepository;
 import com.example.datasetapi.repository.PricingRuleRepo;
+import com.example.datasetapi.repository.ProviderRevenueRepo;
+import com.example.datasetapi.service.payment.PaymentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -30,7 +35,10 @@ public class PriceServiceImpl implements  PriceService {
     private DatasetPricingRepository datasetPricingRepository;
     @Autowired
     private DatasetMapper datasetMapper;
-
+    @Autowired
+    private PaymentService paymentService ;
+@Autowired
+private ProviderRevenueRepo providerRevenueRepo;
     @Override
     public void createPricingForDataset(Dataset dataset, DatasetInformation datasetInformation) {
         //tạo giá cho mua một lần
@@ -76,6 +84,26 @@ public class PriceServiceImpl implements  PriceService {
     @Override
     public PricingRule findApiPricingRuleById(long apiPackId) {
         return pricingRuleRepo.findByIdAndMethod(apiPackId,PricingMethod.API);
+    }
+
+    @Override
+    public void createRevenueForProvider(Provider provider, DatasetPack datasetPack, Dataset dataset) {
+        // tìm lợi nhuận cho provider đã được định nghĩa
+        PricingRule pricingRule =  pricingRuleRepo.findByMethodAndDatasetPack(PricingMethod.PROVIDER_REVENUE,datasetPack);
+
+        double basePricePoint = pricingRule.getBasePricePoint();
+
+        createProviderRevenue(provider,basePricePoint,dataset);
+
+        paymentService.updateWallet(TransferType.TOUP,basePricePoint,provider.getUser().getId(),BuyType.PROVIDER_REVENUE);
+    }
+
+    private void createProviderRevenue(Provider provider, double point, Dataset dataset) {
+        ProviderRevenue providerRevenue = new ProviderRevenue();
+        providerRevenue.setProvider(provider);
+        providerRevenue.setRevenue_amount(point);
+        providerRevenue.setDataset(dataset);
+        providerRevenueRepo.save(providerRevenue);
     }
 
 

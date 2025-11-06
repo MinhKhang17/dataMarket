@@ -1,6 +1,7 @@
 package com.example.datasetapi.mapper;
 
 import com.example.datasetapi.config.ModelMapper;
+import com.example.datasetapi.dto.ProviderRevenueDTO;
 import com.example.datasetapi.dto.response.*;
 import com.example.datasetapi.dto.service.*;
 import com.example.datasetapi.enums.Datasets.DatasetStatus;
@@ -196,6 +197,12 @@ datasetDTO.setRow_amount(dataset.getRow_count());
         datasetGroupInfor.setProvine_id(datasetGroup.getCommune().getIdCommune());
         datasetGroupInfor.setProvine_name(datasetGroup.getCommune().getName());
         return datasetGroupInfor;
+    }
+
+    @Override
+    public ProviderRevenueDTO toProviderRevenueDTO(ProviderRevenue providerRevenue) {
+
+        return new ProviderRevenueDTO(toDatasetDTO(providerRevenue.getDataset()),providerRevenue.getRevenue_amount(),providerRevenue.getId());
     }
 
     private BuySubInfoDTO toBuySubInfoDTO(ConsumerSubscription infor) {

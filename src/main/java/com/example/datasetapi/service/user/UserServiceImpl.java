@@ -1,5 +1,6 @@
 package com.example.datasetapi.service.user;
 
+import com.example.datasetapi.dto.ProviderRevenueDTO;
 import com.example.datasetapi.dto.request.*;
 import com.example.datasetapi.dto.service.ProviderIdentityDocumentDTO;
 import com.example.datasetapi.mapper.DatasetMapper;
@@ -10,6 +11,7 @@ import com.example.datasetapi.enums.VerificationStatus.RegistrationStatus;
 import com.example.datasetapi.enums.VerificationStatus.VerificationStatus;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
+import com.example.datasetapi.model.dataset.ProviderRevenue;
 import com.example.datasetapi.model.location.LocationRegistration;
 import com.example.datasetapi.model.location.Province;
 import com.example.datasetapi.model.userManager.*;
@@ -35,6 +37,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import org.checkerframework.checker.units.qual.C;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -63,7 +66,7 @@ public class UserServiceImpl implements UserService {
     private final WalletService walletService;
     private final HttpServletRequest request;
     private final LocationRegistrationRepository locationRegistrationRepository;
-
+    @Autowired private ProviderRevenueRepo providerRevenueRepo;
     @Autowired
     private  DatasetMapper datasetMapper;
     @Autowired
@@ -561,6 +564,16 @@ public class UserServiceImpl implements UserService {
 
         return ResponseEntity.ok().body(new ApiResponse(true, "Location registration submitted successfully. Your application is under review.", response));
     }
+
+    @Override
+    public List<ProviderRevenueDTO> getProviderRevenue(HttpServletRequest request) {
+        return providerRevenueRepo.findAllByProviderAndCreatedAtAfterOrderByCreatedAtDesc(findProviderById(tokenService.getUserIdFromRequest(request)),LocalDateTime.now().toLocalDate().atStartOfDay())
+                .stream()
+                .map(datasetMapper::toProviderRevenueDTO)
+                .collect(Collectors.toList());
+    }
+
+
 
     @Transactional
     protected LocationRegistration registerLocation(LocationRegistrationRequest dto, Provider provider, Commune commune) {

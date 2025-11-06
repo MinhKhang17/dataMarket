@@ -1,8 +1,10 @@
 package com.example.datasetapi.service.user;
 
+import com.example.datasetapi.dto.ProviderRevenueDTO;
 import com.example.datasetapi.dto.request.*;
 import com.example.datasetapi.dto.response.ApiResponse;
 //import com.example.datasetapi.model.userManager.Address;
+import com.example.datasetapi.model.dataset.ProviderRevenue;
 import com.example.datasetapi.model.userManager.Provider;
 import com.example.datasetapi.model.userManager.Role;
 import com.example.datasetapi.model.userManager.User;
@@ -12,6 +14,8 @@ import jakarta.transaction.Transactional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public interface UserService {
@@ -45,4 +49,6 @@ public interface UserService {
     void saveUser(User consumer);
 
     ResponseEntity<ApiResponse> locationRegistrationProcess(LocationRegistrationRequest locationRegistrationRequest);
+
+    List<ProviderRevenueDTO> getProviderRevenue(HttpServletRequest request);
 }

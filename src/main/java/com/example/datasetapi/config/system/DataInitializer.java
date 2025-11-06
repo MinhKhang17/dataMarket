@@ -201,6 +201,42 @@ public class DataInitializer implements CommandLineRunner {
         r6.setSubType(SubType.LARGE);
         r6.setNote("Gói thuê bao 3 tháng \nThoải mái tải dataset\n Có dashboard thể hiện thông tin được tổng hợp bằng AI ");
         rules.add(r6);
+        // SUBSCRIPTION - Premium
+        PricingRule r7 = new PricingRule();
+        r7.setMethod(PricingMethod.SUBSCRIPTION);
+        r7.setPlanName("Provider Revenue Small Pack");
+        r7.setBasePricePoint(2500000.0);
+        r7.setDatasetPack(DatasetPack.SMALL);
+        r7.setNote("Lợi Nhuận cho provider với gói nhỏ");
+        rules.add(r7);
+
+// Gói nhỏ (bạn đã có)
+        PricingRule r8 = new PricingRule();
+        r8.setMethod(PricingMethod.PROVIDER_REVENUE);
+        r8.setPlanName("Provider Revenue Small Pack");
+        r8.setBasePricePoint(2500000.0);
+        r8.setDatasetPack(DatasetPack.SMALL);
+        r8.setNote("Lợi Nhuận cho provider với gói nhỏ");
+        rules.add(r8);
+
+// Gói vừa
+        PricingRule r9 = new PricingRule();
+        r9.setMethod(PricingMethod.PROVIDER_REVENUE);
+        r9.setPlanName("Provider Revenue Medium Pack");
+        r9.setBasePricePoint(5000000.0); // giá gợi ý
+        r9.setDatasetPack(DatasetPack.MEDIUM);
+        r9.setNote("Lợi Nhuận cho provider với gói vừa");
+        rules.add(r9);
+
+// Gói lớn
+        PricingRule r10 = new PricingRule();
+        r10.setMethod(PricingMethod.PROVIDER_REVENUE);
+        r10.setPlanName("Provider Revenue Large Pack");
+        r10.setBasePricePoint(10000000.0); // giá gợi ý
+        r10.setDatasetPack(DatasetPack.LARGE);
+        r10.setNote("Lợi Nhuận cho provider với gói lớn");
+        rules.add(r10);
+
 
         pricingRuleRepo.saveAll(rules);
     }
