@@ -1,5 +1,6 @@
 package com.example.datasetapi.service.feature;
 
+import com.example.datasetapi.enums.Datasets.DatasetSourceType;
 import com.example.datasetapi.mapper.DatasetMapper;
 import com.example.datasetapi.dto.request.DatasetFilterRequestDTO;
 import com.example.datasetapi.dto.response.DatasetDTO;
@@ -34,6 +35,7 @@ public class DatasetFilterService {
 
         List<DatasetDTO> filteredList = page.getContent().stream()
                 .filter(dataset -> dataset.getDatasetStatus() == DatasetStatus.APPROVE)
+                .filter(dataset -> dataset.getDatasetChildGroup().getDatasetSourceType()== DatasetSourceType.DATASET_PROVIDER)
                 .map(datasetMapper::toDatasetDTO)
                 .collect(Collectors.toList());
 

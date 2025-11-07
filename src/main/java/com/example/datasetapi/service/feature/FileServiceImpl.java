@@ -711,146 +711,197 @@ public class FileServiceImpl implements FileService {
         String typeName = dsType.getName();
         String sampleCsv = sampleToCsv(sampleRows, csvHeaders, 50);
 
+        // Khối hướng dẫn chung – bắt buộc có "data"
+        String commonHeader = """
+You are a professional data analysis assistant.
+
+STRICT OUTPUT RULES:
+- Return **JSON only** (no markdown, no code fences, no prose).
+- For **each chart**, you MUST include:
+  - "title": string
+  - "type": "line" | "bar" | "scatter"
+  - "x": string (column name)
+  - "y": string (numeric column name)
+  - "insight": short text (1–2 sentences)
+  - "data": array of objects where **each object has keys exactly matching x and y**.
+    Example for x="date", y="energy": 
+    "data": [
+      {"date":"2025-01-01","energy":120.5},
+      {"date":"2025-01-02","energy":118.9}
+    ]
+
+If there is no data for a chart, still output "data": [].
+JSON schema:
+{
+  "charts": [
+    { "title":"...", "type":"...", "x":"...", "y":"...", "insight":"...", "data":[ {...}, ... ] },
+    { "title":"...", "type":"...", "x":"...", "y":"...", "insight":"...", "data":[ {...}, ... ] }
+  ],
+  "alerts": [ { ... }, ... ],
+  "notes": "..."
+}
+""";
+
         if ("STATION_ENERGY".equalsIgnoreCase(typeName)) {
-            return """
-        You are a professional data analysis assistant. You will receive:
-        1) A summarized data object (metricsJson) for dataset type: STATION_ENERGY.
-        2) A sample CSV (for optional reference, not required to analyze fully).
+            return (commonHeader + """
+DATA CONTEXT:
+- metricsJson.daily_summary = list of { "date": "YYYY-MM-DD", "energy": number, "sessions": number }
 
-        Task Requirements:
-        - Analyze daily energy and session trends based on metricsJson.
-        - Produce exactly **two charts**:
-          1) Line Chart → Total energy (energy) by date.
-          2) Bar Chart → Charging sessions (sessions) by date.
-        - Provide a short insight for each chart (1–2 sentences).
-        - Detect alerts based on:
-          * Energy drop >30%% vs. previous average.
-          * Session spike >150%% vs. 7-day rolling average.
-          * Missing or abnormally low session days.
-        
-        Output Format (strict JSON, no explanation, no text outside JSON):
-        {
-          "charts": [
-            {"title": "Daily Total Energy", "type": "line", "x": "date", "y": "energy", "insight": "..."},
-            {"title": "Daily Charging Sessions", "type": "bar", "x": "date", "y": "sessions", "insight": "..."}
-          ],
-          "alerts": [
-            {"date": "YYYY-MM-DD", "type": "energy_drop|session_spike|missing_data", "severity": "low|medium|high", "message": "..."}
-          ],
-          "notes": "Optional method explanation (max 2 sentences)."
+TASK:
+- Produce exactly two charts using metricsJson.daily_summary:
+  1) Line chart: energy by date
+  2) Bar chart: sessions by date
+- Create meaningful insights (1–2 sentences each).
+- Alerts to consider:
+  - "energy_drop" if energy drops > 30%% vs. mean of prior days
+  - "session_spike" if sessions > 150%% vs. 7-day rolling average
+  - "missing_data" for unusually low sessions
+
+STRICT OUTPUT JSON ONLY:
+{
+  "charts": [
+    {
+      "title": "Daily Total Energy",
+      "type": "line",
+      "x": "date",
+      "y": "energy",
+      "insight": "Short insight...",
+      "data": [] // FILL from metricsJson.daily_summary
+    },
+    {
+      "title": "Daily Charging Sessions",
+      "type": "bar",
+      "x": "date",
+      "y": "sessions",
+      "insight": "Short insight...",
+      "data": [] // FILL from metricsJson.daily_summary
+    }
+  ],
+  "alerts": [
+    { "date":"YYYY-MM-DD","type":"energy_drop|session_spike|missing_data","severity":"low|medium|high","message":"..." }
+  ],
+  "notes": "Optional (<=2 sentences)."
+}
+
+metricsJson:
+%s
+
+sampleCsv (reference only):
+%s
+""").formatted(metricsJson, sampleCsv);
         }
-
-        DATA (metricsJson):
-        %s
-
-        SAMPLE CSV (reference-only):
-        %s
-        """.formatted(metricsJson, sampleCsv);
-        }
-
         else if ("TRANSACTION_BILLING".equalsIgnoreCase(typeName)) {
-            return """
-        You are a professional data analysis assistant. Provided:
-        1) Summarized data (metricsJson) for TRANSACTION_BILLING.
-        2) Sample CSV (reference-only).
+            return (commonHeader + """
+DATA CONTEXT:
+- metricsJson.daily_revenue = list of { "date": "YYYY-MM-DD", "revenue": number, "txCount": number }
 
-        Requirements:
-        - Produce exactly two charts:
-          1) Line Chart → Revenue by date.
-          2) Bar Chart → Transaction count (txCount) by date.
-        - Provide 1–2 sentence insight per chart.
-        - Trigger alerts if:
-          * Revenue drop >20%% vs. previous 7-day average.
-          * A single plan contributes >60%% of total revenue → `plan_dominant`.
+TASK:
+- Two charts using metricsJson.daily_revenue:
+  1) Line: revenue by date
+  2) Bar: txCount by date
+- Alerts:
+  - "revenue_drop" if revenue drops > 20%% vs 7-day average
+  - "plan_dominant" if any plan's share > 60%% total revenue
 
-        Output JSON (strict format):
-        {
-          "charts": [
-            {"title": "Daily Revenue", "type": "line", "x": "date", "y": "revenue", "insight": "..."},
-            {"title": "Daily Transaction Count", "type": "bar", "x": "date", "y": "txCount", "insight": "..."}
-          ],
-          "alerts": [
-            {"date": "YYYY-MM-DD", "type": "revenue_drop", "severity": "medium|high", "message": "..."},
-            {"type": "plan_dominant", "plan": "...", "share": 0.00, "message": "..."}
-          ],
-          "notes": "Optional (max 2 sentences)."
+STRICT OUTPUT JSON ONLY:
+{
+  "charts": [
+    {
+      "title": "Daily Revenue",
+      "type": "line",
+      "x": "date",
+      "y": "revenue",
+      "insight": "Short insight...",
+      "data": []
+    },
+    {
+      "title": "Daily Transaction Count",
+      "type": "bar",
+      "x": "date",
+      "y": "txCount",
+      "insight": "Short insight...",
+      "data": []
+    }
+  ],
+  "alerts": [
+    { "date":"YYYY-MM-DD","type":"revenue_drop","severity":"medium|high","message":"..." },
+    { "type":"plan_dominant","plan":"...","share":0.0,"message":"..." }
+  ],
+  "notes": "Optional (<=2 sentences)."
+}
+
+metricsJson:
+%s
+
+sampleCsv (reference only):
+%s
+""").formatted(metricsJson, sampleCsv);
         }
-
-        DATA:
-        %s
-
-        SAMPLE CSV:
-        %s
-        """.formatted(metricsJson, sampleCsv);
-        }
-
         else if ("VEHICLE_DATA_SAMPLE".equalsIgnoreCase(typeName)) {
-            return """
-        You are a professional data analysis assistant. Input includes:
-        - Summarized data metrics (metricsJson) for VEHICLE_DATA_SAMPLE.
-        - Sample CSV (reference-only).
+            return (commonHeader + """
+DATA CONTEXT (examples in metricsJson):
+- metricsJson.top_models = list of { "model": "...", "avg_requested_energy": number, "count": number }
+- (optional) if available: capacity/energy pairs for scatter.
 
-        Requirements:
-        - Produce two charts:
-          1) Bar Chart → Top vehicle models by avg_requested_energy.
-          2) Scatter Plot → requested_energy vs battery_capacity_kwh.
-        - Detect alerts:
-          * requested_energy > battery_capacity → `over_requested`.
-          * SOC or charging anomalies if present.
+TASK:
+- Two charts:
+  1) Bar: top models by avg_requested_energy  (x="model", y="avg_requested_energy", data from top_models)
+  2) Scatter: battery_capacity_kwh vs requested_energy  (if not available, return data: [])
+- Alerts:
+  - "over_requested" when requested_energy > battery_capacity
+  - SOC anomalies if found
 
-        Output JSON structure (strict):
-        {
-          "charts": [
-            {"title": "Top Models by Requested Energy", "type": "bar", "x": "vehicle_model", "y": "avg_requested_energy", "insight": "..."},
-            {"title": "Requested Energy vs Battery Capacity", "type": "scatter", "x": "battery_capacity_kwh", "y": "requested_energy", "insight": "..."}
-          ],
-          "alerts": [
-            {"type": "over_requested", "model": "...", "count": 0, "message": "..."}
-          ],
-          "notes": "Optional (max 2 sentences)."
+STRICT OUTPUT JSON ONLY:
+{
+  "charts": [
+    {
+      "title": "Top Models by Requested Energy",
+      "type": "bar",
+      "x": "model",
+      "y": "avg_requested_energy",
+      "insight": "Short insight...",
+      "data": []
+    },
+    {
+      "title": "Requested Energy vs Battery Capacity",
+      "type": "scatter",
+      "x": "battery_capacity_kwh",
+      "y": "requested_energy",
+      "insight": "Short insight...",
+      "data": []
+    }
+  ],
+  "alerts": [
+    { "type":"over_requested","model":"...","count":0,"message":"..." }
+  ],
+  "notes": "Optional (<=2 sentences)."
+}
+
+metricsJson:
+%s
+
+sampleCsv (reference only):
+%s
+""").formatted(metricsJson, sampleCsv);
         }
-
-        DATA:
-        %s
-
-        SAMPLE CSV:
-        %s
-        """.formatted(metricsJson, sampleCsv);
-        }
-
         else {
-            return """
-        You are a professional data analysis assistant.
+            return (commonHeader + """
+TASK:
+- Choose two meaningful charts from metricsJson, with valid numeric y.
+- Provide insights and at least one alert (drop/spike/anomaly).
+- Always include "data" array for each chart, keys must match x and y.
 
-        Input:
-        - metricsJson (primary data to analyze)
-        - sample CSV (optional reference)
+STRICT OUTPUT JSON ONLY.
 
-        Requirements:
-        - Choose **two** meaningful charts based on metricsJson.
-        - Provide 1–2 sentence insight for each chart.
-        - Detect at least **one** alert (e.g., drop >20%%, spike >150%%, anomaly).
-        
-        Output Format (strict JSON only):
-        {
-          "charts": [
-            {"title": "...", "type": "...", "x": "...", "y": "...", "insight": "..."},
-            {"title": "...", "type": "...", "x": "...", "y": "...", "insight": "..."}
-          ],
-          "alerts": [
-            {"type": "...", "severity": "low|medium|high", "message": "..."}
-          ],
-          "notes": "Optional (max 2 sentences)."
-        }
+metricsJson:
+%s
 
-        METRICS:
-        %s
-
-        SAMPLE CSV:
-        %s
-        """.formatted(metricsJson, sampleCsv);
+sampleCsv (reference only):
+%s
+""").formatted(metricsJson, sampleCsv);
         }
     }
+
 
 
     // Chuyển danh sách CSVRecord thành CSV string (chỉ lấy header + N dòng sample)

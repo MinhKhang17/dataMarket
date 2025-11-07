@@ -1,8 +1,17 @@
 package com.example.datasetapi.dto.service;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.List;
+import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class ChartDto {
 
     private String title;
@@ -10,6 +19,7 @@ public class ChartDto {
     private String x;
     private String y;
     private String insight;
+    private List<Map<String, Object>> data;
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }

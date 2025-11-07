@@ -254,9 +254,9 @@ public class DatasetServiceImpl implements DatasetService {
             dataset.setRow_count(datasetInformation.getRowCount());
             // (Upload file xử lý ở đây nếu cần — giữ nguyên như bạn muốn)
             if (datasetSourceType.equals(DatasetSourceType.DATASET_PROVIDER)) {
-                // uploadCSVFileToPendingFolder(new File(datasetInformation.getFile_url()), dataset);
+                 uploadCSVFileToPendingFolder(new File(datasetInformation.getFile_url()), dataset);
             } else {
-                // uploadCSVFileToSytemFolder(new File(datasetInformation.getFile_url()), dataset);
+                 uploadCSVFileToSytemFolder(new File(datasetInformation.getFile_url()), dataset);
             }
 
             logger.info(" Dataset [{}] uploaded successfully (source: {})", dataset.getTitle(), datasetSourceType);
@@ -375,7 +375,7 @@ public class DatasetServiceImpl implements DatasetService {
         reviewHistoryRepository.save(reviewHistory);
         ReviewHistoryDto reviewHistoryDto = datasetMapper.toReviewHistoryDto(reviewHistoryRepository.save(reviewHistory));
 
-//        moveFileFromPendingToApproveFolder(dataset);
+        moveFileFromPendingToApproveFolder(dataset);
 
         //tạo giá sau khi accept
         priceService.createPricingForDataset(dataset,datasetInformationOptional.get());
