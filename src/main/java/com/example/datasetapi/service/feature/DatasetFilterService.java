@@ -1,10 +1,12 @@
 package com.example.datasetapi.service.feature;
 
+import com.example.datasetapi.enums.Datasets.DatasetSourceType;
 import com.example.datasetapi.mapper.DatasetMapper;
 import com.example.datasetapi.dto.request.DatasetFilterRequestDTO;
 import com.example.datasetapi.dto.response.DatasetDTO;
 import com.example.datasetapi.enums.Datasets.DatasetStatus;
 import com.example.datasetapi.model.dataset.Dataset;
+import com.example.datasetapi.model.dataset.DatasetType;
 import com.example.datasetapi.repository.DatasetRepository;
 import com.example.datasetapi.specification.DatasetSpecification;
 import org.springframework.data.domain.*;
@@ -34,6 +36,7 @@ public class DatasetFilterService {
 
         List<DatasetDTO> filteredList = page.getContent().stream()
                 .filter(dataset -> dataset.getDatasetStatus() == DatasetStatus.APPROVE)
+                .filter(dataset -> dataset.getDatasetChildGroup().getDatasetSourceType() == DatasetSourceType.SYSTEM_DATASET)
                 .map(datasetMapper::toDatasetDTO)
                 .collect(Collectors.toList());
 

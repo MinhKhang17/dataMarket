@@ -1,6 +1,8 @@
 package com.example.datasetapi.dto.response;
 
+import com.example.datasetapi.enums.Datasets.DatasetSourceType;
 import com.example.datasetapi.model.dataset.Category;
+import com.example.datasetapi.model.dataset.DatasetType;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -20,4 +22,6 @@ public class DatasetDTO {
     private List<Category> category;
     private LocalDate date;
     private long row_amount;
+    private DatasetSourceType datasetType;
+
 }

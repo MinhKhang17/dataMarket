@@ -44,7 +44,6 @@ public class DatasetMapperImpl implements DatasetMapper {
         DatasetDTO datasetDTO = new DatasetDTO();
         datasetDTO.setDatasetId(dataset.getId());
         datasetDTO.setVersion(dataset.getVersion());
-
             datasetDTO.setDatasetPLanWithPricingDTO(datasetPlanRepo.findALlByDatasetId(dataset.getId())
                     .stream()
                     .map(this::toDatasetPlanWithPricingDTO)
@@ -202,7 +201,7 @@ datasetDTO.setRow_amount(dataset.getRow_count());
     @Override
     public ProviderRevenueDTO toProviderRevenueDTO(ProviderRevenue providerRevenue) {
 
-        return new ProviderRevenueDTO(toDatasetDTO(providerRevenue.getDataset()),providerRevenue.getRevenue_amount(),providerRevenue.getId());
+        return new ProviderRevenueDTO(toDatasetDTO(providerRevenue.getDataset()),providerRevenue.getRevenue_amount(),providerRevenue.getId(),providerRevenue.getCreatedAt());
     }
 
     private BuySubInfoDTO toBuySubInfoDTO(ConsumerSubscription infor) {

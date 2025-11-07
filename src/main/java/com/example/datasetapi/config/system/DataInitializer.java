@@ -201,14 +201,7 @@ public class DataInitializer implements CommandLineRunner {
         r6.setSubType(SubType.LARGE);
         r6.setNote("Gói thuê bao 3 tháng \nThoải mái tải dataset\n Có dashboard thể hiện thông tin được tổng hợp bằng AI ");
         rules.add(r6);
-        // SUBSCRIPTION - Premium
-        PricingRule r7 = new PricingRule();
-        r7.setMethod(PricingMethod.SUBSCRIPTION);
-        r7.setPlanName("Provider Revenue Small Pack");
-        r7.setBasePricePoint(2500000.0);
-        r7.setDatasetPack(DatasetPack.SMALL);
-        r7.setNote("Lợi Nhuận cho provider với gói nhỏ");
-        rules.add(r7);
+
 
 // Gói nhỏ (bạn đã có)
         PricingRule r8 = new PricingRule();
