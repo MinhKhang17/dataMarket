@@ -6,6 +6,7 @@ import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.enums.Datasets.DatasetSourceType;
 import com.example.datasetapi.service.dataset.DatasetValidateService;
 import com.example.datasetapi.service.payment.PaymentService;
+import com.example.datasetapi.service.user.ProviderService;
 import com.example.datasetapi.service.user.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,8 @@ import org.springframework.web.multipart.MultipartFile;
 public class providerController {
     @Autowired
     private DatasetValidateService datasetValidateService;
+    @Autowired
+    ProviderService providerService;
 
     @Autowired
     private UserService userService;
@@ -47,5 +50,10 @@ public class providerController {
     @GetMapping("revenue")
     public ResponseEntity<?> getProviderRevenue(HttpServletRequest request) {
         return ResponseEntity.ok().body(new ApiResponse(true,"load success",userService.getProviderRevenue(request)));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse> getProfile() {
+        return providerService.viewProfile();
     }
 }
