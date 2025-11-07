@@ -12,6 +12,7 @@ public class ConsumerBuyResponseDTO {
         private BuySubInfoDTO buySubInfoDTO;
         private BuyApiInforDTO buyApiInforDTO;
         private BuyWithGroupDTO buyWithGroupDTO;
+        private Long orderId;
 
     }
 

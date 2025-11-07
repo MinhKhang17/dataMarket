@@ -5,6 +5,7 @@ import com.example.datasetapi.dto.request.ConsumerBuyRequestDTO;
 import com.example.datasetapi.dto.response.*;
 
 import com.example.datasetapi.service.dataset.DatasetService;
+import com.example.datasetapi.service.order.OrderService;
 import com.example.datasetapi.service.user.ConsumerService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,10 +17,9 @@ import java.util.List;
 @RestController
 @RequestMapping("api/consumer/")
 public class ConsumerController {
-    @Autowired
-    private DatasetService datasetService;
-    @Autowired
-    private ConsumerService consumerService;
+    @Autowired private DatasetService datasetService;
+    @Autowired private ConsumerService consumerService;
+    @Autowired private OrderService orderService;
 
     @GetMapping("dataset/checkout")
     public ResponseEntity<ApiResponse> checkout(
@@ -63,7 +63,7 @@ public class ConsumerController {
         return ResponseEntity.ok().body(new ApiResponse(true,"Sub selecting success",consumerBuyResponseDTO));
     }
     @GetMapping("dataset/key")
-    public ResponseEntity<ApiResponse> dowloadKey(@RequestParam long datasetId, HttpServletRequest request){
+    public ResponseEntity<ApiResponse> downloadKey(@RequestParam long datasetId, HttpServletRequest request){
        String download_token = datasetService.getDownloadTokenOfDatasetForConsumer(datasetId,request);
         return ResponseEntity.ok().body(new ApiResponse(true,"Download token ",download_token));
     }
@@ -88,6 +88,15 @@ public class ConsumerController {
         return ResponseEntity.ok().body(new ApiResponse(true,"Consumer dataset ",datasetDTOS));
     }
 
+    @GetMapping("order")
+    public ResponseEntity<ApiResponse> viewOrderHistory(){
+        return orderService.getOrdersForConsumer();
+    }
+
+    @GetMapping("order/{orderId}")
+    public ResponseEntity<ApiResponse> viewOrderById(@PathVariable Long orderId){
+        return orderService.getOrderById(orderId);
+    }
 //    @PostMapping("dataset/sub/buy")
 //    public ResponseEntity<ApiResponse> buyDatasetWithSub(@RequestBody long datasetId,HttpServletRequest request){
 //        ConsumerBuyResponseDTO consumerBuyResponseDTO = datasetService.buyDatasetWithSub(datasetId,request);

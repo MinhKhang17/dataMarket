@@ -4,5 +4,5 @@ import lombok.Data;
 
 @Data
 public class BuyOnTimeInfoDTO {
-    private String dowloadToken;
+    private String downloadToken;
 }

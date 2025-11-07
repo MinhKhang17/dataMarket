@@ -6,7 +6,4 @@ import lombok.Data;
 public class WithdrawRequest {
     private Long amount;
     private Long BankAccountId;
-    private String bankName;
-    private String accountNumber;
-    private String accountHolderName;
 }

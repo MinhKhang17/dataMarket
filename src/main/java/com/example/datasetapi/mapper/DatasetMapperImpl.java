@@ -1,6 +1,7 @@
 package com.example.datasetapi.mapper;
 
 import com.example.datasetapi.config.ModelMapper;
+import com.example.datasetapi.dto.ProviderRevenueDTO;
 import com.example.datasetapi.dto.response.*;
 import com.example.datasetapi.dto.service.*;
 import com.example.datasetapi.enums.Datasets.DatasetStatus;
@@ -43,7 +44,6 @@ public class DatasetMapperImpl implements DatasetMapper {
         DatasetDTO datasetDTO = new DatasetDTO();
         datasetDTO.setDatasetId(dataset.getId());
         datasetDTO.setVersion(dataset.getVersion());
-
             datasetDTO.setDatasetPLanWithPricingDTO(datasetPlanRepo.findALlByDatasetId(dataset.getId())
                     .stream()
                     .map(this::toDatasetPlanWithPricingDTO)
@@ -132,7 +132,7 @@ datasetDTO.setRow_amount(dataset.getRow_count());
 
     private BuyApiInforDTO toBuyApiInfoDTO(DownloadToken infor) {
         BuyApiInforDTO buyApiInforDTO = new BuyApiInforDTO();
-        buyApiInforDTO.setDowLoadToken(infor.getId().toString());
+        buyApiInforDTO.setDownLoadToken(infor.getId().toString());
         return  buyApiInforDTO;
     }
 
@@ -198,6 +198,12 @@ datasetDTO.setRow_amount(dataset.getRow_count());
         return datasetGroupInfor;
     }
 
+    @Override
+    public ProviderRevenueDTO toProviderRevenueDTO(ProviderRevenue providerRevenue) {
+
+        return new ProviderRevenueDTO(toDatasetDTO(providerRevenue.getDataset()),providerRevenue.getRevenue_amount(),providerRevenue.getId(),providerRevenue.getCreatedAt());
+    }
+
     private BuySubInfoDTO toBuySubInfoDTO(ConsumerSubscription infor) {
         BuySubInfoDTO buySubInfoDTO = new BuySubInfoDTO();
         buySubInfoDTO.setSubType(infor.getSubType());
@@ -210,7 +216,7 @@ datasetDTO.setRow_amount(dataset.getRow_count());
 
     private BuyOnTimeInfoDTO toBuyOneTimeInfoDTO(UUID infor) {
         BuyOnTimeInfoDTO buyOnTimeInfoDTO = new BuyOnTimeInfoDTO();
-        buyOnTimeInfoDTO.setDowloadToken(infor.toString());
+        buyOnTimeInfoDTO.setDownloadToken(infor.toString());
         return buyOnTimeInfoDTO;
     }
 

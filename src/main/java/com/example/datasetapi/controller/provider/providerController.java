@@ -5,6 +5,7 @@ import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.enums.Datasets.DatasetSourceType;
 import com.example.datasetapi.service.dataset.DatasetValidateService;
+import com.example.datasetapi.service.payment.PaymentService;
 import com.example.datasetapi.service.user.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +21,8 @@ public class providerController {
 
     @Autowired
     private UserService userService;
-
+    @Autowired
+    private PaymentService paymentService;
     @PostMapping("dataset/validate-dataset")
     public ResponseEntity<?> checkDatasetContent(@RequestParam MultipartFile file,
                                                  @RequestParam long datasetTypeId,
@@ -41,5 +43,9 @@ public class providerController {
     @PostMapping("send-location-registration-request")
     public ResponseEntity<ApiResponse> sendLocationRegistrationRequest(@ModelAttribute LocationRegistrationRequest locationRegistrationRequest) {
         return userService.locationRegistrationProcess(locationRegistrationRequest);
+    }
+    @GetMapping("revenue")
+    public ResponseEntity<?> getProviderRevenue(HttpServletRequest request) {
+        return ResponseEntity.ok().body(new ApiResponse(true,"load success",userService.getProviderRevenue(request)));
     }
 }
