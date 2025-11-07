@@ -707,129 +707,148 @@ public class FileServiceImpl implements FileService {
         return out;
     }
 
-    // Thay thế hoàn toàn method buildPromptForDatasetType bằng method sau
     private String buildPromptForDatasetType(DatasetType dsType, List<CSVRecord> sampleRows, List<String> csvHeaders, String metricsJson) {
         String typeName = dsType.getName();
         String sampleCsv = sampleToCsv(sampleRows, csvHeaders, 50);
 
         if ("STATION_ENERGY".equalsIgnoreCase(typeName)) {
-            // note: escape literal % -> %% to be safe with String.formatted
             return """
-        Bạn là một trợ lý dữ liệu chuyên nghiệp. Tôi sẽ cung cấp CHỈ dữ liệu tổng hợp (metricsJson) đã được tính cục bộ từ dataset loại STATION_ENERGY, kèm một sample CSV để tham chiếu.
-        
-        Yêu cầu:
-        - Dựa trên metricsJson, hãy phân tích xu hướng năng lượng và phiên sạc theo ngày.
-        - Sinh 2 biểu đồ chính phù hợp với Dashboard 1 (theo spec):
-          1) Line Chart: Tổng năng lượng (energy) theo ngày.
-          2) Bar Chart: Số phiên (sessions) theo ngày.
-        - Đưa ra insight ngắn cho mỗi biểu đồ (1-2 câu).
-        - Phát hiện và liệt kê cảnh báo (alerts) nếu thỏa các điều kiện:
-          * Năng lượng ngày giảm >30%% so với trung bình trước đó -> alert.
-          * Spike sessions: tăng >150%% so với rolling 7-day average -> alert.
-          * Nếu tìm thấy ngày thiếu dữ liệu hoặc sessions thấp bất thường -> alert.
-        - Trả về **CHỈ MỘT JSON hợp lệ** (NO EXTRA TEXT) theo cấu trúc EXACT dưới đây.
+        You are a professional data analysis assistant. You will receive:
+        1) A summarized data object (metricsJson) for dataset type: STATION_ENERGY.
+        2) A sample CSV (for optional reference, not required to analyze fully).
 
-        Mong muốn JSON output:
+        Task Requirements:
+        - Analyze daily energy and session trends based on metricsJson.
+        - Produce exactly **two charts**:
+          1) Line Chart → Total energy (energy) by date.
+          2) Bar Chart → Charging sessions (sessions) by date.
+        - Provide a short insight for each chart (1–2 sentences).
+        - Detect alerts based on:
+          * Energy drop >30%% vs. previous average.
+          * Session spike >150%% vs. 7-day rolling average.
+          * Missing or abnormally low session days.
+        
+        Output Format (strict JSON, no explanation, no text outside JSON):
         {
           "charts": [
-            {"title": "Tổng năng lượng theo ngày", "type": "line", "x": "date", "y": "energy", "insight": "..."},
-            {"title": "Số phiên theo ngày", "type": "bar", "x": "date", "y": "sessions", "insight": "..."}
+            {"title": "Daily Total Energy", "type": "line", "x": "date", "y": "energy", "insight": "..."},
+            {"title": "Daily Charging Sessions", "type": "bar", "x": "date", "y": "sessions", "insight": "..."}
           ],
           "alerts": [
-            {"date": "2025-01-04", "type": "energy_drop", "severity": "high", "message": "..."},
-            ...
+            {"date": "YYYY-MM-DD", "type": "energy_drop|session_spike|missing_data", "severity": "low|medium|high", "message": "..."}
           ],
-          "notes": "ngắn gọn (tối đa 2 câu) nếu cần giải thích phương pháp"
+          "notes": "Optional method explanation (max 2 sentences)."
         }
 
-        LƯU Ý:
-        - Trả về JSON hợp lệ parsable (không có code fences, không mô tả thêm).
-        - Sử dụng các trường có trong metricsJson: daily_summary (date, energy, sessions), top_stations, avg_efficiency, total_energy_kwh, v.v.
-        - sample CSV chỉ để tham chiếu nếu cần (không bắt buộc phân tích hàng loạt).
-        
-        DỮ LIỆU (metricsJson): 
+        DATA (metricsJson):
         %s
 
-        SAMPLE CSV (tham chiếu):
+        SAMPLE CSV (reference-only):
         %s
         """.formatted(metricsJson, sampleCsv);
-        } else if ("TRANSACTION_BILLING".equalsIgnoreCase(typeName)) {
-            return """
-        Bạn là một trợ lý dữ liệu chuyên nghiệp. Tôi cung cấp CHỈ dữ liệu tổng hợp (metricsJson) đã được tính cục bộ cho dataset TRANSACTION_BILLING, kèm sample CSV để tham chiếu.
-
-        Yêu cầu:
-        - Sinh 2 biểu đồ chính theo Dashboard 1 (spec):
-          1) Line Chart: Doanh thu (revenue) theo ngày.
-          2) Bar Chart: Số giao dịch (txCount) theo ngày.
-        - Nêu insight chính cho mỗi biểu đồ (1-2 câu).
-        - Cảnh báo nếu doanh thu ngày giảm >20%% so với trung bình 7 ngày trước.
-        - Nếu có plan chiếm >60%% tổng doanh thu, báo alert "plan_dominant".
-        - Trả về CHỈ MỘT JSON hợp lệ theo cấu trúc:
-
-        {
-          "charts": [
-            {"title": "Doanh thu theo ngày", "type": "line", "x": "date", "y": "revenue", "insight": "..."},
-            {"title": "Số giao dịch theo ngày", "type": "bar", "x": "date", "y": "txCount", "insight": "..."}
-          ],
-          "alerts": [
-            {"date": "2025-01-03", "type": "revenue_drop", "severity": "medium", "message": "..."},
-            {"type": "plan_dominant", "plan": "Premium", "share": 0.59, "message": "..."}
-          ],
-          "notes": "..."
         }
 
-        DỮ LIỆU:
+        else if ("TRANSACTION_BILLING".equalsIgnoreCase(typeName)) {
+            return """
+        You are a professional data analysis assistant. Provided:
+        1) Summarized data (metricsJson) for TRANSACTION_BILLING.
+        2) Sample CSV (reference-only).
+
+        Requirements:
+        - Produce exactly two charts:
+          1) Line Chart → Revenue by date.
+          2) Bar Chart → Transaction count (txCount) by date.
+        - Provide 1–2 sentence insight per chart.
+        - Trigger alerts if:
+          * Revenue drop >20%% vs. previous 7-day average.
+          * A single plan contributes >60%% of total revenue → `plan_dominant`.
+
+        Output JSON (strict format):
+        {
+          "charts": [
+            {"title": "Daily Revenue", "type": "line", "x": "date", "y": "revenue", "insight": "..."},
+            {"title": "Daily Transaction Count", "type": "bar", "x": "date", "y": "txCount", "insight": "..."}
+          ],
+          "alerts": [
+            {"date": "YYYY-MM-DD", "type": "revenue_drop", "severity": "medium|high", "message": "..."},
+            {"type": "plan_dominant", "plan": "...", "share": 0.00, "message": "..."}
+          ],
+          "notes": "Optional (max 2 sentences)."
+        }
+
+        DATA:
         %s
 
         SAMPLE CSV:
         %s
         """.formatted(metricsJson, sampleCsv);
-        } else if ("VEHICLE_DATA_SAMPLE".equalsIgnoreCase(typeName)) {
-            return """
-        Bạn là một trợ lý dữ liệu chuyên nghiệp. Tôi cung cấp CHỈ dữ liệu tổng hợp (metricsJson) cho dataset VEHICLE_DATA_SAMPLE và sample CSV để tham chiếu.
-
-        Yêu cầu:
-        - Sinh 2 biểu đồ theo spec:
-          1) Bar Chart: Top models theo avg_requested_energy.
-          2) Scatter Plot: requested_energy vs battery_capacity_kwh.
-        - Phát hiện model hoặc phiên có requested_energy vượt quá battery_capacity -> alert "over_requested".
-        - Phát hiện SOC anomalies (nếu metrics cung cấp) -> alert.
-        - Trả về CHỈ MỘT JSON hợp lệ:
-
-        {
-          "charts": [
-            {"title": "Top model theo năng lượng yêu cầu", "type": "bar", "x": "vehicle_model", "y": "avg_requested_energy", "insight": "..."},
-            {"title": "Requested energy vs battery capacity", "type": "scatter", "x": "battery_capacity_kwh", "y": "requested_energy", "insight": "..."}
-          ],
-          "alerts": [
-            {"type": "over_requested", "model": "Model X", "count": 5, "message": "..."},
-            ...
-          ],
-          "notes": "..."
         }
 
-        DỮ LIỆU:
+        else if ("VEHICLE_DATA_SAMPLE".equalsIgnoreCase(typeName)) {
+            return """
+        You are a professional data analysis assistant. Input includes:
+        - Summarized data metrics (metricsJson) for VEHICLE_DATA_SAMPLE.
+        - Sample CSV (reference-only).
+
+        Requirements:
+        - Produce two charts:
+          1) Bar Chart → Top vehicle models by avg_requested_energy.
+          2) Scatter Plot → requested_energy vs battery_capacity_kwh.
+        - Detect alerts:
+          * requested_energy > battery_capacity → `over_requested`.
+          * SOC or charging anomalies if present.
+
+        Output JSON structure (strict):
+        {
+          "charts": [
+            {"title": "Top Models by Requested Energy", "type": "bar", "x": "vehicle_model", "y": "avg_requested_energy", "insight": "..."},
+            {"title": "Requested Energy vs Battery Capacity", "type": "scatter", "x": "battery_capacity_kwh", "y": "requested_energy", "insight": "..."}
+          ],
+          "alerts": [
+            {"type": "over_requested", "model": "...", "count": 0, "message": "..."}
+          ],
+          "notes": "Optional (max 2 sentences)."
+        }
+
+        DATA:
         %s
 
         SAMPLE CSV:
         %s
         """.formatted(metricsJson, sampleCsv);
-        } else {
-            return
-                    """
-                      Bạn là một trợ lý dữ liệu chuyên nghiệp. Tôi cung cấp CHỈ metricsJson và sample CSV cho dataset type: %s.
-          
-                      Yêu cầu:
-                      - Dựa trên metricsJson, hãy chọn 2 biểu đồ phù hợp (time series / bar / pie / scatter / histogram).
-                      - Nêu insight chính và ít nhất 1 alert có thể bật dựa trên biến động (ví dụ: drop >20%%, spike >150%%).
-                      - Trả về CHỈ MỘT JSON hợp lệ với keys: charts, alerts, notes.
-          
-                      METRICS:
-                      %s
-          
-                      SAMPLE CSV:
-                      %s
-                      """.formatted(typeName, metricsJson, sampleCsv);
+        }
+
+        else {
+            return """
+        You are a professional data analysis assistant.
+
+        Input:
+        - metricsJson (primary data to analyze)
+        - sample CSV (optional reference)
+
+        Requirements:
+        - Choose **two** meaningful charts based on metricsJson.
+        - Provide 1–2 sentence insight for each chart.
+        - Detect at least **one** alert (e.g., drop >20%%, spike >150%%, anomaly).
+        
+        Output Format (strict JSON only):
+        {
+          "charts": [
+            {"title": "...", "type": "...", "x": "...", "y": "...", "insight": "..."},
+            {"title": "...", "type": "...", "x": "...", "y": "...", "insight": "..."}
+          ],
+          "alerts": [
+            {"type": "...", "severity": "low|medium|high", "message": "..."}
+          ],
+          "notes": "Optional (max 2 sentences)."
+        }
+
+        METRICS:
+        %s
+
+        SAMPLE CSV:
+        %s
+        """.formatted(metricsJson, sampleCsv);
         }
     }
 

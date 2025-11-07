@@ -8,4 +8,6 @@ import java.util.List;
 
 public interface DatasetInforRepository extends JpaRepository<DatasetInformation, Long> {
     List<DatasetInformation> findAllByStatus(DatasetInforStatus status);
+
+    DatasetInformation findByDatasetId(Long datasetId);
 }

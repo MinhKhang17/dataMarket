@@ -30,6 +30,7 @@ public class AiPromptRecord {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
+
     public AiPromptRecord() { this.createdAt = Instant.now(); }
 
     }
