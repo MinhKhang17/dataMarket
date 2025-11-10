@@ -8,5 +8,4 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface SurveyService {
     ResponseEntity<ApiResponse> getOptionsForSurvey();
     ResponseEntity<ApiResponse> submitSurveyResponses(@RequestBody ConsumerRequest consumerRequest);
-
 }

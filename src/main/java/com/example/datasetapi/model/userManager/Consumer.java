@@ -13,16 +13,16 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Consumer {
-    @Id
-    @Column
-    private long id;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @Id
+    private Long id;
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @MapsId
     @JoinColumn(name = "id")
     private User user;
 
-    @ManyToMany(fetch =  FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "consumer_consumer_type",
             joinColumns = @JoinColumn(name = "consumer_id"),
@@ -33,3 +33,5 @@ public class Consumer {
     @Column(name = "is_do_survey", nullable = false)
     private boolean doSurvey = false;
 }
+
+

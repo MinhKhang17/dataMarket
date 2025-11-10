@@ -2,7 +2,6 @@ package com.example.datasetapi.model.userManager;
 
 import com.example.datasetapi.enums.UserStatus;
 import com.example.datasetapi.model.dataset.DownloadToken;
-import com.example.datasetapi.model.paySystem.BankAccount;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -27,11 +26,8 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    @Column(nullable = false,unique = true)
+    @Column(nullable = false, unique = true)
     private String email;
-
-    @OneToOne(mappedBy = "user", orphanRemoval = true, cascade = CascadeType.ALL, fetch =  FetchType.LAZY, optional = true)
-    private Consumer consumer;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id")
@@ -41,23 +37,19 @@ public class User {
     @JoinColumn(name = "token_id")
     private Token token;
 
-    @Column(nullable = true)
     private String Author;
-    @Column(nullable = true)
     private String Auth_id;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = true)
     private UserStatus userStatus;
 
-    private boolean isActive=false;
+    private boolean isActive = false;
 
     @OneToMany
-    private List<DownloadToken> downloadTokens;
+    private List<DownloadToken> downloadTokens = new ArrayList<>();
 
     public void setToken(Token token) {
         this.token = token;
         if (token != null) token.setUser(this);
     }
-
 }

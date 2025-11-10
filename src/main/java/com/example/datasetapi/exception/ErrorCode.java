@@ -26,6 +26,9 @@ public enum ErrorCode {
     PASSWORD_MISMATCH("PASSWORD_MISMATCH", "Passwords do not match"),
     OLD_PASSWORD_INCORRECT("OLD_PASSWORD_INCORRECT", "Old password is incorrect"),
 
+    // Consumer errors
+    CONSUMER_NOT_FOUND("CONSUMER_NOT_FOUND", "Consumer not found"),
+
     // Input errors
     REGISTRATION_DISABLED("REGISTRATION_DISABLED", "User registration is currently disabled"),
     INVALID_INPUT("INVALID_INPUT", "Invalid input data"),

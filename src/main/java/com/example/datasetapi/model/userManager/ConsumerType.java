@@ -8,19 +8,20 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 @Entity
+@Table(name = "consumer_type")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "consumer_type")
 public class ConsumerType {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
     @Column(nullable = false)
     private String name;
 
-    @ManyToMany(mappedBy = "consumerTypes", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @ManyToMany(mappedBy = "consumerTypes", fetch = FetchType.LAZY)
     private List<Consumer> consumers;
 }
+

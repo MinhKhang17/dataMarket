@@ -35,42 +35,26 @@ import java.util.stream.Collectors;
 @Component
 public class DataInitializer implements CommandLineRunner {
 
-    @Autowired
-    private RoleRepository roleRepository;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private ConsumerTypeRepository consumerTypeRepository;
-    @Autowired
-    private ProviderRegistrationRepository providerRegistrationRepository;
-    @Autowired
-    private ProviderIndentityDocumentRepository providerIndentityDocumentRepository;
-    @Autowired
-    private CategoryRepository categoryRepository;
-    @Autowired
-    private DatasetTypeRepository datasetTypeRepository;
-    @Autowired
-    private Dataset_Type_Column_Repository datasetTypeColumnRepository;
-    @Autowired
-    private DatasetRepository datasetRepository;
-    @Autowired
-    private ProviderRepository providerRepository;
-    @Autowired
-    private DatasetInforRepository datasetInforRepository;
-    @Autowired
-    private PricingRuleRepo pricingRuleRepo;
-    @Autowired
-    private ProvinceRepository provinceRepository;
-    @Autowired
-    private CommuneRepository communeRepository;
-    @Autowired
-    private WalletRepository walletRepository;
-    @Autowired
-    private WalletService walletService;
-    @Autowired
-    private BankAccountRepository bankAccountRepository;
+    @Autowired private RoleRepository roleRepository;
+    @Autowired private PasswordEncoder passwordEncoder;
+    @Autowired private UserRepository userRepository;
+    @Autowired private ConsumerTypeRepository consumerTypeRepository;
+    @Autowired private ProviderRegistrationRepository providerRegistrationRepository;
+    @Autowired private ProviderIndentityDocumentRepository providerIndentityDocumentRepository;
+    @Autowired private CategoryRepository categoryRepository;
+    @Autowired private DatasetTypeRepository datasetTypeRepository;
+    @Autowired private Dataset_Type_Column_Repository datasetTypeColumnRepository;
+    @Autowired private DatasetRepository datasetRepository;
+    @Autowired private ProviderRepository providerRepository;
+    @Autowired private DatasetInforRepository datasetInforRepository;
+    @Autowired private PricingRuleRepo pricingRuleRepo;
+    @Autowired private ProvinceRepository provinceRepository;
+    @Autowired private CommuneRepository communeRepository;
+    @Autowired private WalletRepository walletRepository;
+    @Autowired private WalletService walletService;
+    @Autowired private BankAccountRepository bankAccountRepository;
+    @Autowired private ConsumerRepository consumerRepository;
+
 
     @Override
     public void run(String... args) throws Exception {
@@ -532,6 +516,7 @@ public class DataInitializer implements CommandLineRunner {
         System.out.println("Create Admin Role");
     }
 
+
     private void createConsumerRole() {
         User user = new User();
         user.setUsername("consumer");
@@ -539,6 +524,8 @@ public class DataInitializer implements CommandLineRunner {
         user.setPassword(passwordEncoder.encode("password"));
         user.setEmail("consumer@gmail.com");
         user.setRole(roleRepository.findByName("CONSUMER").get());
+        Consumer consumer = new Consumer();
+        consumer.setUser(user);
 
         Wallet wallet = new Wallet();
         wallet.setUser(user);
@@ -550,7 +537,7 @@ public class DataInitializer implements CommandLineRunner {
         bankAccount.setAccountNumber("987654321");
         bankAccount.setUser(user);
 
-        userRepository.save(user);
+        consumerRepository.save(consumer);
         bankAccountRepository.save(bankAccount);
         walletRepository.save(wallet);
         System.out.println("Khoi tao consumer");

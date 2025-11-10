@@ -58,7 +58,6 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final TokenService tokenService;
     private final RoleRepository roleRepository;
-    private final ImageServiceImpl imageService;
     private final WalletRepository walletRepository;
     private final ProviderIndentityDocumentRepository providerIdentityDocumentRepository;
     private final ProviderRegistrationRepository providerRegistrationRepository;
@@ -66,19 +65,19 @@ public class UserServiceImpl implements UserService {
     private final WalletService walletService;
     private final HttpServletRequest request;
     private final LocationRegistrationRepository locationRegistrationRepository;
-    @Autowired private ProviderRevenueRepo providerRevenueRepo;
+    private final ProviderRevenueRepo providerRevenueRepo;
+    private final DatasetMapper datasetMapper;
+    private final CommuneRepository communeRepository;
+    private final ConsumerSubRepo consumerSubRepo;
+    private final ConsumerRepository consumerRepository;
+
+
     @Autowired
-    private  DatasetMapper datasetMapper;
-    @Autowired
-    private CommuneRepository communeRepository;
-    @Autowired private ConsumerSubRepo consumerSubRepo;
-    @Autowired
-    public UserServiceImpl(ProviderRepository providerRepository, UserRepository userRepository, JwtUtil jwtUtil, TokenServiceImpl tokenService, RoleRepository roleRepository, ImageServiceImpl imageService, ProviderIndentityDocumentRepository providerIdentityDocumentRepository, ProviderRegistrationRepository providerRegistrationRepository, WalletRepository walletRepository, WalletService walletService, HttpServletRequest request, LocationRegistrationRepository locationRegistrationRepository) {
+    public UserServiceImpl(ProviderRepository providerRepository, UserRepository userRepository, JwtUtil jwtUtil, TokenServiceImpl tokenService, RoleRepository roleRepository, ImageServiceImpl imageService, ProviderIndentityDocumentRepository providerIdentityDocumentRepository, ProviderRegistrationRepository providerRegistrationRepository, WalletRepository walletRepository, WalletService walletService, HttpServletRequest request, LocationRegistrationRepository locationRegistrationRepository, ProviderRevenueRepo providerRevenueRepo, DatasetMapper datasetMapper, CommuneRepository communeRepository, ConsumerSubRepo consumerSubRepo, ConsumerRepository consumerRepository) {
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
         this.tokenService = tokenService;
         this.roleRepository = roleRepository;
-        this.imageService = imageService;
         this.providerIdentityDocumentRepository = providerIdentityDocumentRepository;
         this.providerRegistrationRepository = providerRegistrationRepository;
         this.walletRepository = walletRepository;
@@ -86,6 +85,11 @@ public class UserServiceImpl implements UserService {
         this.walletService = walletService;
         this.request = request;
         this.locationRegistrationRepository = locationRegistrationRepository;
+        this.providerRevenueRepo = providerRevenueRepo;
+        this.datasetMapper = datasetMapper;
+        this.communeRepository = communeRepository;
+        this.consumerSubRepo = consumerSubRepo;
+        this.consumerRepository = consumerRepository;
     }
 
 
@@ -182,55 +186,47 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-
     public ResponseEntity<ApiResponse> register(RegisterRequest registerRequest) {
         // check username
         if (userRepository.findByUsername(registerRequest.getUsername()).isPresent()) {
-            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.USERNAME_ALREADY_EXISTS);
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.USERNAME_ALREADY_EXISTS);
         }
 
         // check password
         if (registerRequest.getPassword().length() < 8) {
-        throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.PASSWORD_TOO_SHORT);
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.PASSWORD_TOO_SHORT);
         }
         if (!Validator.isValidPassword(registerRequest.getPassword())) {
-        throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.PASSWORD_TOO_WEAK);
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.PASSWORD_TOO_WEAK);
         }
 
         // check email
         if (!Validator.isValidEmail(registerRequest.getEmail())) {
-            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.EMAIL_INVALID);
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.EMAIL_INVALID);
         }
         if (userRepository.existsByEmail(registerRequest.getEmail())) {
-            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.EMAIL_ALREADY_EXISTS);
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
-        // tạo user
         User user = new User();
         user.setUsername(registerRequest.getUsername());
         user.setPassword(PasswordUtil.encode(registerRequest.getPassword()));
         user.setEmail(registerRequest.getEmail());
         user.setActive(true);
 
-        // gán role
-        Optional<Role> roleOptional = roleRepository.findByName("CONSUMER");
-        if (roleOptional.isEmpty()) {
-            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.INVALID_ROLE);
-        }
+        Consumer consumer = new Consumer();
+        consumer.setUser(user);
 
-        user.setRole(roleOptional.get());
-        // lưu user
-        try {
-            userRepository.save(user);
-            walletService.createWallet(user);
+        Role role = roleRepository.findByName("CONSUMER")
+                .orElseThrow(() -> new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.INVALID_ROLE));
+        user.setRole(role);
 
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, "Error", e.getMessage()));
-        }
+        userRepository.save(user);
+        consumerRepository.save(consumer);
+        walletService.createWallet(user);
 
-        return ResponseEntity.ok().body(new ApiResponse(true, "User registered successfully", user.getUsername()));
+        return ResponseEntity.ok(new ApiResponse(true, "User registered successfully", user.getUsername()));
     }
-
 
 
     @Transactional
@@ -662,12 +658,16 @@ public class UserServiceImpl implements UserService {
                 else{
                     userResponse.setHaveSub(true);
                     userResponse.setConsumerSubInfo(datasetMapper.toConsumerSubReponseDTO(consumerSubRepo.findByConsumerAndIsUsing(user,true).orElseThrow(
-                                    ()-> new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.COMMUNE_NOT_FOUND)
+                                    ()-> new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.CONSUMER_NOT_FOUND)
                             ))
                     );
 
                 }
+                Consumer consumer = consumerRepository.findById(userOptional.get().getId()).orElseThrow(()
+                        -> new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.CONSUMER_NOT_FOUND));
+                userResponse.setDoSurvey(consumer.isDoSurvey());
             }
+
 
             return ResponseEntity.ok().body(new ApiResponse(true, "User Information", userResponse));
 

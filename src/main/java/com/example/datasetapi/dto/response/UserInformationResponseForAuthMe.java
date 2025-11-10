@@ -10,4 +10,5 @@ public class UserInformationResponseForAuthMe {
     private String role;
     private boolean isHaveSub = false;
     private ConsumerSubResponseDTO consumerSubInfo;
+    private boolean isDoSurvey = false;
 }
