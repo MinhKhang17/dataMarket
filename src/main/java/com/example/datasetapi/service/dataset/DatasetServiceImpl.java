@@ -604,7 +604,7 @@ else {
         orderReq.setPrice(dataset_row);
         orderReq.setPricingMethod(PricingMethod.SUBSCRIPTION);
 
-        ConsumerDatasetOrderResponse order = orderService.createOrder(
+        ConsumerOrderResponse order = orderService.createOrder(
                 consumer.getId(),
                 List.of(orderReq)
         );
@@ -638,7 +638,7 @@ else {
         item.setPrice((long) pricing.getPrice());
         item.setPricingMethod(PricingMethod.ONE_TIME);
 
-        ConsumerDatasetOrderResponse order = orderService.createOrder(
+        ConsumerOrderResponse order = orderService.createOrder(
                 consumer.getId(),
                 List.of(item)
         );

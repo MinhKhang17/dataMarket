@@ -5,18 +5,16 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class AdminOrderResponse {
-    private Long id;
-    private Long userId;
-    private String username;
-    private String email;
-    private List<OrderItemDetailResponse> items;
+public class OrderSummaryResponse {
+    private Long orderId;
+    private LocalDateTime purchaseDate;
     private Long totalAmount;
     private PricingMethod purchaseMethod;
-    private LocalDateTime createdAt;
+    private Integer datasetCount;
 }
