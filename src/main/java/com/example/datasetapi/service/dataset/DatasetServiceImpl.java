@@ -789,6 +789,38 @@ else {
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(resource);
     }
+    @Transactional
+    @Override
+    public ResponseEntity<?> downloadDatasetNoValidToken(Long datasetId) {
+
+        // Lấy dataset
+        Dataset dataset = datasetRepository.findById(datasetId)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_NOT_FOUND));
+
+        String fileKey = dataset.getFileKey();
+
+        // Chuẩn bị request lên S3
+        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                .bucket(BUCKET_NAME)
+                .key(fileKey)
+                .build();
+
+        // Lấy file từ S3
+        ResponseInputStream<GetObjectResponse> s3Object = s3Client.getObject(getObjectRequest);
+        InputStreamResource resource = new InputStreamResource(s3Object);
+
+        // Tăng lượt tải
+        dataset.setDowload_count(dataset.getDowload_count() + 1);
+        datasetRepository.save(dataset);
+
+        // Trả file về client
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + Paths.get(fileKey).getFileName().toString() + "\"")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource);
+    }
+
 
     @Override
     public List<DatasetDTO> findAllConsumerDataset(HttpServletRequest request) {

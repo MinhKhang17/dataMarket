@@ -17,6 +17,7 @@ import com.example.datasetapi.model.userManager.User;
 import com.example.datasetapi.dto.response.*;
 import com.example.datasetapi.model.dataset.TimeGroup;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -80,6 +81,9 @@ public interface DatasetService {
     String getDownloadTokenOfDatasetForConsumer(long datasetId, HttpServletRequest request);
 
     ResponseEntity<?> downloadDataset(String dowloadToken,HttpServletRequest request);
+
+    @Transactional
+    ResponseEntity<?> downloadDatasetNoValidToken(Long datasetId);
 
     List<DatasetDTO> findAllConsumerDataset(HttpServletRequest request);
 

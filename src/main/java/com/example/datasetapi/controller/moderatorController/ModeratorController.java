@@ -27,6 +27,7 @@ public class ModeratorController {
     private DatasetValidateService datasetValidateService;
     @Autowired
     private DatasetService datasetService;
+
     @GetMapping("/get-dataset-validation")
     public ResponseEntity<?> getAllDatasetInformation() {
         return datasetValidateService.getAllDatasetErrorWithDatasetInfor();
@@ -69,6 +70,10 @@ public class ModeratorController {
     public ResponseEntity<?> getGroupInfor(@RequestParam long datasetGroupId) {
         DatasetGroupInfor datasetGroupInfor = datasetService.getDatasetGroupInfor(datasetGroupId);
         return ResponseEntity.ok().body(new ApiResponse(true,"load succes",datasetGroupInfor));
+    }
+    @PostMapping("/download/{id}")
+    public ResponseEntity<?> downloadDataset(@PathVariable("id") long id,HttpServletRequest request) {
+        return datasetService.downloadDatasetNoValidToken(id);
     }
 
 }
