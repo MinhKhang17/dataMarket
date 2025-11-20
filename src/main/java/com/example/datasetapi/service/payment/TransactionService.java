@@ -15,4 +15,5 @@ public interface TransactionService {
      Transaction createTransaction(TransferType transferType, double amount, long user_id, Wallet wallet, BuyType buyType);
 
      ResponseEntity<ApiResponse> getTransactions();
+     List<Transaction> findByBuyType(String buyType);
 }

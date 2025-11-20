@@ -2,6 +2,7 @@ package com.example.datasetapi.controller.adminController;
 
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.enums.VerificationStatus.RegistrationStatus;
+import com.example.datasetapi.service.analytics.AnalyticsService;
 import com.example.datasetapi.service.order.OrderService;
 import com.example.datasetapi.service.user.AdminService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,6 +16,7 @@ public class AdminController {
 
     @Autowired private AdminService adminService;
     @Autowired private OrderService orderService;
+    @Autowired private AnalyticsService analyticsService;
 
     @GetMapping("providerRegis/getPending")
     public ResponseEntity<?> getProviderRegisPending() {
@@ -49,5 +51,10 @@ public class AdminController {
     @GetMapping("orders/get/{orderId}")
     public ResponseEntity<?> getOrderById(@PathVariable Long orderId) {
         return orderService.getOrderById(orderId);
+    }
+
+    @GetMapping("analytic/revenue")
+    public ResponseEntity<?> getRevenue(){
+        return ResponseEntity.ok().body(new ApiResponse(true, "Revenue", analyticsService.getRevenue()));
     }
 }

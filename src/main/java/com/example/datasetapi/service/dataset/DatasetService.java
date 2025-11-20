@@ -1,9 +1,6 @@
 package com.example.datasetapi.service.dataset;
 
-import com.example.datasetapi.dto.request.CheckoutRequestDTO;
-import com.example.datasetapi.dto.request.ConsumerBuyRequestDTO;
-import com.example.datasetapi.dto.request.ModeratorCreateNewDatasetGroupRequest;
-import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
+import com.example.datasetapi.dto.request.*;
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.dto.response.CheckoutResponseDTO;
 import com.example.datasetapi.dto.response.ConsumerBuyResponseDTO;
@@ -105,5 +102,6 @@ public interface DatasetService {
 
     boolean cancelDataset(Long id, HttpServletRequest request);
 
+    DatasetUpdateResponse updateDataset(Long id, DatasetUpdateRequest request);
 
 }

@@ -2,10 +2,11 @@ package com.example.datasetapi.service.order;
 
 import com.example.datasetapi.dto.request.OrderRequest;
 import com.example.datasetapi.dto.response.*;
+import com.example.datasetapi.enums.Datasets.PricingMethod;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
-import com.example.datasetapi.model.dataset.DatasetOrder;
-import com.example.datasetapi.model.dataset.DatasetOrderItem;
+import com.example.datasetapi.model.order.Order;
+import com.example.datasetapi.model.order.OrderItem;
 import com.example.datasetapi.model.userManager.User;
 import com.example.datasetapi.repository.OrderRepository;
 import com.example.datasetapi.service.user.TokenService;
@@ -39,7 +40,7 @@ public class OrderServiceImpl implements OrderService {
             throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED);
         }
 
-        List<DatasetOrder> orders = orderRepository.findAll();
+        List<Order> orders = orderRepository.findAll();
         List<OrderSummaryResponse> response = orders.stream()
                 .map(o -> {
                     return new OrderSummaryResponse(
@@ -66,7 +67,7 @@ public class OrderServiceImpl implements OrderService {
             throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED);
         }
 
-        List<DatasetOrder> orders = orderRepository.findByUserId(userId);
+        List<Order> orders = orderRepository.findByUserId(userId);
         if(orders.isEmpty()) {
             return ResponseEntity.ok().body(new ApiResponse(false, "Orders not found", List.of()));
         }
@@ -98,12 +99,12 @@ public class OrderServiceImpl implements OrderService {
             throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
         }
 
-        DatasetOrder datasetOrder = new DatasetOrder();
+        Order datasetOrder = new Order();
         datasetOrder.setUser(user);
 
-        List<DatasetOrderItem> items = orderRequest.stream()
+        List<OrderItem> items = orderRequest.stream()
                 .map(req -> {
-                    DatasetOrderItem item = new DatasetOrderItem();
+                    OrderItem item = new OrderItem();
                     item.setDatasetId(req.getDatasetId());
                     item.setDatasetName(req.getDatasetName());
                     item.setPriceAtPurchase(req.getPrice());
@@ -114,13 +115,13 @@ public class OrderServiceImpl implements OrderService {
         datasetOrder.setItems(items);
 
         Long total = items.stream()
-                .mapToLong(DatasetOrderItem::getPriceAtPurchase)
+                .mapToLong(OrderItem::getPriceAtPurchase)
                 .sum();
         datasetOrder.setTotalAmount(total);
 
         datasetOrder.setPurchaseMethod(orderRequest.get(0).getPricingMethod());
 
-        DatasetOrder saved = orderRepository.save(datasetOrder);
+        Order saved = orderRepository.save(datasetOrder);
 
         List<OrderItemDetailResponse> itemsDetail = items.stream()
                 .map(i -> {
@@ -152,7 +153,7 @@ public class OrderServiceImpl implements OrderService {
             }
 
             User user = userService.findUserById(userId);
-            DatasetOrder order = orderRepository.findById(orderId)
+            Order order = orderRepository.findById(orderId)
                     .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.ORDER_NOT_FOUND));
             User requester = order.getUser();
             if(!user.getRole().getName().equalsIgnoreCase("ADMIN")
@@ -188,5 +189,10 @@ public class OrderServiceImpl implements OrderService {
                     order.getCreatedAt()
             );
             return ResponseEntity.ok().body(new ApiResponse(true, "Order retrieved successfully", adminResponse));
+    }
+
+    @Override
+    public List<Order> findByPricingMethod(String pricingMethod) {
+        return orderRepository.findByPurchaseMethod(PricingMethod.valueOf(pricingMethod));
     }
 }

@@ -19,7 +19,8 @@ public class DatasetPricing {
 //    @Enumerated(EnumType.STRING)
 //    private PricingType pricingType = PricingType.UNDETERMINED;
 
-    @ManyToOne (cascade = CascadeType.ALL)
+    @ManyToOne (fetch = FetchType.LAZY)
+    @JoinColumn(name = "pricing_rule_id")
     private PricingRule pricingRule;
 
     @Enumerated(EnumType.STRING)
@@ -27,4 +28,7 @@ public class DatasetPricing {
 
     @Enumerated
     private PricingMethod pricingMethod;
+
+    @ManyToOne
+    private DatasetPlan datasetPlan;
 }

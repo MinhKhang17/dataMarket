@@ -1,4 +1,4 @@
-package com.example.datasetapi.model.dataset;
+package com.example.datasetapi.model.order;
 
 import com.example.datasetapi.enums.Datasets.PricingMethod;
 import com.example.datasetapi.model.userManager.User;
@@ -16,13 +16,13 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 
-public class DatasetOrder {
+public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "order")
-    private List<DatasetOrderItem> items;
+    private List<OrderItem> items;
 
     @Column(nullable = false)
     private Long totalAmount;
