@@ -23,6 +23,7 @@ import com.example.datasetapi.dto.response.LoginResponse;
 import com.example.datasetapi.model.paySystem.Wallet;
 import com.example.datasetapi.repository.RoleRepository;
 import com.example.datasetapi.repository.ProviderRegistrationRepository;
+import com.example.datasetapi.service.feature.EmailService;
 import com.example.datasetapi.service.feature.ImageServiceImpl;
 import com.example.datasetapi.repository.WalletRepository;
 import com.example.datasetapi.service.payment.WalletService;
@@ -66,13 +67,17 @@ public class UserServiceImpl implements UserService {
     private final WalletService walletService;
     private final HttpServletRequest request;
     private final LocationRegistrationRepository locationRegistrationRepository;
+
     @Autowired private ProviderRevenueRepo providerRevenueRepo;
     @Autowired
     private  DatasetMapper datasetMapper;
     @Autowired
     private CommuneRepository communeRepository;
     @Autowired private ConsumerSubRepo consumerSubRepo;
-    @Autowired
+
+    @Autowired private EmailService emailService;
+
+
     public UserServiceImpl(ProviderRepository providerRepository, UserRepository userRepository, JwtUtil jwtUtil, TokenServiceImpl tokenService, RoleRepository roleRepository, ImageServiceImpl imageService, ProviderIndentityDocumentRepository providerIdentityDocumentRepository, ProviderRegistrationRepository providerRegistrationRepository, WalletRepository walletRepository, WalletService walletService, HttpServletRequest request, LocationRegistrationRepository locationRegistrationRepository) {
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
@@ -136,6 +141,9 @@ public class UserServiceImpl implements UserService {
 
         if(!user.isActive()){
             throw new CustomException(HttpStatus.NOT_FOUND,ErrorCode.USER_NOT_FOUND);
+        }
+        if(!user.getIsEmailValid()){
+            throw new CustomException(HttpStatus.FORBIDDEN,ErrorCode.EMAIL_INVALID);
         }
 
 
@@ -211,7 +219,6 @@ public class UserServiceImpl implements UserService {
         user.setPassword(PasswordUtil.encode(registerRequest.getPassword()));
         user.setEmail(registerRequest.getEmail());
         user.setActive(true);
-
         // gán role
         Optional<Role> roleOptional = roleRepository.findByName("CONSUMER");
         if (roleOptional.isEmpty()) {
@@ -222,6 +229,7 @@ public class UserServiceImpl implements UserService {
         // lưu user
         try {
             userRepository.save(user);
+            emailService.sendVerfiMail(tokenService.generateVerifyEmailToken(user),user.getEmail());
             walletService.createWallet(user);
 
         } catch (Exception e) {
@@ -573,6 +581,10 @@ public class UserServiceImpl implements UserService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public void save(User user) {
+        userRepository.save(user);
+    }
 
 
     @Transactional

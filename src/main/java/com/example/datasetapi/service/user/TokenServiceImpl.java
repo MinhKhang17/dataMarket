@@ -8,6 +8,7 @@ import com.example.datasetapi.model.userManager.Token;
 import com.example.datasetapi.model.userManager.User;
 import com.example.datasetapi.repository.DownloadTokenRepository;
 import com.example.datasetapi.repository.TokenRepository;
+import com.example.datasetapi.repository.UserRepository;
 import com.example.datasetapi.util.JwtUtil;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.Cookie;
@@ -19,10 +20,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
 public class TokenServiceImpl implements TokenService {
+
+    @Autowired private UserRepository userRepository;
     @Override
     public long getUserIdFromRequest(HttpServletRequest request) {
         return jwtUtil.getUserIdFromToken(resolveToken(request));
@@ -37,7 +41,27 @@ public class TokenServiceImpl implements TokenService {
                 .orElseThrow(() -> new EntityNotFoundException("DownloadToken not found with id: " + tokenId));
     }
 
-@Autowired
+    @Override
+    public String generateVerifyEmailToken(User user) {
+        // 1. Tạo token
+        String token = UUID.randomUUID().toString();
+
+        // 2. Thiết lập thời gian hết hạn (ví dụ 15 phút)
+        LocalDateTime expiredAt = LocalDateTime.now().plusMinutes(15);
+
+        // 3. Tạo object token
+        Token emailToken = new Token();
+        emailToken.setToken(token);
+        emailToken.setUser(user);
+        // 4. Lưu vào DB
+        tokenRepository.save(emailToken);
+
+        // 5. Trả token để gửi email
+        return token;
+    }
+
+
+    @Autowired
     private TokenRepository tokenRepository;
 @Autowired
     private JwtUtil jwtUtil;
@@ -113,6 +137,26 @@ public class TokenServiceImpl implements TokenService {
     @Override
     public void deleteByUserId(long userId) {
         tokenRepository.deleteByUser_Id(userId);
+    }
+
+
+    @Override
+    public String verifyEmailToken(String token) {
+
+        // 1. Lấy token trong DB
+        Token emailToken = tokenRepository.findByToken(token);
+        if(emailToken==null){
+            throw  new CustomException(HttpStatus.NOT_FOUND,ErrorCode.TOKEN_NOT_FOUND);
+        }
+
+        // 4. Lấy user từ token → đánh dấu verify
+        User user = emailToken.getUser();
+        user.setIsEmailValid(true);
+        userRepository.save(user);
+
+
+        // 6. Trả kết quả
+        return "Email verified successfully";
     }
 
 

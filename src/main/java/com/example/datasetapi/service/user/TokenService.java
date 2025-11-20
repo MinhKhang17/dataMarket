@@ -27,6 +27,10 @@ public interface TokenService {
 
     DownloadToken findDownloadTokenById(UUID tokenId);
 
+    String generateVerifyEmailToken(User user);
+
+    String verifyEmailToken(String token);
+
 //    public ResponseEntity<ApiResponse> getDownloadToken(long datasetId, HttpServletRequest request);
 
 }

@@ -30,6 +30,8 @@ public class User {
     @Column(nullable = false,unique = true)
     private String email;
 
+    private Boolean isEmailValid = false;
+
     @OneToOne(mappedBy = "user", orphanRemoval = true, cascade = CascadeType.ALL, fetch =  FetchType.LAZY, optional = true)
     private Consumer consumer;
 

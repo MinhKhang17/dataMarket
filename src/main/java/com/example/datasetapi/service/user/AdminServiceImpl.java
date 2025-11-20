@@ -132,6 +132,7 @@ private EmailService emailService;
         user.setActive(true);
         String password = UUID.randomUUID().toString();
         user.setPassword(PasswordUtil.encode(password));
+        user.setIsEmailValid(true);
         Provider provider = new Provider();
         provider.setUser(user);
         provider.setCommunes(List.of(providerRegistration.getCommune()));

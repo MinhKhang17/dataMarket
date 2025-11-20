@@ -241,6 +241,7 @@ public class DataInitializer implements CommandLineRunner {
         user.setPassword(passwordEncoder.encode("moderator"));
         user.setRole(roleRepository.findByName("MODERATOR").get());
         user.setEmail("moderator@gmail.com");
+        user.setIsEmailValid(true);
         userRepository.save(user);
     }
 
@@ -483,6 +484,7 @@ public class DataInitializer implements CommandLineRunner {
         User user = new User();
         user.setUsername("provider");
         user.setEmail("provider@gmail.com");
+        user.setIsEmailValid(true);
         user.setPassword(passwordEncoder.encode("password"));
         user.setUserStatus(UserStatus.ACTIVE);
         user.setRole(roleRepository.getRolesByName("PROVIDER"));
@@ -522,6 +524,7 @@ public class DataInitializer implements CommandLineRunner {
         user.setEmail("admin@gmail.com");
         user.setPassword(passwordEncoder.encode("password"));
         user.setRole(roleRepository.findByName("ADMIN").get());
+        user.setIsEmailValid(true);
         userRepository.save(user);
         walletService.createWallet(user);
         System.out.println("Create Admin Role");

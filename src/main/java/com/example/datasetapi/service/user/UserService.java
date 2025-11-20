@@ -51,4 +51,7 @@ public interface UserService {
     ResponseEntity<ApiResponse> locationRegistrationProcess(LocationRegistrationRequest locationRegistrationRequest);
 
     List<ProviderRevenueDTO> getProviderRevenue(HttpServletRequest request);
+
+    void save(User user);
+
 }
