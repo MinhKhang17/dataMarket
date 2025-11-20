@@ -600,6 +600,13 @@ public class UserServiceImpl implements UserService {
         return userRepository.save(user);
     }
 
+    @Override
+    public User unBanUser(Long id) {
+        User user = findUserById(id);
+        user.setActive(true);
+        return userRepository.save(user);
+    }
+
 
     @Transactional
     protected LocationRegistration registerLocation(LocationRegistrationRequest dto, Provider provider, Commune commune) {

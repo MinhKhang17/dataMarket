@@ -67,4 +67,8 @@ public class AdminController {
     public ResponseEntity<?> banning(@PathVariable Long id) {
         return ResponseEntity.ok().body(userMapper.toUserDto(userService.banUser(id)));
     }
+    @PostMapping("user/unban/{id}")
+    public ResponseEntity<?> unban(@PathVariable Long id) {
+        return ResponseEntity.ok().body(userMapper.toUserDto(userService.unBanUser(id)));
+    }
 }

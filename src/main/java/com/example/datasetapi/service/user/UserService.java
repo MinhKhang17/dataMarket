@@ -58,4 +58,6 @@ public interface UserService {
     List<UserDto> findAllUser();
 
     User banUser(Long id);
+
+    User unBanUser(Long id);
 }
