@@ -39,11 +39,9 @@ private String fileKey;
 @Column
 private int version;
 
-    // ✅ ĐỔI TÊN FIELD NÀY
     @Column(name = "created_at")  // Map tới column created_at trong DB
     private LocalDateTime createdAt = LocalDateTime.now();  // Field name trong Java
 
-    // ✅ ĐỔI TÊN FIELD NÀY
     @Column(name = "updated_at")  // Map tới column updated_at trong DB
     private LocalDateTime updatedAt;  // Field name trong Java
 @Column
@@ -81,7 +79,15 @@ private String title;
     private long dowload_count = 0;
 
     //phân loại dataset của provider hay của hệ thống
+    @Column
+    @Enumerated(EnumType.STRING)
     private DatasetSourceType datasetSourceType;
+
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
+
 
 
 }

@@ -1,12 +1,14 @@
 package com.example.datasetapi.repository;
 
 import com.example.datasetapi.dto.response.DatasetDTO;
+import com.example.datasetapi.enums.Datasets.PricingMethod;
 import com.example.datasetapi.model.dataset.Dataset;
 import com.example.datasetapi.model.userManager.Provider;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Repository;
 
@@ -27,4 +29,6 @@ public interface DatasetRepository extends JpaRepository<Dataset, Long>, JpaSpec
     List<Dataset> findByProviderAndId(Provider provider, Long id);
 
     Dataset findByIdAndProvider(Long id, Provider provider);
+
+
 }

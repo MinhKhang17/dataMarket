@@ -1,5 +1,6 @@
 package com.example.datasetapi.controller.moderatorController;
 
+import com.example.datasetapi.dto.request.DatasetUpdateRequest;
 import com.example.datasetapi.dto.request.ModeratorCreateNewDatasetGroupRequest;
 import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
@@ -86,4 +87,9 @@ public class ModeratorController {
         return datasetService.downloadDatasetNoValidToken(id);
     }
 
+    @PostMapping("dataset/{id}/update")
+    public ResponseEntity<?> updateDataSet(@PathVariable Long id,
+                                           @RequestParam DatasetUpdateRequest dataset) {
+        return ResponseEntity.ok().body(new ApiResponse(true, "Update dataset success", datasetService.updateDataset(id, dataset)));
+    }
 }

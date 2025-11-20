@@ -4,6 +4,7 @@ import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.enums.VerificationStatus.RegistrationStatus;
 import com.example.datasetapi.mapper.UserMapper;
 import com.example.datasetapi.model.dataset.PricingRule;
+import com.example.datasetapi.service.analytics.AnalyticsService;
 import com.example.datasetapi.service.order.OrderService;
 import com.example.datasetapi.service.user.AdminService;
 import com.example.datasetapi.service.user.UserService;
@@ -22,6 +23,7 @@ public class AdminController {
     @Autowired private UserService userService;
     @Autowired
     private UserMapper userMapper;
+    @Autowired private AnalyticsService analyticsService;
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("providerRegis/getPending")
@@ -97,9 +99,16 @@ public class AdminController {
     public ResponseEntity<?> getDetailPricingRule(@RequestParam long id) {
         return ResponseEntity.ok().body(adminService.getDetailPricingRule(id));
     }
+
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("pricing-rule")
+    @PutMapping("pricing-rule/{id}")
     public ResponseEntity<?> updatePricingRule(@RequestBody PricingRule pricingRule) {
         return ResponseEntity.ok().body(adminService.updatePricingRule(pricingRule));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("analytic/revenue")
+    public ResponseEntity<?> getRevenue(){
+        return ResponseEntity.ok().body(new ApiResponse(true, "Revenue", analyticsService.getRevenue()));
     }
 }

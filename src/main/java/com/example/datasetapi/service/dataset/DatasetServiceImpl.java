@@ -78,11 +78,12 @@ public class DatasetServiceImpl implements DatasetService {
     @Autowired private WalletService walletService;
     @Autowired private OrderService orderService;
     @Autowired private TransactionService transactionService;
+    @Autowired private ProvinceRepository provinceRepository;
+
     @Value("${aws.bucket.name}") private String BUCKET_NAME;
 
     private static final Logger logger =  LoggerFactory.getLogger(DatasetServiceImpl.class);
     @Autowired private FileService fileService;
-
 
     @Override
     public ResponseEntity<ApiResponse> searchDatasetByName(String datasetName) {
@@ -606,18 +607,13 @@ else {
 
         userService.saveUser(consumer);
 
-        Wallet wallet = walletService.findWalletByUserId(consumer.getId()).orElseThrow(()
-                -> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.WALLET_NOT_FOUND));
-
-        transactionService.createTransaction(TransferType.TODOWN, (double) dataset_row, consumer.getId(), wallet, BuyType.BUY_SUB);
-
         OrderRequest orderReq = new OrderRequest();
         orderReq.setDatasetId(dataset.getId());
         orderReq.setDatasetName(dataset.getName());
         orderReq.setPrice(dataset_row);
         orderReq.setPricingMethod(PricingMethod.SUBSCRIPTION);
 
-        ConsumerDatasetOrderResponse order = orderService.createOrder(
+        ConsumerOrderResponse order = orderService.createOrder(
                 consumer.getId(),
                 List.of(orderReq)
         );
@@ -651,7 +647,7 @@ else {
         item.setPrice((long) pricing.getPrice());
         item.setPricingMethod(PricingMethod.ONE_TIME);
 
-        ConsumerDatasetOrderResponse order = orderService.createOrder(
+        ConsumerOrderResponse order = orderService.createOrder(
                 consumer.getId(),
                 List.of(item)
         );
@@ -965,6 +961,127 @@ else {
             datasetRepository.save(dataset);
             return true;
     }
+
+    @Override
+    @Transactional
+    public DatasetUpdateResponse updateDataset(Long id, DatasetUpdateRequest request) {
+
+        Dataset dataset = datasetRepository.findById(id)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_NOT_FOUND));
+
+        updateBasicFields(dataset, request);
+
+        updateFileVersion(dataset, request);
+
+        updateGroupRelations(dataset, request);
+
+        updateTimeGroup(dataset, request);
+
+        updatePricing(id, request);
+
+        Dataset saved = datasetRepository.save(dataset);
+
+        Double updatedPrice = null;
+        Double updatedPricePerRequest = null;
+
+        if (request.getPricingList() != null && !request.getPricingList().isEmpty()) {
+            DatasetPricingUpdateRequest last = request.getPricingList()
+                    .get(request.getPricingList().size() - 1);
+
+            updatedPrice = last.getPrice();
+            updatedPricePerRequest = last.getPricePerRequest();
+        }
+
+        return new DatasetUpdateResponse(
+                saved.getId(),
+                saved.getName(),
+                saved.getTitle(),
+                saved.getDescription(),
+
+                saved.getDatasetChildGroup() != null &&
+                        saved.getDatasetChildGroup().getCommune() != null
+                        ? saved.getDatasetChildGroup().getCommune().getName()
+                        : null,
+
+                saved.getDatasetChildGroup() != null &&
+                        saved.getDatasetChildGroup().getCommune() != null &&
+                        saved.getDatasetChildGroup().getCommune().getProvince() != null
+                        ? saved.getDatasetChildGroup().getCommune().getProvince().getName()
+                        : null,
+
+                updatedPrice,
+                updatedPricePerRequest,
+                saved.getFileKey(),
+                saved.getVersion()
+        );
+    }
+
+
+    private void updateBasicFields(Dataset dataset, DatasetUpdateRequest request) {
+        if (request.getDatasetName() != null) dataset.setName(request.getDatasetName());
+        if (request.getTitle() != null) dataset.setTitle(request.getTitle());
+        if (request.getDescription() != null) dataset.setDescription(request.getDescription());
+        if (request.getStatus() != null) dataset.setDatasetStatus(request.getStatus());
+        if (request.getDatasetPack() != null) dataset.setDatasetPack(request.getDatasetPack());
+        if (request.getDatasetSourceType() != null) dataset.setDatasetSourceType(request.getDatasetSourceType());
+    }
+
+
+    private void updateFileVersion(Dataset dataset, DatasetUpdateRequest request) {
+        if (request.getFileKey() != null && !request.getFileKey().equals(dataset.getFileKey())) {
+            dataset.setFileKey(request.getFileKey());
+            dataset.setVersion(dataset.getVersion() + 1);
+        }
+    }
+
+    private void updateGroupRelations(Dataset dataset, DatasetUpdateRequest request) {
+
+        if (request.getDatasetChildGroupId() == null) return;
+
+        DatasetGroup group = datasetGroupRepository.findById(request.getDatasetChildGroupId())
+                .orElseThrow(() ->
+                        new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_GROUP_NOT_FOUND));
+
+        if (request.getCommuneId() != null) {
+
+            Commune commune = communeRepository.findById(request.getCommuneId())
+                    .orElseThrow(() ->
+                            new CustomException(HttpStatus.NOT_FOUND, ErrorCode.COMMUNE_NOT_FOUND));
+
+            group.setCommune(commune);
+            group.setProvince(commune.getProvince());
+        }
+
+        datasetGroupRepository.save(group);
+        dataset.setDatasetChildGroup(group);
+    }
+
+
+    private void updateTimeGroup(Dataset dataset, DatasetUpdateRequest request) {
+        if (request.getTimeGroupId() == null) return;
+
+        TimeGroup time = timeGroupRepository.findById(request.getTimeGroupId())
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.TIME_GROUP_NOT_FOUND));
+        dataset.setTimeGroup(time);
+    }
+
+    private void updatePricing(Long datasetId, DatasetUpdateRequest request) {
+        if (request.getPricingList() == null) return;
+
+        for (DatasetPricingUpdateRequest p : request.getPricingList()) {
+
+            DatasetPricing pricing = datasetPricingRepository.findById(p.getPricingId())
+                    .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_PRICING_NOT_FOUND));
+
+            if (!pricing.getDatasetPlan().getDataset().getId().equals(datasetId)) {
+                throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.DATASET_PRICING_NOT_BELONG_TO_DATASET);
+            }
+
+            pricing.setPrice(p.getPrice());
+            pricing.setPricePerRequest(p.getPricePerRequest());
+        }
+    }
+
 
 
 

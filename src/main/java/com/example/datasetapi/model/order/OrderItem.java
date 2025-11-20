@@ -1,4 +1,4 @@
-package com.example.datasetapi.model.dataset;
+package com.example.datasetapi.model.order;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class DatasetOrderItem {
+public class OrderItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -22,5 +22,5 @@ public class DatasetOrderItem {
 
     @ManyToOne
     @JoinColumn(name = "order_id")
-    private DatasetOrder order;
+    private Order order;
 }

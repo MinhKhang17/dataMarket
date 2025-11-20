@@ -81,4 +81,9 @@ public class TransactionServiceImpl implements TransactionService {
 
         return ResponseEntity.ok(new ApiResponse(true, "Transactions retrieved successfully", response));
     }
+
+    @Override
+    public List<Transaction> findByBuyType(String buyType) {
+        return transactionRepository.findByBuyType(BuyType.valueOf(buyType));
+    }
 }

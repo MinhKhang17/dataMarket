@@ -11,10 +11,10 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ConsumerDatasetOrderResponse {
+public class ConsumerOrderResponse {
     private Long id;
-    private Long amount;
-    private List<String> datasetNames;
+    private Long totalAmount;
+    private List<OrderItemDetailResponse> items;
     private PricingMethod purchaseMethod;
     private LocalDateTime purchaseDate;
 }

@@ -1,7 +1,6 @@
 package com.example.datasetapi.service.user;
 
 import com.example.datasetapi.dto.response.ProviderRegistrationResponseDTO;
-import com.example.datasetapi.dto.service.PricingRuleDTO;
 import com.example.datasetapi.enums.VerificationStatus.RegistrationStatus;
 import com.example.datasetapi.model.dataset.PricingRule;
 import jakarta.servlet.http.HttpServletRequest;
