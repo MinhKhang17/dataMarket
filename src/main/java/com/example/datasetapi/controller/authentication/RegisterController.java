@@ -31,6 +31,7 @@ public class RegisterController {
         System.out.println(registerRequest.getEmail());
         return userService.register(registerRequest);
     }
+
     @GetMapping("verify-email")
     public void validateEmail(@RequestParam("token") String token,
                               HttpServletResponse response) throws IOException {

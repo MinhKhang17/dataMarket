@@ -231,7 +231,7 @@ public class UserServiceImpl implements UserService {
         // lưu user
         try {
             userRepository.save(user);
-            emailService.sendVerfiMail(tokenService.generateVerifyEmailToken(user),user.getEmail());
+            emailService.sendVerfiMail  (tokenService.generateVerifyEmailToken(user),user.getEmail());
             walletService.createWallet(user);
 
         } catch (Exception e) {
