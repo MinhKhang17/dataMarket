@@ -10,6 +10,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
@@ -25,14 +29,25 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
-        // Với quan hệ N-1, User chỉ có 1 Role
-        GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + user.getRole().getName());
+        Collection<GrantedAuthority> authorities = mapAuthorities(user);
 
+        // Sử dụng builder của Spring Security, có thể set accountLocked/expired/credentialsExpired/disabled nếu cần
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getUsername())
-                .password(user.getPassword()) // password đã được encode (BCrypt)
-                .authorities(authority)
+                .password(user.getPassword()) // đảm bảo đã encode (BCrypt)
+                .authorities(authorities)
+                .disabled(!user.isActive()) // nếu user.isActive() false => disabled
                 .build();
     }
 
+    private Collection<GrantedAuthority> mapAuthorities(User user) {
+        if (user.getRole() == null) {
+            // fallback: user không có role
+            return Collections.emptyList();
+        }
+        // nếu Role.getName() lưu "ADMIN" không có prefix ROLE_ -> thêm prefix
+        String roleName = user.getRole().getName();
+        String authority = roleName.startsWith("ROLE_") ? roleName : "ROLE_" + roleName;
+        return List.of(new SimpleGrantedAuthority(authority));
+    }
 }

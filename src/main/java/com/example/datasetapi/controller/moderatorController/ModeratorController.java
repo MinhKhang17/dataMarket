@@ -13,6 +13,7 @@ import com.example.datasetapi.service.dataset.DatasetValidateService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -28,31 +29,37 @@ public class ModeratorController {
     @Autowired
     private DatasetService datasetService;
 
+    @PreAuthorize("hasRole('MODERATOR')")
     @GetMapping("/get-dataset-validation")
     public ResponseEntity<?> getAllDatasetInformation() {
         return datasetValidateService.getAllDatasetErrorWithDatasetInfor();
     }
+    @PreAuthorize("hasRole('MODERATOR')")
     @PostMapping("/accept")
     public ResponseEntity<?> acceptDataset(@RequestParam long datasetInforId, HttpServletRequest request) {
             return datasetService.acceptDataset(datasetInforId,request);
     }
+    @PreAuthorize("hasRole('MODERATOR')")
     @PostMapping("/reject")
     public ResponseEntity<?> rejectDataset(@RequestParam long datasetInforId, HttpServletRequest request,String reason) {
         return datasetService.rejectDataset(datasetInforId,request,reason);
     }
 
+    @PreAuthorize("hasRole('MODERATOR')")
     @PostMapping("dataset-group")
     public ResponseEntity<?> CreateDatasetGroup(@RequestParam ModeratorCreateNewDatasetGroupRequest moderatorCreateNewDatasetGroupRequest, HttpServletRequest request) {
         datasetService.moderatorCreateNewDatasetGroup(moderatorCreateNewDatasetGroupRequest);
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("hasRole('MODERATOR')")
     @GetMapping("dataset-group")
     public ResponseEntity<?> getDatasetGroup() {
         List<DatasetParentReposonseDto> datasetParentReposonseDtos = datasetService.findAllSystamDatasetGroup();
         return ResponseEntity.ok().body(new ApiResponse(true,"load succes",datasetParentReposonseDtos));
     }
 
+    @PreAuthorize("hasRole('MODERATOR')")
     @PostMapping("system-dataset/update")
     public ResponseEntity<?> uploadNewDatasetToDatasetGroup(@RequestParam MultipartFile file,
                                                                       @RequestParam long datasetTypeId,
@@ -61,16 +68,19 @@ public class ModeratorController {
         return datasetValidateService.uploadAndHeaderCheckCSVFile(file,datasetTypeId,request,providerUploadDatasetRequest, DatasetSourceType.SYSTEM_DATASET);
     }
 
+    @PreAuthorize("hasRole('MODERATOR')")
     @GetMapping("dataset-provider")
     public ResponseEntity<?> getDatasetProvider(HttpServletRequest request) {
         return ResponseEntity.ok().body(new ApiResponse(true,"load succes",datasetService.findAllProviderDataset()));
     }
 
+    @PreAuthorize("hasRole('MODERATOR')")
     @GetMapping("group/info")
     public ResponseEntity<?> getGroupInfor(@RequestParam long datasetGroupId) {
         DatasetGroupInfor datasetGroupInfor = datasetService.getDatasetGroupInfor(datasetGroupId);
         return ResponseEntity.ok().body(new ApiResponse(true,"load succes",datasetGroupInfor));
     }
+    @PreAuthorize("hasRole('MODERATOR')")
     @PostMapping("/download/{id}")
     public ResponseEntity<?> downloadDataset(@PathVariable("id") long id,HttpServletRequest request) {
         return datasetService.downloadDatasetNoValidToken(id);

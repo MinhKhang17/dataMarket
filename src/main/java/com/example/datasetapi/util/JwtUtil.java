@@ -1,122 +1,127 @@
-    package com.example.datasetapi.util;
+package com.example.datasetapi.util;
 
-    import com.example.datasetapi.model.dataset.Dataset;
-    import com.example.datasetapi.model.dataset.DownloadToken;
-    import com.example.datasetapi.model.userManager.User;
-    import com.example.datasetapi.model.dataset.TimeGroup;
-    import com.example.datasetapi.repository.DownloadTokenRepository;
-    import io.jsonwebtoken.*;
-    import io.jsonwebtoken.security.Keys;
-    import org.springframework.beans.factory.annotation.Autowired;
-    import org.springframework.beans.factory.annotation.Value;
-    import org.springframework.stereotype.Component;
+import com.example.datasetapi.model.dataset.Dataset;
+import com.example.datasetapi.model.dataset.DownloadToken;
+import com.example.datasetapi.model.userManager.User;
+import com.example.datasetapi.model.dataset.TimeGroup;
+import com.example.datasetapi.repository.DownloadTokenRepository;
+import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
-    import java.security.Key;
-    import java.time.LocalDateTime;
-    import java.util.Date;
-    import java.util.UUID;
+import javax.crypto.SecretKey;
+import java.security.Key;
+import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.UUID;
 
-    @Component
-    public class JwtUtil {
-        private final Key key;  // Dùng để ký và verify token
-        private final long expirationTime;
+@Component
+public class JwtUtil {
+    private final SecretKey key;  // Dùng để ký và verify token
+    private final long expirationTime;
 
-        @Autowired
-        private DownloadTokenRepository  downloadTokenRepository;
-        // Spring sẽ inject từ application.properties
-        public JwtUtil(@Value("${jwt.secret}") String secret,
-                       @Value("${jwt.expiration}") long expirationTime) {
-            this.key = Keys.hmacShaKeyFor(secret.getBytes()); // String -> Key
-            this.expirationTime = expirationTime;
-        }
+    @Autowired
+    private DownloadTokenRepository downloadTokenRepository;
 
-        public String generateAccessToken(User user) {
-            return Jwts.builder()
-                    .setSubject(user.getUsername())
-                    .claim("role", user.getRole().getName()) // 👈 chỉ lấy tên role
-                    .claim("id", user.getId())
-                    .setIssuedAt(new Date())
-                    .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 15)) // 15 phút
-                    .signWith(key, SignatureAlgorithm.HS256)
-                    .compact();
-        }
-
-
-        public String generateRefreshToken(String userId) {
-            System.out.println("User id from generateRefreshToken: " + userId);
-            return Jwts.builder()
-                    .setSubject(userId)
-                    .claim("user_Id",userId)
-                    .setIssuedAt(new Date())
-                    .setExpiration(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 7)) // 7 ngày
-                    .signWith(key, SignatureAlgorithm.HS256)
-                    .compact();
-        }
-
-        public DownloadToken generateDowloadToken(User consumer, Dataset dataset, long day, int useAmount, TimeGroup timeGroup) {
-            DownloadToken token = new DownloadToken();
-            token.setId(UUID.randomUUID());
-            token.setConsumer(consumer);
-            token.setUse_amount(useAmount);
-            token.setExpiresAt(LocalDateTime.now().plusDays(day));
-            if(dataset!=null){
-                token.setDataset(dataset);
-            }
-            else{
-                token.setTimeGroup(timeGroup);
-            }
-            return downloadTokenRepository.save(token);
-        }
-
-
-        // Lấy username từ token
-        public String extractUsername(String token) {
-            return extractAllClaims(token).getSubject();
-        }
-
-        // Kiểm tra token còn hợp lệ hay không
-        public boolean validateToken(String token, String username) {
-            String extractedUsername = extractUsername(token);
-            return (username.equals(extractedUsername) && !isTokenExpired(token));
-        }
-
-        // ================== PRIVATE METHODS ==================
-
-        private Claims extractAllClaims(String token) {
-            return Jwts.parserBuilder()
-                    .setSigningKey(key)
-                    .build()
-                    .parseClaimsJws(token)
-                    .getBody();
-        }
-
-        private boolean isTokenExpired(String token) {
-            return extractAllClaims(token).getExpiration().before(new Date());
-        }
-
-        public Long getUserIdFromToken(String token) {
-            try {
-                Claims claims = Jwts.parserBuilder()
-                        .setSigningKey(key)
-                        .build()
-                        .parseClaimsJws(token)
-                        .getBody();
-
-                // Lấy userId từ claim "id"
-                return claims.get("id", Long.class);
-            } catch (ExpiredJwtException e) {
-                System.out.println("Token hết hạn");
-            } catch (UnsupportedJwtException e) {
-                System.out.println("Token không hỗ trợ");
-            } catch (MalformedJwtException e) {
-                System.out.println("Token sai format");
-            } catch (SignatureException e) {
-                System.out.println("Chữ ký token không hợp lệ");
-            } catch (IllegalArgumentException e) {
-                System.out.println("Token rỗng hoặc null");
-            }
-            return null; // ⚡ trả null thay vì Long.MIN_VALUE
-        }
-
-
+    @Autowired
+    public JwtUtil(@Value("${jwt.secret}") String secret,
+                   @Value("${jwt.expiration}") long expirationTime) {
+        // chú ý: secret nên có độ dài >= 32 bytes (256 bit) cho HS256
+        this.key = Keys.hmacShaKeyFor(secret.getBytes()); // String -> SecretKey
+        this.expirationTime = expirationTime;
     }
+
+    public String generateAccessToken(User user) {
+        return Jwts.builder()
+                .setSubject(user.getUsername())
+                .claim("role", user.getRole() != null ? user.getRole().getName() : null)
+                .claim("id", user.getId())
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 15)) // 15 phút
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    public String generateRefreshToken(String userId) {
+        return Jwts.builder()
+                .setSubject(userId)
+                .claim("user_Id", userId)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 7)) // 7 ngày
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    public DownloadToken generateDowloadToken(User consumer, Dataset dataset, long day, int useAmount, TimeGroup timeGroup) {
+        DownloadToken token = new DownloadToken();
+        token.setId(UUID.randomUUID());
+        token.setConsumer(consumer);
+        token.setUse_amount(useAmount);
+        token.setExpiresAt(LocalDateTime.now().plusDays(day));
+        if (dataset != null) {
+            token.setDataset(dataset);
+        } else {
+            token.setTimeGroup(timeGroup);
+        }
+        return downloadTokenRepository.save(token);
+    }
+
+    // Lấy username từ token (nếu invalid => ném JwtException)
+    public String extractUsername(String token) {
+        return extractAllClaims(token).getSubject();
+    }
+
+    // Kiểm tra token còn hợp lệ hay không, an toàn: bắt exception và trả false nếu invalid
+    public boolean validateToken(String token, String username) {
+        try {
+            String extractedUsername = extractUsername(token);
+            return (username != null && username.equals(extractedUsername) && !isTokenExpired(token));
+        } catch (JwtException | IllegalArgumentException e) {
+            // token malformed / expired / signature invalid -> return false
+            // bạn có thể log e.getMessage() ở đây nếu muốn
+            return false;
+        }
+    }
+
+    // ================== PRIVATE METHODS ==================
+
+    private Claims extractAllClaims(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+    }
+
+    private boolean isTokenExpired(String token) {
+        Date exp = extractAllClaims(token).getExpiration();
+        return exp != null && exp.before(new Date());
+    }
+
+    public Long getUserIdFromToken(String token) {
+        try {
+            Claims claims = extractAllClaims(token);
+            Object idObj = claims.get("id");
+            if (idObj == null) return null;
+            if (idObj instanceof Number) {
+                return ((Number) idObj).longValue();
+            } else {
+                // nếu lưu dạng string trong claim
+                return Long.valueOf(idObj.toString());
+            }
+        } catch (ExpiredJwtException e) {
+            System.out.println("Token hết hạn: " + e.getMessage());
+        } catch (UnsupportedJwtException e) {
+            System.out.println("Token không hỗ trợ: " + e.getMessage());
+        } catch (MalformedJwtException e) {
+            System.out.println("Token sai format: " + e.getMessage());
+        } catch (SignatureException e) {
+            System.out.println("Chữ ký token không hợp lệ: " + e.getMessage());
+        } catch (IllegalArgumentException e) {
+            System.out.println("Token rỗng hoặc null: " + e.getMessage());
+        }
+        return null;
+    }
+}

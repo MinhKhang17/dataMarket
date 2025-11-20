@@ -1,23 +1,61 @@
-version: '3.8'
-
 services:
   backend:
     build: .
+    image: datamarket-backend
     ports:
       - "8080:8080"
+    env_file:
+      - .env
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/mydb
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: 123456
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      # app của bạn dùng các biến DB_URL / DB_USERNAME / DB_PASSWORD v.v.
+      DB_URL: jdbc:postgresql://db:5432/datamarket
+      DB_USERNAME: postgres
+      DB_PASSWORD: password
+
+      JWT_SECRET: mysupersecretkeymysupersecretkey123456
+      GOOGLE_CLIENT_ID: 624073973217-6cm9s3qttvup2c94sp9r7vppdake5q7j.apps.googleusercontent.com
+      GOOGLE_CLIENT_SECRET: $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
+
+      CLOUDINARY_CLOUD_NAME: ofuoy88z
+      CLOUDINARY_API_KEY: 921526637348378
+      CLOUDINARY_API_SECRET: UUnGLuumsX82bMgHBpojb_hW_7A
+
+      VNPAY_TMN_CODE: HKN6O7QC
+      VNPAY_HASH_SECRET: Z3VQSTV63DZAO5UTXCJHS97HNGLLJSEJ
+
+      AWS_ACCESS_KEY: AKIAZYOYI2MFOOCJL3CY
+      AWS_SECRET_KEY: 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
+      AWS_BUCKET_NAME: datasetmarket-bucket
+
+      MAIL_USERNAME: itsportfpt@gmail.com
+      MAIL_PASSWORD: cybraqxkcxkxkpvv
+
+      GEMINI_API_KEY: AIzaSyDYuupMEO22Euw-lujhBdBOKIQc-wctRjk
+
+      FRONTEND_URL: ${FRONTEND_URL}
+      APP_FRONTEND_URL: https://data-market-ev.vercel.app/login
+      APP_BACKEND_URL: https://b57959cd9df0.ngrok-free.app
+
     depends_on:
       - db
+    restart: unless-stopped
 
   db:
-    image: mysql:8
-    restart: always
+    image: postgres:15
     environment:
-      MYSQL_DATABASE: mydb
-      MYSQL_ROOT_PASSWORD: 123456
+      POSTGRES_DB: datamarket
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
     ports:
-      - "3307:3306"
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d datamarket"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  pgdata:

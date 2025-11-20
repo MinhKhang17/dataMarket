@@ -7,7 +7,9 @@ import com.example.datasetapi.enums.UserStatus;
 import com.example.datasetapi.enums.VerificationStatus.RegistrationStatus;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
+import com.example.datasetapi.model.dataset.PricingRule;
 import com.example.datasetapi.model.userManager.*;
+import com.example.datasetapi.repository.PricingRuleRepo;
 import com.example.datasetapi.repository.ProviderRegisReviewHistoryRepo;
 import com.example.datasetapi.repository.ProviderRegistrationRepository;
 import com.example.datasetapi.service.feature.EmailService;
@@ -41,6 +43,8 @@ public class AdminServiceImpl implements AdminService {
     private ProviderRegisReviewHistoryRepo providerRegisReviewHistoryRepo;
     @Autowired
     private WalletService walletService;
+    @Autowired
+    private PricingRuleRepo pricingRuleRepo;
 @Autowired
 private EmailService emailService;
 
@@ -114,6 +118,21 @@ private EmailService emailService;
     public ResponseEntity<?> getReviewProviderHistory() {
         List<ProviderRegisReviewHistory> listReview = providerRegisReviewHistoryRepo.findAll();
         return ResponseEntity.ok().body(listReview.stream().map(userMapper::toProviderRegisReviewHistory).collect(Collectors.toList()));
+    }
+
+    @Override
+    public List<PricingRule> getAllPricingRuleForAdmin() {
+        return pricingRuleRepo.findAll();
+    }
+
+    @Override
+    public PricingRule getDetailPricingRule(long id) {
+        return pricingRuleRepo.findById(id).get();
+    }
+
+    @Override
+    public PricingRule updatePricingRule(PricingRule pricingRule) {
+        return pricingRuleRepo.save(pricingRule);
     }
 
     private void sendMail(String tempPassword, String tempUserName, String reason) {
