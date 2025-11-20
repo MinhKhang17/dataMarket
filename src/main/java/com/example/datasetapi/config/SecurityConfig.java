@@ -117,7 +117,8 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/api/moderation/**",
                                 "/api/location/**",
-                                "api/auth/**"
+                                "api/auth/**",
+                                "api/admin/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

@@ -193,8 +193,9 @@ datasetDTO.setRow_amount(dataset.getRow_count());
         datasetGroupInfor.setDataset_Type_id(datasetGroup.getDatasetType().getId());
         datasetGroupInfor.setCommune_name(datasetGroup.getCommune().getName());
         datasetGroupInfor.setCommune_id(datasetGroup.getCommune().getIdCommune());
-        datasetGroupInfor.setProvine_id(datasetGroup.getCommune().getIdCommune());
-        datasetGroupInfor.setProvine_name(datasetGroup.getCommune().getName());
+        datasetGroupInfor.setProvine_id(datasetGroup.getCommune().getProvince().getIdProvince());
+        datasetGroupInfor.setProvine_name(datasetGroup.getCommune().getProvince().getName());
+        datasetGroupInfor.setSetDataset_Type_Name(datasetGroup.getDatasetType().getName());
         return datasetGroupInfor;
     }
 

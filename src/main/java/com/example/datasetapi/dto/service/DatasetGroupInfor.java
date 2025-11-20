@@ -9,5 +9,6 @@ public class DatasetGroupInfor {
     private String provine_id;
     private String provine_name;
     private long Dataset_Type_id;
+    private String setDataset_Type_Name;
 
 }
