@@ -2,8 +2,10 @@ package com.example.datasetapi.controller.adminController;
 
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.enums.VerificationStatus.RegistrationStatus;
+import com.example.datasetapi.mapper.UserMapper;
 import com.example.datasetapi.service.order.OrderService;
 import com.example.datasetapi.service.user.AdminService;
+import com.example.datasetapi.service.user.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +17,9 @@ public class AdminController {
 
     @Autowired private AdminService adminService;
     @Autowired private OrderService orderService;
+    @Autowired private UserService userService;
+    @Autowired
+    private UserMapper userMapper;
 
     @GetMapping("providerRegis/getPending")
     public ResponseEntity<?> getProviderRegisPending() {
@@ -49,5 +54,17 @@ public class AdminController {
     @GetMapping("orders/get/{orderId}")
     public ResponseEntity<?> getOrderById(@PathVariable Long orderId) {
         return orderService.getOrderById(orderId);
+    }
+    @GetMapping("users")
+    public ResponseEntity<?> getAllUsers() {
+        return ResponseEntity.ok().body(userService.findAllUser());
+    }
+    @GetMapping("user/{id}")
+    public ResponseEntity<?> getUserById(@PathVariable Long id) {
+        return ResponseEntity.ok().body(userMapper.toUserDto(userService.findUserById(id)));
+    }
+    @PostMapping("user/banning/{id}")
+    public ResponseEntity<?> banning(@PathVariable Long id) {
+        return ResponseEntity.ok().body(userMapper.toUserDto(userService.banUser(id)));
     }
 }

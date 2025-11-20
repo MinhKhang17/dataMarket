@@ -76,6 +76,8 @@ public class UserServiceImpl implements UserService {
     @Autowired private ConsumerSubRepo consumerSubRepo;
 
     @Autowired private EmailService emailService;
+    @Autowired
+    private UserMapper userMapper;
 
 
     public UserServiceImpl(ProviderRepository providerRepository, UserRepository userRepository, JwtUtil jwtUtil, TokenServiceImpl tokenService, RoleRepository roleRepository, ImageServiceImpl imageService, ProviderIndentityDocumentRepository providerIdentityDocumentRepository, ProviderRegistrationRepository providerRegistrationRepository, WalletRepository walletRepository, WalletService walletService, HttpServletRequest request, LocationRegistrationRepository locationRegistrationRepository) {
@@ -584,6 +586,18 @@ public class UserServiceImpl implements UserService {
     @Override
     public void save(User user) {
         userRepository.save(user);
+    }
+
+    @Override
+    public List<UserDto> findAllUser() {
+        return userRepository.findAll().stream().map(userMapper::toUserDto).collect(Collectors.toList());
+    }
+
+    @Override
+    public User banUser(Long id) {
+        User user = findUserById(id);
+        user.setActive(false);
+        return userRepository.save(user);
     }
 
 

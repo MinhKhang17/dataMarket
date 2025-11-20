@@ -101,10 +101,11 @@ public class UserMapper implements UserResponseDTOMapper {
             return dto;
     }
 
-    private UserDto toUserDto(User admin) {
+    public UserDto toUserDto(User admin) {
         UserDto dto = new UserDto();
         dto.setId(admin.getId());
         dto.setUsername(admin.getUsername());
+        dto.setActive(admin.isActive());
         return dto;
     }
 

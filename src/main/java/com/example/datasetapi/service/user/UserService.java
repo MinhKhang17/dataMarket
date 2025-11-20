@@ -4,6 +4,7 @@ import com.example.datasetapi.dto.ProviderRevenueDTO;
 import com.example.datasetapi.dto.request.*;
 import com.example.datasetapi.dto.response.ApiResponse;
 //import com.example.datasetapi.model.userManager.Address;
+import com.example.datasetapi.dto.response.UserDto;
 import com.example.datasetapi.model.dataset.ProviderRevenue;
 import com.example.datasetapi.model.userManager.Provider;
 import com.example.datasetapi.model.userManager.Role;
@@ -54,4 +55,7 @@ public interface UserService {
 
     void save(User user);
 
+    List<UserDto> findAllUser();
+
+    User banUser(Long id);
 }
