@@ -106,6 +106,9 @@ public class UserMapper implements UserResponseDTOMapper {
         dto.setId(admin.getId());
         dto.setUsername(admin.getUsername());
         dto.setActive(admin.isActive());
+        if(admin.getEmail()!= null){
+            dto.setEmail(admin.getEmail());
+        }
         return dto;
     }
 
