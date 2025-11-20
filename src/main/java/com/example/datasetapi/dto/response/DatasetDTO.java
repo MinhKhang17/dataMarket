@@ -23,5 +23,6 @@ public class DatasetDTO {
     private LocalDate date;
     private long row_amount;
     private DatasetSourceType datasetType;
+    private String status;
 
 }

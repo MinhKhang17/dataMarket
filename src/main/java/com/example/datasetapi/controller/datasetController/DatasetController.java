@@ -5,12 +5,10 @@ import com.example.datasetapi.service.dataset.DatasetService;
 import com.example.datasetapi.dto.response.TimeGroupDTO;
 import com.example.datasetapi.model.dataset.TimeGroup;
 import com.example.datasetapi.service.dataset.DatasetService;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController()
 @RequestMapping("api/auth/dataset")
@@ -36,5 +34,6 @@ public class DatasetController {
     public ResponseEntity<ApiResponse> searchByDatasetName(@RequestParam(required = false) String name){
         return datasetService.searchDatasetByName(name);
     }
+
 
 }

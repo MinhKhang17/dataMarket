@@ -21,14 +21,8 @@ public class DatasetOrder {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-        name = "order_datasets_items",
-        joinColumns = @JoinColumn(name = "order_id"),
-        inverseJoinColumns = @JoinColumn(name = "dataset_id")
-    )
-    @Column
-    private List<Dataset> datasets;
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "order")
+    private List<DatasetOrderItem> items;
 
     @Column(nullable = false)
     private Long totalAmount;
