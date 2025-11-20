@@ -10,4 +10,5 @@ public class ProviderUploadDatasetRequest {
     private String description;
     private String commune_id;
     private String dataset_time;
+    private double price = 0.0;
 }

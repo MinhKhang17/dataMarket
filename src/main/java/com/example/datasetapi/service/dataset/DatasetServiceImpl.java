@@ -170,6 +170,19 @@ public class DatasetServiceImpl implements DatasetService {
             dataset.setTitle(request.getTitle());
             dataset.setDescription(request.getDescription());
             dataset.setRow_count(datasetInformation.getRowCount());
+            if(request.getPrice()!=0.0){
+                for(DatasetPlan datasetPlan : dataset.getDatasetPlans()){
+                    if(datasetPlan.getPricingMethod().equals(PricingMethod.ONE_TIME)){
+                        for(DatasetPricing datasetPricing :datasetPlan.getDatasetPricingList()){
+                            if(datasetPricing.getPricingMethod() == PricingMethod.ONE_TIME){
+                                datasetPricing.setPrice(request.getPrice());
+                                datasetPricingRepository.save(datasetPricing);
+                             }
+                        }
+                    }
+                }
+            }
+
             setDatasetPack(dataset, datasetInformation);
             if (datasetSourceType.equals(DatasetSourceType.DATASET_PROVIDER)) {
                 admin = null;
