@@ -3,19 +3,28 @@ package com.example.datasetapi.service.ai;
 import com.example.datasetapi.dto.response.AnalyticsSummaryDto;
 import com.example.datasetapi.dto.service.ChartDto;
 import com.example.datasetapi.dto.service.ChartDto;
+import com.example.datasetapi.exception.CustomException;
+import com.example.datasetapi.exception.ErrorCode;
 import com.example.datasetapi.mapper.AiTextMapper;
 import com.example.datasetapi.model.dataset.AiPromptRecord;
 import com.example.datasetapi.model.dataset.DatasetAnalysis;
 import com.example.datasetapi.model.dataset.DatasetInformation;
+import com.example.datasetapi.model.userManager.User;
 import com.example.datasetapi.repository.AiPromptRecordRepository;
 import com.example.datasetapi.repository.DatasetAnalysisRepository;
 import com.example.datasetapi.repository.DatasetInforRepository;
 import com.example.datasetapi.service.ChatService;
+import com.example.datasetapi.service.user.TokenService;
+import com.example.datasetapi.service.user.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.net.http.HttpClient;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,13 +33,16 @@ import java.util.List;
 public class AiAnalyticsMapperService {
 
     private static final Logger log = LoggerFactory.getLogger(AiAnalyticsMapperService.class);
-
+    @Autowired private HttpServletRequest request;
     private final DatasetInforRepository datasetInforRepository;
     private final DatasetAnalysisRepository datasetAnalysisRepository;
     private final AiPromptRecordRepository aiPromptRecordRepository;
     private final ChatService chatService;
     private final AiTextMapper aiTextMapper;
-
+    @Autowired
+    private UserService userService;
+    @Autowired
+    private TokenService tokenService;
     public AiAnalyticsMapperService(
             DatasetInforRepository datasetInforRepository,
             DatasetAnalysisRepository datasetAnalysisRepository,
@@ -51,6 +63,10 @@ public class AiAnalyticsMapperService {
      * Chỉ bổ sung chống-null an toàn cho DTO để UI không lỗi (không đổi logic nghiệp vụ).
      */
     public AnalyticsSummaryDto datasetAnalistByAi(long datasetId) {
+        if(!userService.findConsumerSubByUserId(tokenService.getUserIdFromRequest(request))){
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.SUB_NOT_AVAILABLE);
+        }
+
         // 1) Lấy dataset + analysis + prompt record
         DatasetInformation ds = datasetInforRepository.findByDatasetId(datasetId);
         if (ds == null) {

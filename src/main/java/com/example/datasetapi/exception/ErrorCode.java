@@ -92,7 +92,8 @@ public enum ErrorCode {
     TOKEN_IS_EXPIRED("TOKEN_IS_EXPIRED","Token Hết hạn" ),
     DATASET_BOUGHT("DATASET_BOUGHT","Dataset đã được mua" ),
     CONSUMER_SUB_NOT_FOUND("CONSUMER_SUB_NOT_FOUND","Không tìm thấy gói thuê bao của người dùng" ),
-    CAN_NOT_CANCEL_DATASET("CAN_NOT_CANCEL_DATASET","không thể cancel dataset" );
+    CAN_NOT_CANCEL_DATASET("CAN_NOT_CANCEL_DATASET","không thể cancel dataset" ),
+    SUB_NOT_AVAILABLE("SUB_NOT_AVAILABLE","gói sub không hợp lệ" );
 
     private final String code;
     private final String message;

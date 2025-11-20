@@ -46,10 +46,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import software.amazon.awssdk.services.s3.model.*;
@@ -171,20 +168,13 @@ public class DatasetServiceImpl implements DatasetService {
             dataset.setTitle(request.getTitle());
             dataset.setDescription(request.getDescription());
             dataset.setRow_count(datasetInformation.getRowCount());
-            if(request.getPrice()!=0.0){
-                for(DatasetPlan datasetPlan : dataset.getDatasetPlans()){
-                    if(datasetPlan.getPricingMethod().equals(PricingMethod.ONE_TIME)){
-                        for(DatasetPricing datasetPricing :datasetPlan.getDatasetPricingList()){
-                            if(datasetPricing.getPricingMethod() == PricingMethod.ONE_TIME){
-                                datasetPricing.setPrice(request.getPrice());
-                                datasetPricingRepository.save(datasetPricing);
-                             }
-                        }
-                    }
-                }
-            }
+            System.out.println(request.getPrice());
+
+
+
 
             setDatasetPack(dataset, datasetInformation);
+
             if (datasetSourceType.equals(DatasetSourceType.DATASET_PROVIDER)) {
                 admin = null;
                 provider = userService.findProviderById(providerId);
@@ -195,9 +185,9 @@ public class DatasetServiceImpl implements DatasetService {
                 dataset.setModerator(admin);
                 dataset.setDatasetStatus(DatasetStatus.APPROVE);
                 datasetInformation.setStatus(DatasetInforStatus.APPROVED);
-                priceService.createPricingForDataset(dataset,datasetInformation);
-            }
+                priceService.createPricingForDataset(dataset, datasetInformation,request);
 
+            }
 
 
             // Nếu relationship được mapping 2 chiều, thêm dataset vào childGroup để persist quan hệ
@@ -373,7 +363,7 @@ public class DatasetServiceImpl implements DatasetService {
         moveFileFromPendingToApproveFolder(dataset);
 
         //tạo giá sau khi accept
-        priceService.createPricingForDataset(dataset,datasetInformationOptional.get());
+        priceService.createPricingForDataset(dataset,datasetInformationOptional.get(),new ProviderUploadDatasetRequest());
         priceService.createRevenueForProvider(dataset.getProvider(),dataset.getDatasetPack(),dataset);
         return ResponseEntity.ok().body(new ApiResponse(true,"Dataset Accepted Successfully",reviewHistoryDto));
     }

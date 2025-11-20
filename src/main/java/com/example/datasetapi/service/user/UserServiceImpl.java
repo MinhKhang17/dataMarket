@@ -3,6 +3,7 @@ package com.example.datasetapi.service.user;
 import com.example.datasetapi.dto.ProviderRevenueDTO;
 import com.example.datasetapi.dto.request.*;
 import com.example.datasetapi.dto.service.ProviderIdentityDocumentDTO;
+import com.example.datasetapi.enums.Datasets.SubType;
 import com.example.datasetapi.mapper.DatasetMapper;
 import com.example.datasetapi.mapper.UserMapper;
 import com.example.datasetapi.dto.response.*;
@@ -11,7 +12,6 @@ import com.example.datasetapi.enums.VerificationStatus.RegistrationStatus;
 import com.example.datasetapi.enums.VerificationStatus.VerificationStatus;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
-import com.example.datasetapi.model.dataset.ProviderRevenue;
 import com.example.datasetapi.model.location.LocationRegistration;
 import com.example.datasetapi.model.location.Province;
 import com.example.datasetapi.model.userManager.*;
@@ -36,16 +36,13 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
-import org.checkerframework.checker.units.qual.C;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -605,6 +602,13 @@ public class UserServiceImpl implements UserService {
         User user = findUserById(id);
         user.setActive(true);
         return userRepository.save(user);
+    }
+
+    @Override
+    public boolean findConsumerSubByUserId(long userIdFromRequest) {
+        User user = userRepository.findById(userIdFromRequest).orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.USER_NOT_FOUND));
+
+        return consumerSubRepo.findByConsumerAndIsUsing(user,true).get().getPricingRule().getSubType() == SubType.LARGE;
     }
 
 

@@ -1,7 +1,9 @@
 package com.example.datasetapi.service.dataset;
 
+import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
 import com.example.datasetapi.dto.service.PricingRuleDTO;
 import com.example.datasetapi.enums.Datasets.DatasetPack;
+import com.example.datasetapi.enums.Datasets.DatasetSourceType;
 import com.example.datasetapi.model.dataset.Dataset;
 import com.example.datasetapi.model.dataset.DatasetInformation;
 import com.example.datasetapi.model.dataset.PricingRule;
@@ -12,7 +14,7 @@ import java.util.List;
 
 @Service
 public interface PriceService {
-    void createPricingForDataset(Dataset dataset, DatasetInformation datasetInformation);
+    void createPricingForDataset(Dataset dataset, DatasetInformation datasetInformation, ProviderUploadDatasetRequest request);
 
     PricingRule findSubPricingRuleById(long pricingSubRuleId );
 

@@ -1,12 +1,10 @@
 package com.example.datasetapi.service.dataset;
 
-import com.example.datasetapi.enums.Datasets.BuyType;
+import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
+import com.example.datasetapi.enums.Datasets.*;
 import com.example.datasetapi.enums.TransferType;
 import com.example.datasetapi.mapper.DatasetMapper;
 import com.example.datasetapi.dto.service.PricingRuleDTO;
-import com.example.datasetapi.enums.Datasets.DatasetPack;
-import com.example.datasetapi.enums.Datasets.PricingMethod;
-import com.example.datasetapi.enums.Datasets.SubType;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
 import com.example.datasetapi.model.dataset.*;
@@ -40,19 +38,19 @@ public class PriceServiceImpl implements  PriceService {
 @Autowired
 private ProviderRevenueRepo providerRevenueRepo;
     @Override
-    public void createPricingForDataset(Dataset dataset, DatasetInformation datasetInformation) {
+    public void createPricingForDataset(Dataset dataset, DatasetInformation datasetInformation,  ProviderUploadDatasetRequest request) {
         //tạo giá cho mua một lần
         switch (dataset.getDatasetPack()) {
             case SMALL -> {
-                createPricing(dataset,datasetInformation,DatasetPack.SMALL);
+                createPricing(dataset,datasetInformation,DatasetPack.SMALL,request);
             }
             case MEDIUM -> {
 
-                createPricing(dataset,datasetInformation,DatasetPack.MEDIUM);
+                createPricing(dataset,datasetInformation,DatasetPack.MEDIUM, request);
 
             }
             case LARGE -> {
-                createPricing(dataset,datasetInformation,DatasetPack.LARGE);
+                createPricing(dataset,datasetInformation,DatasetPack.LARGE, request);
             }
             case UNDETERMINED -> {
                 throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.DATASET_PACK_INVALID);
@@ -107,7 +105,7 @@ private ProviderRevenueRepo providerRevenueRepo;
     }
 
 
-    private void createPricing(Dataset dataset, DatasetInformation datasetInformation, DatasetPack datasetPack) {
+    private void createPricing(Dataset dataset, DatasetInformation datasetInformation, DatasetPack datasetPack, ProviderUploadDatasetRequest request) {
         Set<DatasetPlan> datasetPlans = new HashSet<>() ;
 
         // ONE_TIME
@@ -115,7 +113,7 @@ private ProviderRevenueRepo providerRevenueRepo;
         oneTimePlan.setPricingMethod(PricingMethod.ONE_TIME);
         oneTimePlan.setDataset(dataset);
         oneTimePlan.setDatasetPack(datasetPack);
-        oneTimePlan.setDatasetPricingList(calculatePricing(PricingMethod.ONE_TIME, datasetPack, datasetInformation.getRowCount(), oneTimePlan,dataset));
+        oneTimePlan.setDatasetPricingList(calculatePricing(PricingMethod.ONE_TIME, datasetPack, datasetInformation.getRowCount(), oneTimePlan,dataset,request));
 
         datasetPlans.add(oneTimePlan);
 
@@ -124,7 +122,7 @@ private ProviderRevenueRepo providerRevenueRepo;
         subTypePlan.setPricingMethod(PricingMethod.SUBSCRIPTION);
         subTypePlan.setDataset(dataset);
         subTypePlan.setDatasetPack(datasetPack);
-        subTypePlan.setDatasetPricingList(calculatePricing(PricingMethod.SUBSCRIPTION, datasetPack, datasetInformation.getRowCount(), subTypePlan, dataset));
+        subTypePlan.setDatasetPricingList(calculatePricing(PricingMethod.SUBSCRIPTION, datasetPack, datasetInformation.getRowCount(), subTypePlan, dataset, request));
         datasetPlans.add(subTypePlan);
 
 //        // API
@@ -140,14 +138,19 @@ private ProviderRevenueRepo providerRevenueRepo;
     }
 
 
-    private Set<DatasetPricing> calculatePricing(PricingMethod pricingMethod, DatasetPack datasetPack, Long rowCount, DatasetPlan plan, Dataset dataset) {
+    private Set<DatasetPricing> calculatePricing(PricingMethod pricingMethod, DatasetPack datasetPack, Long rowCount, DatasetPlan plan, Dataset dataset, ProviderUploadDatasetRequest request) {
         Set<DatasetPricing> list = new HashSet<>();
         if(pricingMethod == PricingMethod.ONE_TIME) {
             DatasetPricing datasetPricing = new DatasetPricing();
             datasetPricing.setPricingRule(pricingRuleRepo.findByMethodAndDatasetPack(pricingMethod, datasetPack));
-            datasetPricing.setPrice(oneTimePricingCal(datasetPack,rowCount));
             datasetPricing.setDatasetPack(datasetPack);
             datasetPricing.setPricingMethod(PricingMethod.ONE_TIME);
+            if(request.getPrice()!=0.0){
+                datasetPricing.setPrice(request.getPrice());
+            }
+            else{
+                datasetPricing.setPrice(oneTimePricingCal(datasetPack,rowCount));
+            }
 //            dataset.getTimeGroup().setPrice(dataset.getTimeGroup().getPrice()+datasetPricing.getPrice());
             list.add(datasetPricing);
             return list;

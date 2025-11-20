@@ -64,17 +64,20 @@ public class SecurityConfig {
         http
                 .securityMatcher("/api/datasets/**")
                 .csrf(csrf -> csrf.disable()) // API stateless -> disable
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // <-- thêm CORS
                 .authenticationProvider(authenticationProvider())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/api/datasets/**").permitAll()
-                        // Ví dụ: chỉ admin/moderator/user được POST/PUT/DELETE
+                        .requestMatchers(HttpMethod.OPTIONS, "/api/datasets/**").permitAll() // <-- đảm bảo OPTIONS
                         .requestMatchers("/api/datasets/**").hasAnyRole("ADMIN","MODERATOR","USER")
                 )
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint)) // <-- tránh redirect
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
+
 
     // chain cho API chung
     @Bean

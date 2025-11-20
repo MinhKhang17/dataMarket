@@ -29,6 +29,7 @@ public class DatasetPricing {
     @Enumerated
     private PricingMethod pricingMethod;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "dataset_plan_id") // tên cột FK
     private DatasetPlan datasetPlan;
 }
