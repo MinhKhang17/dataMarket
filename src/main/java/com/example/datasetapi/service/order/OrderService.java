@@ -1,5 +1,6 @@
 package com.example.datasetapi.service.order;
 
+import com.example.datasetapi.dto.request.OrderRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.dto.response.ConsumerDatasetOrderResponse;
 import com.example.datasetapi.enums.Datasets.PricingMethod;
@@ -12,7 +13,7 @@ public interface OrderService {
 
     ResponseEntity<ApiResponse> getOrdersForConsumer();
 
-    ConsumerDatasetOrderResponse createOrder(Long userId, List<Long> datasetId, Long amount, PricingMethod purchaseMethod);
+    ConsumerDatasetOrderResponse createOrder(Long userId, List<OrderRequest> orderRequest);
 
     ResponseEntity<ApiResponse> getOrderById(Long orderId);
 }

@@ -1,8 +1,6 @@
 package com.example.datasetapi.service.dataset;
 
-import com.example.datasetapi.dto.request.CheckoutRequestDTO;
-import com.example.datasetapi.dto.request.ConsumerBuyRequestDTO;
-import com.example.datasetapi.dto.request.ModeratorCreateNewDatasetGroupRequest;
+import com.example.datasetapi.dto.request.*;
 import com.example.datasetapi.dto.response.*;
 import com.example.datasetapi.dto.service.DatasetGroupInfor;
 import com.example.datasetapi.enums.Datasets.*;
@@ -10,8 +8,8 @@ import com.example.datasetapi.enums.TransferType;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
 import com.example.datasetapi.mapper.DatasetMapper;
-import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
 import com.example.datasetapi.model.dataset.*;
+import com.example.datasetapi.model.paySystem.Wallet;
 import com.example.datasetapi.model.userManager.Provider;
 import com.example.datasetapi.model.userManager.User;
 import com.example.datasetapi.model.userManager.ConsumerSubscription;
@@ -21,6 +19,7 @@ import com.example.datasetapi.service.feature.FileService;
 import com.example.datasetapi.service.order.OrderService;
 import com.example.datasetapi.service.payment.PaymentService;
 import com.example.datasetapi.service.payment.TransactionService;
+import com.example.datasetapi.service.payment.WalletService;
 import com.example.datasetapi.service.user.TokenService;
 import com.example.datasetapi.service.user.UserService;
 import com.example.datasetapi.util.DateUtil;
@@ -59,8 +58,6 @@ import software.amazon.awssdk.services.s3.model.*;
 @Service
 public class DatasetServiceImpl implements DatasetService {
     @Autowired private JwtUtil jwtUtil;
-    @Autowired private DatasetPlanRepo datasetPlanRepo;
-    @Autowired private WalletRepository walletRepository;
     @Autowired private DatasetRepository datasetRepository;
     @Autowired private CategoryRepository categoryRepository;
     @Autowired private DatasetTypeRepository datasetTypeRepository;
@@ -78,6 +75,7 @@ public class DatasetServiceImpl implements DatasetService {
     @Autowired private DatasetPricingRepository datasetPricingRepository;
     @Autowired private ConsumerSubRepo consumerSubRepo;
     @Autowired private DownloadTokenRepository downloadTokenRepository;
+    @Autowired private WalletService walletService;
     @Autowired private OrderService orderService;
     @Autowired private TransactionService transactionService;
     @Value("${aws.bucket.name}") private String BUCKET_NAME;
@@ -573,40 +571,83 @@ else {
     }
 
 
-
-
     private ConsumerBuyResponseDTO createSubPayment(Dataset dataset, User consumer) {
-                ConsumerSubscription consumerSubscription = consumerSubRepo.findByConsumerAndIsUsing(consumer,true)
-                        .orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.SUB_NOT_FOUND));
-            long dataset_row = dataset.getRow_count();
+        ConsumerSubscription consumerSubscription = consumerSubRepo.findByConsumerAndIsUsing(consumer,true)
+                .orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.SUB_NOT_FOUND));
 
-            if(consumerSubscription.getRow_amount()<dataset_row){
-                throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.SUB_ROW_NOT_ENOUGH);
-            }
+        long dataset_row = dataset.getRow_count();
 
-            if (consumerSubscription.getExpiresAt().isBefore(LocalDateTime.now())) {
-                throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.SUB_EXPIRED);
-            }
+        if(consumerSubscription.getRow_amount()<dataset_row){
+            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.SUB_ROW_NOT_ENOUGH);
+        }
 
-            buyWithSubProcess(consumerSubscription,dataset_row);
+        if (consumerSubscription.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.SUB_EXPIRED);
+        }
+
+        buyWithSubProcess(consumerSubscription,dataset_row);
 
         DownloadToken downloadToken = jwtUtil.generateDowloadToken(consumer,dataset,30,10,null);
-            consumer.getDownloadTokens().add(downloadToken);
-            userService.saveUser(consumer);
-        ConsumerBuyResponseDTO consumerBuyResponseDTO =  datasetMapper.toConsumerBuyResponseDTO(PricingMethod.SUBSCRIPTION,consumerSubRepo.save(consumerSubscription));
-        consumerBuyResponseDTO.getBuySubInfoDTO().setDownloadToken(downloadToken.getId().toString());
-        return consumerBuyResponseDTO;
+
+        consumer.getDownloadTokens().add(downloadToken);
+
+        userService.saveUser(consumer);
+
+        Wallet wallet = walletService.findWalletByUserId(consumer.getId()).orElseThrow(()
+                -> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.WALLET_NOT_FOUND));
+
+        transactionService.createTransaction(TransferType.TODOWN, (double) dataset_row, consumer.getId(), wallet, BuyType.BUY_SUB);
+
+        OrderRequest orderReq = new OrderRequest();
+        orderReq.setDatasetId(dataset.getId());
+        orderReq.setDatasetName(dataset.getName());
+        orderReq.setPrice(dataset_row);
+        orderReq.setPricingMethod(PricingMethod.SUBSCRIPTION);
+
+        ConsumerDatasetOrderResponse order = orderService.createOrder(
+                consumer.getId(),
+                List.of(orderReq)
+        );
+
+        ConsumerBuyResponseDTO dto = datasetMapper.toConsumerBuyResponseDTO(PricingMethod.SUBSCRIPTION, consumerSubscription);
+
+        dto.getBuySubInfoDTO().setDownloadToken(downloadToken.getId().toString()); dto.setOrderId(order.getId());
+
+        return dto;
     }
 
-    private ConsumerBuyResponseDTO createOneTimePayment(Dataset dataset, DatasetPricing datasetPricing, User consumer) {
-        if(downloadTokenRepository.findByConsumerAndDatasetAndIsActive(consumer,dataset,true).isPresent()){
-            throw new  CustomException(HttpStatus.BAD_REQUEST,ErrorCode.DATASET_BOUGHT);
+    private ConsumerBuyResponseDTO createOneTimePayment(Dataset dataset, DatasetPricing pricing, User consumer) {
+        if (downloadTokenRepository.findByConsumerAndDatasetAndIsActive(consumer, dataset, true).isPresent()) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.DATASET_BOUGHT);
         }
-        DownloadToken downloadToken = jwtUtil.generateDowloadToken(consumer,dataset,30,2,null);
-        consumer.getDownloadTokens().add(downloadToken);
+
+        DownloadToken token = jwtUtil.generateDowloadToken(consumer, dataset, 30, 2, null);
+        consumer.getDownloadTokens().add(token);
         userService.saveUser(consumer);
-        paymentService.updateWallet(TransferType.TODOWN,datasetPricing.getPrice(),consumer.getId(),BuyType.BUY_ONE_TIME_DATASET);
-        return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.ONE_TIME,downloadToken.getId());
+
+        paymentService.updateWallet(TransferType.TODOWN, pricing.getPrice(), consumer.getId(), BuyType.BUY_ONE_TIME_DATASET);
+
+        Wallet wallet = walletService.findWalletByUserId(consumer.getId()).orElseThrow(()
+        -> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.WALLET_NOT_FOUND));
+
+        transactionService.createTransaction(TransferType.TODOWN, pricing.getPrice(), consumer.getId(), wallet, BuyType.BUY_ONE_TIME_DATASET);
+
+        OrderRequest item = new OrderRequest();
+        item.setDatasetId(dataset.getId());
+        item.setDatasetName(dataset.getName());
+        item.setPrice((long) pricing.getPrice());
+        item.setPricingMethod(PricingMethod.ONE_TIME);
+
+        ConsumerDatasetOrderResponse order = orderService.createOrder(
+                consumer.getId(),
+                List.of(item)
+        );
+
+        ConsumerBuyResponseDTO dto = datasetMapper.toConsumerBuyResponseDTO(PricingMethod.ONE_TIME, token.getId());
+
+        dto.setOrderId(order.getId());
+
+        return dto;
     }
 
 
@@ -913,6 +954,7 @@ else {
     }
 
 
+
     @Override
     public Dataset uploadCSVFileToSytemFolder(File file, Dataset dataset) {
         String fileName = file.getName();
@@ -941,6 +983,7 @@ else {
             throw new RuntimeException("Error uploading to S3: " + e.awsErrorDetails().errorMessage(), e);
         }
     }
+
 
 
 }
