@@ -1,9 +1,13 @@
 package com.example.datasetapi.repository;
 
+import com.example.datasetapi.dto.response.DatasetDTO;
 import com.example.datasetapi.model.dataset.Dataset;
+import com.example.datasetapi.model.userManager.Provider;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -17,4 +21,10 @@ public interface DatasetRepository extends JpaRepository<Dataset, Long>, JpaSpec
     List<Dataset> searchByKeyword(String keyword);
     @Query("SELECT d FROM Dataset d WHERE d.id IN :ids")
     List<Dataset> findAllByIdIn( List<Long> ids);
+
+    List<Dataset> findByProvider(Provider provider);
+
+    List<Dataset> findByProviderAndId(Provider provider, Long id);
+
+    Dataset findByIdAndProvider(Long id, Provider provider);
 }

@@ -848,6 +848,37 @@ else {
         return datasetMapper.toDatasetGroupInfor(datasetGroup);
     }
 
+    @Override
+    public List<DatasetDTO> getAllProviderDataset(HttpServletRequest request) {
+        Provider provider = userService.findProviderById(tokenService.getUserIdFromRequest(request));
+        return datasetRepository.findByProvider(provider).
+                stream().
+                map(datasetMapper::toDatasetDTO).
+                collect(Collectors.toList());
+    }
+
+    @Override
+    public DatasetDTO getDatasetDetail(Long id, HttpServletRequest request) {
+        Provider provider = userService.findProviderById(tokenService.getUserIdFromRequest(request));
+        Dataset dataset = datasetRepository.findByIdAndProvider(id,provider);
+        return datasetMapper.toDatasetDTO(dataset);
+    }
+
+    @Override
+    public boolean cancelDataset(Long id, HttpServletRequest request) {
+            Dataset dataset = datasetRepository.findByIdAndProvider(id,userService.findProviderById(tokenService.getUserIdFromRequest(request)));
+
+            if(!(dataset.getProvider().equals(userService.findProviderById(tokenService.getUserIdFromRequest(request))))){
+                throw new  CustomException(HttpStatus.NOT_FOUND,ErrorCode.CAN_NOT_CANCEL_DATASET);
+            }
+
+            if(!(dataset.getDatasetStatus() == DatasetStatus.PENDING)){
+                throw new CustomException(HttpStatus.UNAUTHORIZED,ErrorCode.CAN_NOT_CANCEL_DATASET);
+            }
+            dataset.setDatasetStatus(DatasetStatus.CANCEL);
+            datasetRepository.save(dataset);
+            return true;
+    }
 
 
     @Override
@@ -868,7 +899,7 @@ else {
 
             dataset.setFileKey(fileKey);
             dataset.setName(fileName);
-            dataset.setDatasetStatus(DatasetStatus.PENDING);
+            dataset.setDatasetStatus(DatasetStatus.APPROVE);
 
             return datasetRepository.save(dataset);
 

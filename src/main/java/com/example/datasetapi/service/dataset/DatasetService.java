@@ -95,5 +95,9 @@ public interface DatasetService {
     DatasetGroupInfor getDatasetGroupInfor(long datasetChilGroupId);
 
 
+    List<DatasetDTO> getAllProviderDataset(HttpServletRequest request);
 
+    DatasetDTO getDatasetDetail(Long id, HttpServletRequest request);
+
+    boolean cancelDataset(Long id, HttpServletRequest request);
 }

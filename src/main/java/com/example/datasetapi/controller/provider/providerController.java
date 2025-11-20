@@ -4,6 +4,7 @@ import com.example.datasetapi.dto.request.LocationRegistrationRequest;
 import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.enums.Datasets.DatasetSourceType;
+import com.example.datasetapi.service.dataset.DatasetService;
 import com.example.datasetapi.service.dataset.DatasetValidateService;
 import com.example.datasetapi.service.payment.PaymentService;
 import com.example.datasetapi.service.user.UserService;
@@ -18,7 +19,8 @@ import org.springframework.web.multipart.MultipartFile;
 public class providerController {
     @Autowired
     private DatasetValidateService datasetValidateService;
-
+    @Autowired
+    private DatasetService datasetService;
     @Autowired
     private UserService userService;
     @Autowired
@@ -48,4 +50,17 @@ public class providerController {
     public ResponseEntity<?> getProviderRevenue(HttpServletRequest request) {
         return ResponseEntity.ok().body(new ApiResponse(true,"load success",userService.getProviderRevenue(request)));
     }
+    @GetMapping("dataset/get")
+    public  ResponseEntity<?> getDatasets(HttpServletRequest request) {
+        return ResponseEntity.ok().body(datasetService.getAllProviderDataset(request));
+    }
+    @GetMapping("dataset/detail/{id}")
+    public ResponseEntity<?> getDataset(@PathVariable Long id, HttpServletRequest request) {
+        return ResponseEntity.ok().body(datasetService.getDatasetDetail(id, request));
+    }
+    @PostMapping("dataset/cancel/{id}")
+    public ResponseEntity<?> cancelDataset(@PathVariable Long id, HttpServletRequest request) {
+        return ResponseEntity.ok().body(datasetService.cancelDataset(id,request));
+    }
+
 }

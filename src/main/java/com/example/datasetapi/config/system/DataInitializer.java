@@ -259,12 +259,7 @@ public class DataInitializer implements CommandLineRunner {
         datasetRepository.save(dataset);
     }
 
-    /**
-     * ✅ Gán lại columns cho 3 dataset type đúng theo schema bạn yêu cầu
-     * - STATION_ENERGY
-     * - TRANSACTION_BILLING
-     * - VEHICLE_DATA_SAMPLE
-     */
+
     private void assignColumnAndCategoryToDatasetType() {
         // Load toàn bộ cột và đưa về lowercase để dễ so khớp
         List<DatasetTypeColumn> allCols = datasetTypeColumnRepository.findAll();
