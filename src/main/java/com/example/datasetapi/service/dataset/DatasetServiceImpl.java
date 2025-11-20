@@ -177,7 +177,7 @@ public class DatasetServiceImpl implements DatasetService {
 
             if (datasetSourceType.equals(DatasetSourceType.DATASET_PROVIDER)) {
                 admin = null;
-                provider = userService.findProviderById(providerId);
+                provider = userService.findProviderByUserId(providerId);
                 dataset.setProvider(provider);
             } else {
                 provider = null;

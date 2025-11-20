@@ -61,4 +61,6 @@ public interface UserService {
     User unBanUser(Long id);
 
     boolean findConsumerSubByUserId(long userIdFromRequest);
+
+    Provider findProviderByUserId(long providerId);
 }

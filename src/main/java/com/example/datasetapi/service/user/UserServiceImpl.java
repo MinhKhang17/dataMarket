@@ -611,6 +611,11 @@ public class UserServiceImpl implements UserService {
         return consumerSubRepo.findByConsumerAndIsUsing(user,true).get().getPricingRule().getSubType() == SubType.LARGE;
     }
 
+    @Override
+    public Provider findProviderByUserId(long providerId) {
+        return providerRepository.findByUserId(providerId);
+    }
+
 
     @Transactional
     protected LocationRegistration registerLocation(LocationRegistrationRequest dto, Provider provider, Commune commune) {

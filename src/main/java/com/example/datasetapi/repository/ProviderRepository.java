@@ -9,6 +9,6 @@ import org.springframework.http.ResponseEntity;
 import java.util.List;
 
 public interface ProviderRepository extends JpaRepository<Provider,Long> {
-    List<Provider> findByUserId(Long userId);
+    Provider findByUserId(Long userId);
 
 }
