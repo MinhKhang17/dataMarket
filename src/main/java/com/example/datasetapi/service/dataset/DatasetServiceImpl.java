@@ -137,11 +137,7 @@ public class DatasetServiceImpl implements DatasetService {
             Commune commune = communeRepository.findById(request.getCommune_id())
                     .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.COMMUNE_NOT_FOUND));
 
-            // Khai báo mà không khởi tạo ngay để đảm bảo biến là effectively final
-            Provider provider;
-            User admin;
-
-            // 🔹 Tìm hoặc tạo DatasetGroup parent theo sourceType
+            // 🔹 BƯỚC 1: Tìm hoặc tạo Parent DatasetGroup
             DatasetGroup parentGroup = datasetGroupRepository
                     .findByDatasetGroupTypeAndProvinceAndDatasetTypeAndDatasetSourceType(
                             DatasetGroupType.PARENT,
@@ -149,18 +145,26 @@ public class DatasetServiceImpl implements DatasetService {
                             datasetInformation.getDatasetType(),
                             datasetSourceType
                     )
-                    .orElseGet(() -> createParentDatasetGroup(commune, datasetInformation, datasetSourceType));
+                    .orElseGet(() -> {
+                        DatasetGroup newParent = createParentDatasetGroup(commune, datasetInformation, datasetSourceType);
+                        return datasetGroupRepository.saveAndFlush(newParent); // ✅ Save ngay lập tức
+                    });
 
             parentGroup.setUpdateAt(LocalDateTime.now());
 
-            // 🔹 Tìm hoặc tạo DatasetGroup con theo commune + sourceType
-            DatasetGroup childGroup = parentGroup.getDatasetGroups().stream()
-                    .filter(group -> commune.equals(group.getCommune()) &&
-                            group.getDatasetSourceType() == datasetSourceType)
-                    .findFirst()
-                    .orElseGet(() -> createChildDatasetGroup(parentGroup, commune, datasetInformation, datasetSourceType));
+            // 🔹 BƯỚC 2: Tìm hoặc tạo Child DatasetGroup
+            DatasetGroup childGroup = datasetGroupRepository
+                    .findByParentAndCommuneAndDatasetSourceType(parentGroup, commune, datasetSourceType)
+                    .orElseGet(() -> {
+                        DatasetGroup newChild = createChildDatasetGroup(parentGroup, commune, datasetInformation, datasetSourceType);
+                        newChild.setParent(parentGroup);
+                        return datasetGroupRepository.saveAndFlush(newChild); // ✅ Save ngay lập tức
+                    });
 
-            // 🔹 Tạo dataset mới và set thông tin cơ bản
+            // 🔹 BƯỚC 3: Xử lý Provider/Admin và tạo Dataset
+            final Provider provider;
+            final User admin;
+
             Dataset dataset = new Dataset();
             dataset.setDatasetSourceType(datasetSourceType);
             dataset.setDatasetStatus(DatasetStatus.PENDING);
@@ -168,40 +172,35 @@ public class DatasetServiceImpl implements DatasetService {
             dataset.setTitle(request.getTitle());
             dataset.setDescription(request.getDescription());
             dataset.setRow_count(datasetInformation.getRowCount());
-            System.out.println(request.getPrice());
-
-
-
 
             setDatasetPack(dataset, datasetInformation);
 
             if (datasetSourceType.equals(DatasetSourceType.DATASET_PROVIDER)) {
-                admin = null;
                 provider = userService.findProviderByUserId(providerId);
+                admin = null;
                 dataset.setProvider(provider);
             } else {
-                provider = null;
                 admin = userService.findUserById(providerId);
+                provider = null;
                 dataset.setModerator(admin);
                 dataset.setDatasetStatus(DatasetStatus.APPROVE);
                 datasetInformation.setStatus(DatasetInforStatus.APPROVED);
-                priceService.createPricingForDataset(dataset, datasetInformation,request);
-
             }
 
+            // ✅ BƯỚC 4: SAVE DATASET TRƯỚC KHI TẠO TIMEGROUP
+            // Điều này quan trọng vì TimeGroup có thể reference đến Dataset
+            dataset = datasetRepository.saveAndFlush(dataset);
 
-            // Nếu relationship được mapping 2 chiều, thêm dataset vào childGroup để persist quan hệ
-            if (childGroup.getDatasets() == null) {
-                childGroup.setDatasets(new ArrayList<>());
+            // 🔹 BƯỚC 5: Tạo pricing nếu là moderator (sau khi dataset đã có ID)
+            if (!datasetSourceType.equals(DatasetSourceType.DATASET_PROVIDER)) {
+                priceService.createPricingForDataset(dataset, datasetInformation, request);
             }
-            childGroup.getDatasets().add(dataset);
 
-            // 🔹 Tìm hoặc tạo TimeGroup theo sourceType
+            // 🔹 BƯỚC 6: Tìm hoặc tạo TimeGroup
             LocalDate datasetDate = DateUtil.parseToLocalDate(request.getDataset_time());
-            TimeGroup timeGroup;
+            final TimeGroup timeGroup;
 
             if (datasetSourceType.equals(DatasetSourceType.DATASET_PROVIDER)) {
-                // provider đã được gán ở trên
                 timeGroup = timeGroupRepository
                         .findByYearAndMonthAndDatasetGroupChildAndProviderAndDatasetSourceType(
                                 datasetDate.getYear(),
@@ -210,9 +209,11 @@ public class DatasetServiceImpl implements DatasetService {
                                 provider,
                                 datasetSourceType
                         )
-                        .orElseGet(() -> createTimeGroup(datasetDate, childGroup, provider, datasetSourceType));
+                        .orElseGet(() -> {
+                            TimeGroup newTimeGroup = createTimeGroup(datasetDate, childGroup, provider, datasetSourceType);
+                            return timeGroupRepository.saveAndFlush(newTimeGroup);
+                        });
             } else {
-                // moderator case: dùng admin (User)
                 timeGroup = timeGroupRepository
                         .findByYearAndMonthAndDatasetGroupChildAndModeratorAndDatasetSourceType(
                                 datasetDate.getYear(),
@@ -221,48 +222,44 @@ public class DatasetServiceImpl implements DatasetService {
                                 admin,
                                 datasetSourceType
                         )
-                        .orElseGet(() -> createTimeGroup(datasetDate, childGroup, admin, datasetSourceType));
+                        .orElseGet(() -> {
+                            TimeGroup newTimeGroup = createTimeGroup(datasetDate, childGroup, admin, datasetSourceType);
+                            return timeGroupRepository.saveAndFlush(newTimeGroup);
+                        });
             }
 
-            // đảm bảo row_Count không null trước khi cộng
-            long existingRows = timeGroup.getRow_Count();
-
+            // 🔹 BƯỚC 7: Cập nhật TimeGroup row count
+            long existingRows = timeGroup.getRow_Count() != 0 ? timeGroup.getRow_Count() : 0L;
             timeGroup.setRow_Count(existingRows + datasetInformation.getRowCount());
 
-            // Liên kết dataset <-> timeGroup
+            // 🔹 BƯỚC 8: Liên kết Dataset với TimeGroup
             dataset.setTimeGroup(timeGroup);
-            dataset.setDatasetChildGroup(childGroup);
-
-            // Liên kết datasetInformation
             datasetInformation.setDataset(dataset);
             datasetInformation.setDataset_time(datasetDate);
-            dataset.setRow_count(datasetInformation.getRowCount());
-            // (Upload file xử lý ở đây nếu cần — giữ nguyên như bạn muốn)
+
+            // 🔹 BƯỚC 9: Upload file
             if (datasetSourceType.equals(DatasetSourceType.DATASET_PROVIDER)) {
-                 uploadCSVFileToPendingFolder(new File(datasetInformation.getFile_url()), dataset);
+                uploadCSVFileToPendingFolder(new File(datasetInformation.getFile_url()), dataset);
             } else {
-                 uploadCSVFileToSytemFolder(new File(datasetInformation.getFile_url()), dataset);
+                uploadCSVFileToSytemFolder(new File(datasetInformation.getFile_url()), dataset);
             }
 
-            logger.info(" Dataset [{}] uploaded successfully (source: {})", dataset.getTitle(), datasetSourceType);
+            logger.info("Dataset [{}] uploaded successfully (source: {})", dataset.getTitle(), datasetSourceType);
 
-            // Lưu dữ liệu (vì cascade có thể không set, lưu explicit dataset và timeGroup nếu cần)
-            // Tùy mapping bạn có thể cần lưu timeGroup và childGroup; ở đây save dataset (cascades nếu cấu hình)
-            datasetRepository.save(dataset);
-
-            // Nếu timeGroup hoặc childGroup cần được lưu explicit (nếu không có cascade)
-            timeGroupRepository.save(timeGroup);
-            datasetGroupRepository.save(childGroup);
-            datasetGroupRepository.save(parentGroup);
+            // 🔹 BƯỚC 10: Save final state
+            // Lưu theo thứ tự: TimeGroup -> Dataset -> ChildGroup -> ParentGroup
+            timeGroupRepository.saveAndFlush(timeGroup);
+            datasetRepository.saveAndFlush(dataset);
+            datasetGroupRepository.saveAndFlush(childGroup);
+            datasetGroupRepository.saveAndFlush(parentGroup);
 
             logger.info("=== Completed checkExitsAndCreateDatasetGroupAndDateset ===");
+
         } catch (Exception e) {
-            logger.error(" Error while processing dataset creation: {}", e.getMessage(), e);
+            logger.error("Error while processing dataset creation: {}", e.getMessage(), e);
             throw new RuntimeException("Error while creating dataset and groups", e);
         }
     }
-
-    /* --- Các helper overloads đã được chỉnh — đặt trong cùng class/service nếu chưa có --- */
 
     private DatasetGroup createParentDatasetGroup(Commune commune, DatasetInformation info, DatasetSourceType datasetSourceType) {
         DatasetGroup parent = new DatasetGroup();
@@ -347,8 +344,8 @@ public class DatasetServiceImpl implements DatasetService {
 
         dataset.setVersion(child.getVersion()+1);
         child.setVersion(child.getVersion()+1);
-        if(!parent.isHaveData()){
-            parent.setHaveData(true);
+        if(!parent.getIsHaveData()){
+            parent.setIsHaveData(true);
         }
         dataset.setDatasetStatus(DatasetStatus.APPROVE);
         datasetRepository.save(dataset);
