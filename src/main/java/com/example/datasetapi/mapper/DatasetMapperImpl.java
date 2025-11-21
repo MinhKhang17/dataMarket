@@ -226,17 +226,92 @@ datasetDTO.setRow_amount(dataset.getRow_count());
     public ReviewHistoryDto toReviewHistoryDto(ReviewHistory save) {
         ReviewHistoryDto reviewHistoryDto = new ReviewHistoryDto();
 
-        reviewHistoryDto.setProviderDto(toProviderDto(save.getProvider()));
-        reviewHistoryDto.setDatasetDTO(toDatasetDto(save.getDataset()));
+        // ✅ Dùng mapper safe (không serialize toàn bộ entity)
+        reviewHistoryDto.setProviderDto(toProviderDtoSafe(save.getProvider()));
+        reviewHistoryDto.setDatasetDTO(toDatasetDtoSafe(save.getDataset()));
         reviewHistoryDto.setReviewId(save.getReviewId());
-        if(save.getAdmin()==null){
-            reviewHistoryDto.setModerator(toUserDto(save.getModerator()));
+
+        if(save.getAdmin() == null){
+            reviewHistoryDto.setModerator(toUserDtoSafe(save.getModerator()));
+        } else {
+            reviewHistoryDto.setAdmin(toUserDtoSafe(save.getAdmin()));
         }
-        else{
-            reviewHistoryDto.setAdmin(toUserDto(save.getAdmin()));
-        }
+
         reviewHistoryDto.setReason(save.getReason());
         return reviewHistoryDto;
+    }
+    private ProviderDto toProviderDtoSafe(Provider provider) {
+        if (provider == null) return null;
+
+        ProviderDto dto = new ProviderDto();
+        dto.setId(provider.getId());
+        dto.setName(provider.getProviderRegistration().getFullName());
+
+
+        // ✅ CHỈ convert User cơ bản, KHÔNG convert toàn bộ Provider trong User
+        if (provider.getUser() != null) {
+            UserDto userDto = new UserDto();
+            userDto.setId(provider.getUser().getId());
+            userDto.setUsername(provider.getUser().getUsername());
+            userDto.setEmail(provider.getUser().getEmail());
+             // KHÔNG set provider trong userDto để tránh vòng lặp
+
+        }
+
+        return dto;
+    }
+
+    /**
+     * ✅ Convert Dataset sang DTO mà KHÔNG gây StackOverflow
+     */
+    private DatasetDTO toDatasetDtoSafe(Dataset dataset) {
+        if (dataset == null) return null;
+
+        DatasetDTO dto = new DatasetDTO();
+        dto.setTitle(dataset.getTitle());
+        dto.setDescription(dataset.getDescription());
+        dto.setVersion(dataset.getVersion());
+
+
+        // ✅ CHỈ lấy tên, KHÔNG convert toàn bộ entity để tránh vòng lặp
+        if (dataset.getDatasetChildGroup() != null) {
+            if (dataset.getDatasetChildGroup().getDatasetType() != null) {
+                dto.setDatasetType(dataset.getDatasetChildGroup().getDatasetSourceType());
+            }
+
+            if (dataset.getDatasetChildGroup().getCommune() != null) {
+                dto.setCommune(dataset.getDatasetChildGroup().getCommune().getName());
+
+                if (dataset.getDatasetChildGroup().getCommune().getProvince() != null) {
+                    dto.setProvince(dataset.getDatasetChildGroup().getCommune().getProvince().getName());
+
+                    if (dataset.getDatasetChildGroup().getCommune().getProvince() != null) {
+                        dto.setProvince(dataset.getDatasetChildGroup().getCommune().getProvince().getName());
+                    }
+                }
+            }
+        }
+
+        // KHÔNG set DatasetGroup, TimeGroup, Provider để tránh vòng lặp
+
+        return dto;
+    }
+
+    /**
+     * ✅ Convert User sang DTO mà KHÔNG gây StackOverflow
+     */
+    private UserDto toUserDtoSafe(User user) {
+        if (user == null) return null;
+
+        UserDto dto = new UserDto();
+        dto.setId(user.getId());
+        dto.setUsername(user.getUsername());
+        dto.setEmail(user.getEmail());
+
+
+        // KHÔNG set provider/admin/moderator để tránh vòng lặp
+
+        return dto;
     }
 
     private UserDto toUserDto(User user) {

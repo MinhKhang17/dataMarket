@@ -187,11 +187,14 @@ public class DatasetServiceImpl implements DatasetService {
                 datasetInformation.setStatus(DatasetInforStatus.APPROVED);
             }
 
-            // ✅ BƯỚC 4: SAVE DATASET TRƯỚC KHI TẠO TIMEGROUP
+            // 🔹 BƯỚC 4: Liên kết DatasetInformation với Dataset (TRƯỚC KHI SAVE)
+            datasetInformation.setDataset(dataset);
+
+            // ✅ BƯỚC 5: SAVE DATASET TRƯỚC KHI TẠO TIMEGROUP
             // Điều này quan trọng vì TimeGroup có thể reference đến Dataset
             dataset = datasetRepository.saveAndFlush(dataset);
 
-            // 🔹 BƯỚC 5: Tạo pricing nếu là moderator (sau khi dataset đã có ID)
+            // 🔹 BƯỚC 6: Tạo pricing nếu là moderator (sau khi dataset đã có ID)
             if (!datasetSourceType.equals(DatasetSourceType.DATASET_PROVIDER)) {
                 priceService.createPricingForDataset(dataset, datasetInformation, request);
             }
@@ -232,10 +235,10 @@ public class DatasetServiceImpl implements DatasetService {
             long existingRows = timeGroup.getRow_Count() != 0 ? timeGroup.getRow_Count() : 0L;
             timeGroup.setRow_Count(existingRows + datasetInformation.getRowCount());
 
-            // 🔹 BƯỚC 8: Liên kết Dataset với TimeGroup
+            // 🔹 BƯỚC 8: Liên kết Dataset với TimeGroup và cập nhật thông tin
             dataset.setTimeGroup(timeGroup);
-            datasetInformation.setDataset(dataset);
             datasetInformation.setDataset_time(datasetDate);
+            dataset.setRow_count(datasetInformation.getRowCount());
 
             // 🔹 BƯỚC 9: Upload file
             if (datasetSourceType.equals(DatasetSourceType.DATASET_PROVIDER)) {
@@ -260,7 +263,6 @@ public class DatasetServiceImpl implements DatasetService {
             throw new RuntimeException("Error while creating dataset and groups", e);
         }
     }
-
     private DatasetGroup createParentDatasetGroup(Commune commune, DatasetInformation info, DatasetSourceType datasetSourceType) {
         DatasetGroup parent = new DatasetGroup();
         parent.setDatasetGroupType(DatasetGroupType.PARENT);
@@ -318,53 +320,67 @@ public class DatasetServiceImpl implements DatasetService {
         }
     }
 
+    @Transactional
     @Override
     public ResponseEntity<?> acceptDataset(long datasetInforId, HttpServletRequest request) {
-        Optional<DatasetInformation> datasetInformationOptional = datasetInforRepository.findById(datasetInforId);
 
+        Optional<DatasetInformation> datasetInformationOptional = datasetInforRepository.findById(datasetInforId);
         long moderator_id = tokenService.getUserIdFromRequest(request);
 
         if(datasetInformationOptional.isEmpty()){
-            throw new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND);
+            throw new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_NOT_FOUND);
         }
 
         if(!datasetInformationOptional.get().getDataset().getDatasetStatus().equals(DatasetStatus.PENDING)){
-            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.DATASET_NOT_PENDING);
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.DATASET_NOT_PENDING);
         }
 
         if(!datasetInformationOptional.get().getStatus().equals(DatasetInforStatus.CONTENT_APPROVED)){
-            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.DATASET_INFO_NOT_APPROVED);
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.DATASET_INFO_NOT_APPROVED);
         }
 
         Dataset dataset = datasetInformationOptional.get().getDataset();
         datasetInformationOptional.get().setStatus(DatasetInforStatus.APPROVED);
-        //cập nhật thông tin của datasetGroup
+
+        // Cập nhật thông tin của datasetGroup
         DatasetGroup child = dataset.getDatasetChildGroup();
         DatasetGroup parent = dataset.getDatasetChildGroup().getParent();
 
-        dataset.setVersion(child.getVersion()+1);
-        child.setVersion(child.getVersion()+1);
+        dataset.setVersion(child.getVersion() + 1);
+        child.setVersion(child.getVersion() + 1);
+        child.setUpdateAt(LocalDateTime.now());
+
         if(!parent.getIsHaveData()){
             parent.setIsHaveData(true);
         }
+        parent.setUpdateAt(LocalDateTime.now());
+
         dataset.setDatasetStatus(DatasetStatus.APPROVE);
+
+        // ✅ Save theo thứ tự đúng
+        datasetGroupRepository.save(parent);
+        datasetGroupRepository.save(child);
         datasetRepository.save(dataset);
 
+        // ✅ Tạo ReviewHistory và CHỈ SAVE 1 LẦN
         ReviewHistory reviewHistory = new ReviewHistory();
         reviewHistory.setDataset(dataset);
         reviewHistory.setModerator(userService.findUserById(moderator_id));
         reviewHistory.setProvider(datasetInformationOptional.get().getDataset().getProvider());
-        reviewHistoryRepository.save(reviewHistory);
-        ReviewHistoryDto reviewHistoryDto = datasetMapper.toReviewHistoryDto(reviewHistoryRepository.save(reviewHistory));
+        reviewHistory = reviewHistoryRepository.save(reviewHistory); // Chỉ save 1 lần
 
+        // ✅ Convert sang DTO TRƯỚC KHI move file
+//        ReviewHistoryDto reviewHistoryDto = datasetMapper.toReviewHistoryDto(reviewHistory);
+
+//        // Move file
         moveFileFromPendingToApproveFolder(dataset);
+//
+//        // Tạo giá sau khi accept
+        priceService.createPricingForDataset(dataset, datasetInformationOptional.get(), new ProviderUploadDatasetRequest());
+//        priceService.createRevenueForProvider(dataset.getProvider(), dataset.getDatasetPack(), dataset);
 
-        //tạo giá sau khi accept
-        priceService.createPricingForDataset(dataset,datasetInformationOptional.get(),new ProviderUploadDatasetRequest());
-        priceService.createRevenueForProvider(dataset.getProvider(),dataset.getDatasetPack(),dataset);
-        return ResponseEntity.ok().body(new ApiResponse(true,"Dataset Accepted Successfully",reviewHistoryDto));
+        return ResponseEntity.ok().body("Accept sucess");
     }
-
     @Override
     public ResponseEntity<ApiResponse> rejectDataset(long datasetInforId,HttpServletRequest request,String reason) {
 
@@ -631,7 +647,7 @@ else {
         OrderRequest item = new OrderRequest();
         item.setDatasetId(dataset.getId());
         item.setDatasetName(dataset.getName());
-        item.setPrice((long) pricing.getPrice());
+        item.setPrice(pricing.getPrice());
         item.setPricingMethod(PricingMethod.ONE_TIME);
 
         ConsumerOrderResponse order = orderService.createOrder(

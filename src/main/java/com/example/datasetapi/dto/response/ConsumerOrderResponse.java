@@ -13,7 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 public class ConsumerOrderResponse {
     private Long id;
-    private Long totalAmount;
+    private double totalAmount;
     private List<OrderItemDetailResponse> items;
     private PricingMethod purchaseMethod;
     private LocalDateTime purchaseDate;

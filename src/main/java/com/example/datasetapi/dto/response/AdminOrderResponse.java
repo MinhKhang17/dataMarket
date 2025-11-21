@@ -16,7 +16,7 @@ public class AdminOrderResponse {
     private String username;
     private String email;
     private List<OrderItemDetailResponse> items;
-    private Long totalAmount;
+    private double totalAmount;
     private PricingMethod purchaseMethod;
     private LocalDateTime createdAt;
 }

@@ -18,7 +18,7 @@ public class OrderItem {
     private Long datasetId;
 
     private String datasetName;
-    private Long priceAtPurchase;
+    private double priceAtPurchase;
 
     @ManyToOne
     @JoinColumn(name = "order_id")

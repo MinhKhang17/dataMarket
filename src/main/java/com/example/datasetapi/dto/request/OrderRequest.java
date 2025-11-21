@@ -13,6 +13,6 @@ import java.util.List;
 public class OrderRequest {
     private Long datasetId;
     private String datasetName;
-    private Long price;
+    private double price;
     private PricingMethod pricingMethod;
 }

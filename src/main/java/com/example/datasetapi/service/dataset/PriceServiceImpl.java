@@ -106,14 +106,21 @@ private ProviderRevenueRepo providerRevenueRepo;
 
 
     private void createPricing(Dataset dataset, DatasetInformation datasetInformation, DatasetPack datasetPack, ProviderUploadDatasetRequest request) {
-        Set<DatasetPlan> datasetPlans = new HashSet<>() ;
+        Set<DatasetPlan> datasetPlans = new HashSet<>();
 
         // ONE_TIME
         DatasetPlan oneTimePlan = new DatasetPlan();
         oneTimePlan.setPricingMethod(PricingMethod.ONE_TIME);
         oneTimePlan.setDataset(dataset);
         oneTimePlan.setDatasetPack(datasetPack);
-        oneTimePlan.setDatasetPricingList(calculatePricing(PricingMethod.ONE_TIME, datasetPack, datasetInformation.getRowCount(), oneTimePlan,dataset,request));
+
+        Set<DatasetPricing> oneTimePricings = calculatePricing(PricingMethod.ONE_TIME, datasetPack, datasetInformation.getRowCount(), oneTimePlan, dataset, request);
+
+        // ✅ Set quan hệ 2 chiều
+        for (DatasetPricing pricing : oneTimePricings) {
+            pricing.setDatasetPlan(oneTimePlan);
+        }
+        oneTimePlan.setDatasetPricingList(oneTimePricings);
 
         datasetPlans.add(oneTimePlan);
 
@@ -122,21 +129,20 @@ private ProviderRevenueRepo providerRevenueRepo;
         subTypePlan.setPricingMethod(PricingMethod.SUBSCRIPTION);
         subTypePlan.setDataset(dataset);
         subTypePlan.setDatasetPack(datasetPack);
-        subTypePlan.setDatasetPricingList(calculatePricing(PricingMethod.SUBSCRIPTION, datasetPack, datasetInformation.getRowCount(), subTypePlan, dataset, request));
+
+        Set<DatasetPricing> subPricings = calculatePricing(PricingMethod.SUBSCRIPTION, datasetPack, datasetInformation.getRowCount(), subTypePlan, dataset, request);
+
+        // ✅ Set quan hệ 2 chiều
+        for (DatasetPricing pricing : subPricings) {
+            pricing.setDatasetPlan(subTypePlan);
+        }
+        subTypePlan.setDatasetPricingList(subPricings);
+
         datasetPlans.add(subTypePlan);
 
-//        // API
-//        DatasetPlan apiPlan = new DatasetPlan();
-//        apiPlan.setDataset(dataset);
-//        apiPlan.setPricingMethod(PricingMethod.API);
-//        apiPlan.setDatasetPack(datasetPack);
-//        apiPlan.setDatasetPricingList(calculatePricing(PricingMethod.API, datasetPack, datasetInformation.getRowCount(), apiPlan, dataset));
-//        datasetPlans.add(apiPlan);
-
-        // 👉 Lưu DatasetPlan sẽ tự cascade xuống Pricing
+        // ✅ Save all
         datasetPlanRepo.saveAll(datasetPlans);
     }
-
 
     private Set<DatasetPricing> calculatePricing(PricingMethod pricingMethod, DatasetPack datasetPack, Long rowCount, DatasetPlan plan, Dataset dataset, ProviderUploadDatasetRequest request) {
         Set<DatasetPricing> list = new HashSet<>();

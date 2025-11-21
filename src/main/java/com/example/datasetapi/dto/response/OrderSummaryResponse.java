@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 public class OrderSummaryResponse {
     private Long orderId;
     private LocalDateTime purchaseDate;
-    private Long totalAmount;
+    private double totalAmount;
     private PricingMethod purchaseMethod;
     private Integer datasetCount;
 }

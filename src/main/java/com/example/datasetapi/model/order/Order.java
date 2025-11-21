@@ -25,7 +25,7 @@ public class Order {
     private List<OrderItem> items;
 
     @Column(nullable = false)
-    private Long totalAmount;
+    private double totalAmount;
 
     @Enumerated(EnumType.STRING)
     private PricingMethod purchaseMethod;

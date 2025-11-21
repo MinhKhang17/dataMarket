@@ -114,8 +114,8 @@ public class OrderServiceImpl implements OrderService {
 
         datasetOrder.setItems(items);
 
-        Long total = items.stream()
-                .mapToLong(OrderItem::getPriceAtPurchase)
+        double total = (long) items.stream()
+                .mapToDouble(OrderItem::getPriceAtPurchase)
                 .sum();
         datasetOrder.setTotalAmount(total);
 

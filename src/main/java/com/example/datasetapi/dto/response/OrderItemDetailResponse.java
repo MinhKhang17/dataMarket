@@ -10,5 +10,5 @@ import lombok.NoArgsConstructor;
 public class OrderItemDetailResponse {
     private Long datasetId;
     private String datasetName;
-    private Long priceAtPurchase;
+    private double priceAtPurchase;
 }
