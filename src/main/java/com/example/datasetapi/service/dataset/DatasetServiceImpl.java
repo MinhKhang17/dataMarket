@@ -377,7 +377,7 @@ public class DatasetServiceImpl implements DatasetService {
 //
 //        // Tạo giá sau khi accept
         priceService.createPricingForDataset(dataset, datasetInformationOptional.get(), new ProviderUploadDatasetRequest());
-//        priceService.createRevenueForProvider(dataset.getProvider(), dataset.getDatasetPack(), dataset);
+        priceService.createRevenueForProvider(dataset.getProvider(), dataset.getDatasetPack(), dataset);
 
         return ResponseEntity.ok().body("Accept sucess");
     }
