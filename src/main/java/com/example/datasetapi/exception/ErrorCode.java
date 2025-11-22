@@ -93,7 +93,8 @@ public enum ErrorCode {
     DATASET_BOUGHT("DATASET_BOUGHT","Dataset đã được mua" ),
     CONSUMER_SUB_NOT_FOUND("CONSUMER_SUB_NOT_FOUND","Không tìm thấy gói thuê bao của người dùng" ),
     CAN_NOT_CANCEL_DATASET("CAN_NOT_CANCEL_DATASET","không thể cancel dataset" ),
-    SUB_NOT_AVAILABLE("SUB_NOT_AVAILABLE","gói sub không hợp lệ" );
+    SUB_NOT_AVAILABLE("SUB_NOT_AVAILABLE","gói sub không hợp lệ" ),
+    FILE_NOT_FOUND("FILE_NOT_FOUND","Không tìm thấy file" );
 
     private final String code;
     private final String message;

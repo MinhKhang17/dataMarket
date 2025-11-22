@@ -1,14 +1,9 @@
 package com.example.datasetapi.service.dataset;
 
-import com.example.datasetapi.model.dataset.DatasetAnalysis;
-import com.example.datasetapi.model.dataset.DatasetInformation;
-import com.example.datasetapi.model.dataset.DatasetValidationError;
-import com.example.datasetapi.model.dataset.AnalysisMetrics;
-import com.example.datasetapi.model.dataset.AiPromptRecord;
+import com.example.datasetapi.model.dataset.*;
 import com.example.datasetapi.repository.AnalysisMetricsRepository;
 import com.example.datasetapi.repository.AiPromptRecordRepository;
 import com.example.datasetapi.repository.DatasetAnalysisRepository;
-import com.example.datasetapi.repository.DatasetInforRepository;
 import com.example.datasetapi.repository.DatasetValidationErrorRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,7 +25,6 @@ public class AnalysisServiceImpl implements AnalysisService {
    @Autowired
    private  AnalysisMetricsRepository analysisMetricsRepository;
     @Autowired  AiPromptRecordRepository aiPromptRecordRepository;
-    @Autowired  DatasetInforRepository datasetInforRepository;
     @Autowired    private  DatasetValidationErrorRepository datasetValidationErrorRepository;
     @Autowired    private  ObjectMapper objectMapper;
 
@@ -46,7 +40,7 @@ public class AnalysisServiceImpl implements AnalysisService {
      */
     @Override
     @Transactional
-    public DatasetAnalysis saveAnalysisAndArtifacts(DatasetInformation dsInfo,
+    public DatasetAnalysis saveAnalysisAndArtifacts(Dataset dsInfo,
                                                     Map<String, Object> coreMetrics,
                                                     String promptText,
                                                     String aiResponseJson,
@@ -67,7 +61,7 @@ public class AnalysisServiceImpl implements AnalysisService {
         analysis.setRowCount(dsInfo.getRowCount());
         analysis.setErrorRatePercent(errorRate);
         analysis.setTotalErrors(totalErrors);
-        analysis.setStatus(dsInfo.getStatus() != null ? dsInfo.getStatus().name() : null);
+        analysis.setStatus(dsInfo.getDatasetStatus() != null ? dsInfo.getDatasetStatus().name() : null);
         analysis.setUpdatedAt(Instant.now());
 
         analysis = datasetAnalysisRepository.save(analysis);
@@ -98,13 +92,13 @@ public class AnalysisServiceImpl implements AnalysisService {
         if (errors != null) {
             try {
                 // delete previous errors linked to this DatasetInformation
-                DatasetInformation di = new DatasetInformation();
+                Dataset di = new Dataset();
                 di.setId(dsInfo.getId());
-                datasetValidationErrorRepository.deleteByDatasetInformation(di);
+                datasetValidationErrorRepository.deleteByDataset(di);
 
                 // set datasetInformation on incoming errors, then save
                 for (DatasetValidationError ev : errors) {
-                    ev.setDatasetInformation(dsInfo);
+                    ev.setDataset(dsInfo);
                 }
                 datasetValidationErrorRepository.saveAll(errors);
             } catch (Exception e) {

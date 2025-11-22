@@ -8,6 +8,7 @@ import com.example.datasetapi.dto.response.DatasetDTO;
 import com.example.datasetapi.dto.response.DatasetParentReposonseDto;
 import com.example.datasetapi.dto.service.DatasetGroupInfor;
 import com.example.datasetapi.enums.Datasets.DatasetSourceType;
+import com.example.datasetapi.enums.FolderType;
 import com.example.datasetapi.model.dataset.DatasetGroup;
 import com.example.datasetapi.service.dataset.DatasetService;
 import com.example.datasetapi.service.dataset.DatasetValidateService;
@@ -86,6 +87,7 @@ public class ModeratorController {
     public ResponseEntity<?> downloadDataset(@PathVariable("id") long id,HttpServletRequest request) {
         return datasetService.downloadDatasetNoValidToken(id);
     }
+
 
     @PostMapping("dataset/{id}/update")
     public ResponseEntity<?> updateDataSet(@PathVariable Long id,

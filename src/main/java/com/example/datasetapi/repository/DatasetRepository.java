@@ -1,6 +1,7 @@
 package com.example.datasetapi.repository;
 
 import com.example.datasetapi.dto.response.DatasetDTO;
+import com.example.datasetapi.enums.Datasets.DatasetStatus;
 import com.example.datasetapi.enums.Datasets.PricingMethod;
 import com.example.datasetapi.model.dataset.Dataset;
 import com.example.datasetapi.model.userManager.Provider;
@@ -30,5 +31,7 @@ public interface DatasetRepository extends JpaRepository<Dataset, Long>, JpaSpec
 
     Dataset findByIdAndProvider(Long id, Provider provider);
 
+
+    List<Dataset> findALByDatasetStatus(DatasetStatus datasetStatus);
 
 }

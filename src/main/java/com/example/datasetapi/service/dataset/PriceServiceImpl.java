@@ -38,19 +38,19 @@ public class PriceServiceImpl implements  PriceService {
 @Autowired
 private ProviderRevenueRepo providerRevenueRepo;
     @Override
-    public void createPricingForDataset(Dataset dataset, DatasetInformation datasetInformation,  ProviderUploadDatasetRequest request) {
+    public void createPricingForDataset(Dataset dataset,  ProviderUploadDatasetRequest request) {
         //tạo giá cho mua một lần
         switch (dataset.getDatasetPack()) {
             case SMALL -> {
-                createPricing(dataset,datasetInformation,DatasetPack.SMALL,request);
+                createPricing(dataset,DatasetPack.SMALL,request);
             }
             case MEDIUM -> {
 
-                createPricing(dataset,datasetInformation,DatasetPack.MEDIUM, request);
+                createPricing(dataset,DatasetPack.MEDIUM, request);
 
             }
             case LARGE -> {
-                createPricing(dataset,datasetInformation,DatasetPack.LARGE, request);
+                createPricing(dataset,DatasetPack.LARGE, request);
             }
             case UNDETERMINED -> {
                 throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.DATASET_PACK_INVALID);
@@ -105,7 +105,7 @@ private ProviderRevenueRepo providerRevenueRepo;
     }
 
 
-    private void createPricing(Dataset dataset, DatasetInformation datasetInformation, DatasetPack datasetPack, ProviderUploadDatasetRequest request) {
+    private void createPricing(Dataset dataset, DatasetPack datasetPack, ProviderUploadDatasetRequest request) {
         Set<DatasetPlan> datasetPlans = new HashSet<>();
 
         // ONE_TIME
@@ -114,7 +114,7 @@ private ProviderRevenueRepo providerRevenueRepo;
         oneTimePlan.setDataset(dataset);
         oneTimePlan.setDatasetPack(datasetPack);
 
-        Set<DatasetPricing> oneTimePricings = calculatePricing(PricingMethod.ONE_TIME, datasetPack, datasetInformation.getRowCount(), oneTimePlan, dataset, request);
+        Set<DatasetPricing> oneTimePricings = calculatePricing(PricingMethod.ONE_TIME, datasetPack, dataset.getRowCount(), oneTimePlan, dataset, request);
 
         // ✅ Set quan hệ 2 chiều
         for (DatasetPricing pricing : oneTimePricings) {
@@ -130,7 +130,7 @@ private ProviderRevenueRepo providerRevenueRepo;
         subTypePlan.setDataset(dataset);
         subTypePlan.setDatasetPack(datasetPack);
 
-        Set<DatasetPricing> subPricings = calculatePricing(PricingMethod.SUBSCRIPTION, datasetPack, datasetInformation.getRowCount(), subTypePlan, dataset, request);
+        Set<DatasetPricing> subPricings = calculatePricing(PricingMethod.SUBSCRIPTION, datasetPack, dataset.getRowCount(), subTypePlan, dataset, request);
 
         // ✅ Set quan hệ 2 chiều
         for (DatasetPricing pricing : subPricings) {

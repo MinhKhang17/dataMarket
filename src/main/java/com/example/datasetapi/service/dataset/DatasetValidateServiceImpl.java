@@ -1,20 +1,20 @@
 package com.example.datasetapi.service.dataset;
 
 import com.example.datasetapi.enums.Datasets.DatasetSourceType;
+import com.example.datasetapi.enums.Datasets.DatasetStatus;
 import com.example.datasetapi.mapper.DatasetMapper;
 import com.example.datasetapi.mapper.UserMapper;
 import com.example.datasetapi.mapper.UserResponseDTOMapper;
 import com.example.datasetapi.dto.request.ProviderUploadDatasetRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
 
-import com.example.datasetapi.enums.Datasets.DatasetInforStatus;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
+import com.example.datasetapi.model.dataset.Dataset;
 import com.example.datasetapi.model.location.Commune;
-import com.example.datasetapi.model.userManager.User;
+import com.example.datasetapi.model.userManager.Provider;
 import com.example.datasetapi.repository.*;
 
-import com.example.datasetapi.model.dataset.DatasetInformation;
 
 import com.example.datasetapi.service.feature.AsyncDatasetService;
 import com.example.datasetapi.service.feature.FileService;
@@ -56,8 +56,7 @@ public class DatasetValidateServiceImpl implements DatasetValidateService {
 
     @Autowired
   private   AsyncDatasetService asyncDatasetService;
-    @Autowired
-    private DatasetInforRepository datasetInforRepository;
+
     @Autowired
     private DatasetValidationErrorRepository datasetValidationErrorRepository;
 
@@ -70,16 +69,18 @@ public class DatasetValidateServiceImpl implements DatasetValidateService {
     @Autowired
     private DatasetService datasetService;
 
-    private ResponseEntity<?> updateInforOfDatasetCheckContentUploadToCloud(ProviderUploadDatasetRequest providerUploadDatasetRequest, HttpServletRequest request, DatasetInformation ds, DatasetSourceType datasetSourceType) {
+    private ResponseEntity<?> updateInforOfDatasetCheckContentUploadToCloud(ProviderUploadDatasetRequest providerUploadDatasetRequest, HttpServletRequest request, Dataset ds, DatasetSourceType datasetSourceType, MultipartFile fileFromRequest) {
 try {
     //check xem đã check header hay chưa
+    MultipartFile file = fileFromRequest;
     if (!ds.isHeaderChecked()) {
         return ResponseEntity.badRequest().body(new ApiResponse(false, "The dataset hasn't been checked for headers.", null));
     }
     //check xem có thuộc về provider đó không
-    if (ds.getProvider().getId() != tokenService.getUserIdFromRequest(request)) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-    }
+    if(datasetSourceType==DatasetSourceType.DATASET_PROVIDER){
+        if (ds.getProvider().getId() != tokenService.getUserIdFromRequest(request)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }}
     long provider_id = tokenService.getUserIdFromRequest(request);
 
 
@@ -89,59 +90,54 @@ try {
     //call truoc de fetch day du thong tin
     ds.getDatasetType().getName();
     ds.getDatasetType().getDatasetTypeColumnList().get(0);
-    ds.setUpdateAt(LocalDateTime.now());
+    ds.setUpdatedAt(LocalDateTime.now());
 
     Optional<Commune> addressOptional = communeRepository.findById(providerUploadDatasetRequest.getCommune_id());
     if (!addressOptional.isPresent()) {
         throw new CustomException(HttpStatus.NOT_FOUND,ErrorCode.Location_NOT_FOUND);
     }
     ds.setCommune(addressOptional.get());
+
     Map<String, Object> result =
             fileService.moderate(ds);
-        if(ds.getStatus()!= DatasetInforStatus.CONTENT_APPROVED){
+        if(ds.getDatasetStatus() != DatasetStatus.CONTENT_APPROVED){
             return ResponseEntity.badRequest().body(new ApiResponse(false, "The dataset hasn't been checked for headers.", result));
         }
 
-    datasetService.checkExitsAndCreateDatasetGroupAndDateset(providerUploadDatasetRequest, provider_id,ds,datasetSourceType);
+    datasetService.checkExitsAndCreateDatasetGroupAndDateset(providerUploadDatasetRequest, provider_id,ds,datasetSourceType,file);
 
-    return ResponseEntity.ok(new ApiResponse(true, "Success in check content progress wait for moderator", ds.getId()));
+   if(datasetSourceType==DatasetSourceType.DATASET_PROVIDER){ return ResponseEntity.ok(new ApiResponse(true, "Success in check content progress wait for moderator", ds.getId()));}
+   else {
+       return ResponseEntity.ok(new ApiResponse(true, "Upload success", ds.getId()));}
+
 }catch (IllegalArgumentException e) {
     throw new RuntimeException(e);
-}finally {
-    try {
 
-        System.out.println("-----------------------------------------\n" +
-                "Deleted dataset\n" +
-                "-----------------------------------------");
-        Files.deleteIfExists(Paths.get(ds.getFile_url()));
-    } catch (IOException e) {
-        System.err.println("Can not delete current file: " + e.getMessage());
-    }
 }
 
     }
     @Override
-    public ResponseEntity<?> uploadAndHeaderCheckCSVFile(MultipartFile file, long datasetTypeId, HttpServletRequest request, ProviderUploadDatasetRequest providerUploadDatasetRequest, DatasetSourceType datasetSourceType) {
+    public ResponseEntity<?> uploadAndHeaderCheckCSVFile(MultipartFile fileFromRequest, long datasetTypeId, HttpServletRequest request, ProviderUploadDatasetRequest providerUploadDatasetRequest, DatasetSourceType datasetSourceType) {
 
             //lay id tu request
-            long provider_id = tokenService.getUserIdFromRequest(request);
+            long user_id = tokenService.getUserIdFromRequest(request);
             //lay provider de gan cho dataset
-            User provider =userService.findUserById(provider_id);
             //tao dataset infor de luu lỗi
-            DatasetInformation ds = new DatasetInformation();
+            Dataset ds = new Dataset();
+        MultipartFile file = fileFromRequest;
             //checkHeader
-            boolean isChecked = fileService.checkHeader(file,datasetTypeId,ds,provider);
+            boolean isChecked = fileService.checkHeader(fileFromRequest,datasetTypeId,ds,user_id,datasetSourceType);
 
             if(!isChecked){
                 return ResponseEntity.badRequest().body(new ApiResponse(false,"dataset header checked and false",datasetMapper.toUploadHeaderResponseDto(ds)));
             }
             //neu check thanh cong thi chuyen sang check content dataset cho provider
-            return updateInforOfDatasetCheckContentUploadToCloud(providerUploadDatasetRequest,request,ds,datasetSourceType);
+            return updateInforOfDatasetCheckContentUploadToCloud(providerUploadDatasetRequest,request,ds,datasetSourceType,file);
 
     }
     @Override
     public ResponseEntity<?> getAllDatasetErrorWithDatasetInfor() {
-        List<DatasetInformation> datasetInformationList = datasetInforRepository.findAllByStatus(DatasetInforStatus.CONTENT_APPROVED);
+        List<Dataset> datasetInformationList = datasetService.findAllByStatus(DatasetStatus.CONTENT_APPROVED);
         datasetInformationList.forEach(datasetInformation -> {
             datasetInformation.getDatasetType().getName();
             datasetInformation.getProvider().getId();
@@ -149,7 +145,7 @@ try {
         });
         return ResponseEntity.ok().body(new ApiResponse(true,"Load success",datasetInformationList
                 .stream()
-                .filter(datasetInformation -> datasetInformation.getStatus()== DatasetInforStatus.CONTENT_APPROVED)
+                .filter(datasetInformation -> datasetInformation.getDatasetStatus()== DatasetStatus.CONTENT_APPROVED)
                 .map(userResponseDTOMapper :: toModeratorDatasetInforResponseDto )
                 .collect(Collectors.toList())
 ));

@@ -7,8 +7,8 @@ import com.example.datasetapi.dto.response.ConsumerBuyResponseDTO;
 import com.example.datasetapi.dto.response.DatasetParentReposonseDto;
 import com.example.datasetapi.dto.service.DatasetGroupInfor;
 import com.example.datasetapi.enums.Datasets.DatasetSourceType;
+import com.example.datasetapi.enums.Datasets.DatasetStatus;
 import com.example.datasetapi.model.dataset.Dataset;
-import com.example.datasetapi.model.dataset.DatasetInformation;
 import com.example.datasetapi.model.userManager.ConsumerSubscription;
 import com.example.datasetapi.model.userManager.User;
 import com.example.datasetapi.dto.response.*;
@@ -17,15 +17,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.util.List;
 
 @Service
 public interface DatasetService {
 
 
-    public void checkExitsAndCreateDatasetGroupAndDateset(ProviderUploadDatasetRequest providerUploadDatasetRequest, long Provider_id, DatasetInformation datasetInformation, DatasetSourceType datasetSourceType);
 
 
     ResponseEntity<ApiResponse> getAllCategories();
@@ -33,8 +32,18 @@ public interface DatasetService {
     ResponseEntity<ApiResponse> getAllDatasetType();
 
 
+    @Transactional
+    void checkExitsAndCreateDatasetGroupAndDateset(
+            ProviderUploadDatasetRequest request,
+            long providerId,
+            Dataset dataset,
+            DatasetSourceType datasetSourceType, MultipartFile file);
+
     ResponseEntity<?> acceptDataset(long datasetInforId, HttpServletRequest request);
-    Dataset uploadCSVFileToSytemFolder(File file, Dataset dataset);
+
+    List<Dataset> findAllByStatus(DatasetStatus datasetStatus);
+
+    Dataset uploadCSVFileToSytemFolder(MultipartFile file, Dataset dataset);
     ResponseEntity<?> getAllAllDataset();
 
     ResponseEntity<?> rejectDataset(long datasetInforId, HttpServletRequest request,String reason);
@@ -71,7 +80,7 @@ public interface DatasetService {
 
     ResponseEntity<ApiResponse> searchDatasetByName(String datasetName);
 
-    Dataset uploadCSVFileToPendingFolder(File file, Dataset dataset);
+    Dataset uploadCSVFileToPendingFolder(MultipartFile file, Dataset dataset);
 
     public Dataset moveFileFromPendingToApproveFolder(Dataset dataset);
 

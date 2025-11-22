@@ -1,17 +1,21 @@
 package com.example.datasetapi.model.dataset;
 
+import com.example.datasetapi.dto.response.ValidationErrorDto;
 import com.example.datasetapi.enums.Datasets.DatasetPack;
 import com.example.datasetapi.enums.Datasets.DatasetSourceType;
 import com.example.datasetapi.enums.Datasets.DatasetStatus;
+import com.example.datasetapi.enums.Datasets.FileExtension;
+import com.example.datasetapi.model.location.Commune;
 import com.example.datasetapi.model.userManager.Provider;
 import com.example.datasetapi.model.userManager.User;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,10 +38,10 @@ public class Dataset {
     @Column
     private String title;
 
-    @Column
+    @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private DatasetStatus datasetStatus = DatasetStatus.PENDING;
 
@@ -45,7 +49,24 @@ public class Dataset {
     private String fileKey;
 
     @Column
-    private Integer version;
+    private String fileUrl;
+
+    @Column
+    @Enumerated(EnumType.STRING)
+    private FileExtension datasetExtension;
+
+
+    @Column
+    private Long rowCount;
+
+    @Column
+    private Long downloadCount = 0L;
+
+    @Column
+    private boolean isHeaderChecked = false;
+
+    @Column
+    private boolean isContentChecked = false;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -54,18 +75,20 @@ public class Dataset {
     private LocalDateTime updatedAt;
 
     @Column
+    private LocalDate datasetTime;
+
+    @Column
     @Enumerated(EnumType.STRING)
     private DatasetPack datasetPack = DatasetPack.UNDETERMINED;
 
     @Column
-    private Long row_count;
-
-    @Column
-    private Long dowload_count = 0L;
-
-    @Column
     @Enumerated(EnumType.STRING)
     private DatasetSourceType datasetSourceType;
+
+    // ==================== TRANSIENT FIELDS ====================
+
+    @Transient
+    private List<ValidationErrorDto> validationErrors;
 
     // ==================== RELATIONSHIPS ====================
 
@@ -73,6 +96,11 @@ public class Dataset {
     @JoinColumn(name = "dataset_group_id")
     @JsonIgnore
     private DatasetGroup datasetChildGroup;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "dataset_type_id")
+    @JsonIgnore
+    private DatasetType datasetType;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "provider_id")
@@ -85,6 +113,11 @@ public class Dataset {
     private User moderator;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "commune_id")
+    @JsonIgnore
+    private Commune commune;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "time_group_id")
     @JsonIgnore
     private TimeGroup timeGroup;
@@ -92,6 +125,10 @@ public class Dataset {
     @OneToMany(mappedBy = "dataset", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<DatasetPlan> datasetPlans = new ArrayList<>();
+
+    @OneToMany(mappedBy = "dataset", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<DatasetValidationError> datasetValidationErrors = new ArrayList<>();
 
     // ==================== LIFECYCLE CALLBACKS ====================
 
@@ -105,14 +142,17 @@ public class Dataset {
         if (this.createdAt == null) {
             this.createdAt = LocalDateTime.now();
         }
+        if (this.updatedAt == null) {
+            this.updatedAt = LocalDateTime.now();
+        }
         if (this.datasetStatus == null) {
             this.datasetStatus = DatasetStatus.PENDING;
         }
         if (this.datasetPack == null) {
             this.datasetPack = DatasetPack.UNDETERMINED;
         }
-        if (this.dowload_count == null) {
-            this.dowload_count = 0L;
+        if (this.downloadCount == null) {
+            this.downloadCount = 0L;
         }
     }
 
@@ -132,6 +172,22 @@ public class Dataset {
     public void removeDatasetPlan(DatasetPlan plan) {
         datasetPlans.remove(plan);
         plan.setDataset(null);
+    }
+
+    /**
+     * Thêm DatasetValidationError vào Dataset
+     */
+    public void addValidationError(DatasetValidationError error) {
+        datasetValidationErrors.add(error);
+        error.setDataset(this);
+    }
+
+    /**
+     * Xóa DatasetValidationError khỏi Dataset
+     */
+    public void removeValidationError(DatasetValidationError error) {
+        datasetValidationErrors.remove(error);
+        error.setDataset(null);
     }
 
     // ==================== EQUALS & HASHCODE ====================
@@ -155,10 +211,11 @@ public class Dataset {
     public String toString() {
         return "Dataset{" +
                 "id=" + id +
+                ", name='" + name + '\'' +
                 ", title='" + title + '\'' +
-                ", version=" + version +
                 ", datasetStatus=" + datasetStatus +
                 ", datasetPack=" + datasetPack +
+                ", rowCount=" + rowCount +
                 '}';
     }
 }

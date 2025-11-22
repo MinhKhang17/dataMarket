@@ -2,17 +2,15 @@ package com.example.datasetapi.service.ai;
 
 import com.example.datasetapi.dto.response.AnalyticsSummaryDto;
 import com.example.datasetapi.dto.service.ChartDto;
-import com.example.datasetapi.dto.service.ChartDto;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
 import com.example.datasetapi.mapper.AiTextMapper;
 import com.example.datasetapi.model.dataset.AiPromptRecord;
+import com.example.datasetapi.model.dataset.Dataset;
 import com.example.datasetapi.model.dataset.DatasetAnalysis;
-import com.example.datasetapi.model.dataset.DatasetInformation;
-import com.example.datasetapi.model.userManager.User;
 import com.example.datasetapi.repository.AiPromptRecordRepository;
 import com.example.datasetapi.repository.DatasetAnalysisRepository;
-import com.example.datasetapi.repository.DatasetInforRepository;
+import com.example.datasetapi.repository.DatasetRepository;
 import com.example.datasetapi.service.ChatService;
 import com.example.datasetapi.service.user.TokenService;
 import com.example.datasetapi.service.user.UserService;
@@ -24,17 +22,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.net.http.HttpClient;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class AiAnalyticsMapperService {
 
     private static final Logger log = LoggerFactory.getLogger(AiAnalyticsMapperService.class);
     @Autowired private HttpServletRequest request;
-    private final DatasetInforRepository datasetInforRepository;
+    private final DatasetRepository datasetInforRepository;
     private final DatasetAnalysisRepository datasetAnalysisRepository;
     private final AiPromptRecordRepository aiPromptRecordRepository;
     private final ChatService chatService;
@@ -44,7 +41,7 @@ public class AiAnalyticsMapperService {
     @Autowired
     private TokenService tokenService;
     public AiAnalyticsMapperService(
-            DatasetInforRepository datasetInforRepository,
+            DatasetRepository datasetInforRepository,
             DatasetAnalysisRepository datasetAnalysisRepository,
             AiPromptRecordRepository aiPromptRecordRepository,
             ChatService chatService,
@@ -68,12 +65,12 @@ public class AiAnalyticsMapperService {
         }
 
         // 1) Lấy dataset + analysis + prompt record
-        DatasetInformation ds = datasetInforRepository.findByDatasetId(datasetId);
-        if (ds == null) {
+        Optional<Dataset> ds = datasetInforRepository.findById(datasetId);
+        if (ds.isEmpty()) {
             throw new IllegalArgumentException("Dataset không tồn tại: " + datasetId);
         }
 
-        DatasetAnalysis analysis = datasetAnalysisRepository.findByDatasetInformation(ds);
+        DatasetAnalysis analysis = datasetAnalysisRepository.findByDatasetInformation(ds.orElse(null));
         if (analysis == null) {
             throw new IllegalArgumentException("Chưa có bản ghi DatasetAnalysis cho datasetId=" + datasetId);
         }

@@ -57,8 +57,7 @@ public class DataInitializer implements CommandLineRunner {
     private DatasetRepository datasetRepository;
     @Autowired
     private ProviderRepository providerRepository;
-    @Autowired
-    private DatasetInforRepository datasetInforRepository;
+
     @Autowired
     private PricingRuleRepo pricingRuleRepo;
     @Autowired
