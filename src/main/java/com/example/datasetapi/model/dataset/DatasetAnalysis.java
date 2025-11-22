@@ -28,8 +28,8 @@ public class DatasetAnalysis {
      * Nếu bạn muốn tránh join, bạn có thể comment phần @ManyToOne này.
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "dataset_information_id", insertable = false, updatable = false)
-    private DatasetInformation datasetInformation;
+    @JoinColumn(name = "dataset_id", insertable = false, updatable = false)
+    private Dataset datasetInformation;
 
     @Column(name = "dataset_type", length = 150)
     private String datasetType;

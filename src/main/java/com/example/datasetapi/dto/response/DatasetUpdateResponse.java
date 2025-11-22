@@ -23,5 +23,4 @@ public class DatasetUpdateResponse {
     private Double price;
     private Double pricePerRequest;
     private String fileKey;
-    private Integer version;
 }

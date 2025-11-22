@@ -24,9 +24,8 @@ import com.example.datasetapi.service.user.TokenService;
 import com.example.datasetapi.service.user.UserService;
 import com.example.datasetapi.util.DateUtil;
 import com.example.datasetapi.util.JwtUtil;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
-import com.example.datasetapi.repository.DatasetRepository;
-import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,99 +36,122 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import software.amazon.awssdk.core.ResponseInputStream;
-import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.services.s3.S3Client;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+
+import java.io.*;
+import java.nio.file.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
-import software.amazon.awssdk.services.s3.model.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @Service
 public class DatasetServiceImpl implements DatasetService {
-    @Autowired private JwtUtil jwtUtil;
-    @Autowired private DatasetRepository datasetRepository;
-    @Autowired private CategoryRepository categoryRepository;
-    @Autowired private DatasetTypeRepository datasetTypeRepository;
-    @Autowired private TokenService tokenService;
-    @Autowired private UserService userService;
-    @Autowired private DatasetInforRepository datasetInforRepository;
-    @Autowired private DatasetGroupRepository datasetGroupRepository;
-    @Autowired private S3Client s3Client;
-    @Autowired private ReviewHistoryRepository reviewHistoryRepository;
-    @Autowired private DatasetMapper datasetMapper;
-    @Autowired private PriceService priceService;
-    @Autowired private CommuneRepository communeRepository;
-    @Autowired private TimeGroupRepository timeGroupRepository;
-    @Autowired private PaymentService paymentService;
-    @Autowired private DatasetPricingRepository datasetPricingRepository;
-    @Autowired private ConsumerSubRepo consumerSubRepo;
-    @Autowired private DownloadTokenRepository downloadTokenRepository;
-    @Autowired private WalletService walletService;
-    @Autowired private OrderService orderService;
-    @Autowired private TransactionService transactionService;
-    @Autowired private ProvinceRepository provinceRepository;
+    @Autowired
+    private JwtUtil jwtUtil;
+    @Autowired
+    private DatasetRepository datasetRepository;
+    @Autowired
+    private CategoryRepository categoryRepository;
+    @Autowired
+    private DatasetTypeRepository datasetTypeRepository;
+    @Autowired
+    private TokenService tokenService;
+    @Autowired
+    private UserService userService;
+    @Autowired
+    private DatasetGroupRepository datasetGroupRepository;
+    @Autowired
+    private ReviewHistoryRepository reviewHistoryRepository;
+    @Autowired
+    private DatasetMapper datasetMapper;
+    @Autowired
+    private PriceService priceService;
+    @Autowired
+    private CommuneRepository communeRepository;
+    @Autowired
+    private TimeGroupRepository timeGroupRepository;
+    @Autowired
+    private PaymentService paymentService;
+    @Autowired
+    private DatasetPricingRepository datasetPricingRepository;
+    @Autowired
+    private ConsumerSubRepo consumerSubRepo;
+    @Autowired
+    private DownloadTokenRepository downloadTokenRepository;
+    @Autowired
+    private WalletService walletService;
+    @Autowired
+    private OrderService orderService;
+    @Autowired
+    private TransactionService transactionService;
+    @Autowired
+    private ProvinceRepository provinceRepository;
+    @Autowired
+    private FileService fileService;
 
-    @Value("${aws.bucket.name}") private String BUCKET_NAME;
+    @Value("${app.upload.base}")
+    private String UPLOAD_BASE;
+    private static final Logger logger = LoggerFactory.getLogger(DatasetServiceImpl.class);
 
-    private static final Logger logger =  LoggerFactory.getLogger(DatasetServiceImpl.class);
-    @Autowired private FileService fileService;
+    @PostConstruct
+    public void initUploadDirs() {
+        try {
+            Path base = Paths.get(UPLOAD_BASE).toAbsolutePath();
+            Files.createDirectories(base.resolve("PENDING"));
+            Files.createDirectories(base.resolve("APPROVED"));
+            Files.createDirectories(base.resolve("SYSTEM"));
+            Files.createDirectories(base.resolve("TEMP"));
+
+            logger.info("Upload directories initialized at: {}", base);
+        } catch (IOException e) {
+            logger.error("Failed to create upload directories", e);
+            throw new RuntimeException("Failed to create upload directories", e);
+        }
+    }
 
     @Override
     public ResponseEntity<ApiResponse> searchDatasetByName(String datasetName) {
-        if(datasetName==null || datasetName.trim().isEmpty()){
+        if (datasetName == null || datasetName.trim().isEmpty()) {
             List<Dataset> datasets = datasetRepository.findAll();
-            return ResponseEntity.ok().body(new ApiResponse(true,"load all dataset success",
-                    datasets.stream()
-                            .map(datasetMapper::toDatasetDTO)
-                            .collect(Collectors.toList())
-            ));
+            return ResponseEntity.ok().body(new ApiResponse(true, "load all dataset success",
+                    datasets.stream().map(datasetMapper::toDatasetDTO).collect(Collectors.toList())));
         }
         List<Dataset> datasets = datasetRepository.searchByKeyword(datasetName);
-        if(datasets.isEmpty()){
-            return ResponseEntity.ok().body(new ApiResponse(false,"No Dataset found with the given name",datasetName));
+        if (datasets.isEmpty()) {
+            return ResponseEntity.ok().body(new ApiResponse(false, "No Dataset found with the given name", datasetName));
         }
-        return ResponseEntity.ok().body(new ApiResponse(true,"load Dataset success",
-                datasets.stream()
-                        .map(datasetMapper::toDatasetDTO)
-                        .collect(Collectors.toList())
-        ));
+        return ResponseEntity.ok().body(new ApiResponse(true, "load Dataset success",
+                datasets.stream().map(datasetMapper::toDatasetDTO).collect(Collectors.toList())));
     }
 
     @Override
     public ResponseEntity<ApiResponse> getAllCategories() {
         List<Category> categories = categoryRepository.findAll();
-        if(categories.isEmpty()){
+        if (categories.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        return ResponseEntity.ok().body(new ApiResponse(true,"load Category success",categories));
+        return ResponseEntity.ok().body(new ApiResponse(true, "load Category success", categories));
     }
 
     @Override
     public ResponseEntity<ApiResponse> getAllDatasetType() {
         List<DatasetType> datasetTypes = datasetTypeRepository.findAll();
-        if(datasetTypes.isEmpty()){
+        if (datasetTypes.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        return ResponseEntity.ok().body(new ApiResponse(true,"load DatasetType success",datasetTypes));
+        return ResponseEntity.ok().body(new ApiResponse(true, "load DatasetType success", datasetTypes));
     }
 
-
-
-    @Transactional
     @Override
     public void checkExitsAndCreateDatasetGroupAndDateset(
             ProviderUploadDatasetRequest request,
             long providerId,
-            DatasetInformation datasetInformation,
-            DatasetSourceType datasetSourceType) {
+            Dataset dataset,
+            DatasetSourceType datasetSourceType, MultipartFile fileFromRequest) {
 
         try {
             logger.info("=== Start checking and creating Dataset Group and Dataset ===");
@@ -137,43 +159,42 @@ public class DatasetServiceImpl implements DatasetService {
             Commune commune = communeRepository.findById(request.getCommune_id())
                     .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.COMMUNE_NOT_FOUND));
 
-            // 🔹 BƯỚC 1: Tìm hoặc tạo Parent DatasetGroup
+            DatasetType datasetType = dataset.getDatasetType();
+
             DatasetGroup parentGroup = datasetGroupRepository
                     .findByDatasetGroupTypeAndProvinceAndDatasetTypeAndDatasetSourceType(
                             DatasetGroupType.PARENT,
                             commune.getProvince(),
-                            datasetInformation.getDatasetType(),
+                            datasetType,
                             datasetSourceType
                     )
                     .orElseGet(() -> {
-                        DatasetGroup newParent = createParentDatasetGroup(commune, datasetInformation, datasetSourceType);
-                        return datasetGroupRepository.saveAndFlush(newParent); // ✅ Save ngay lập tức
+                        DatasetGroup newParent = createParentDatasetGroup(commune, datasetType, datasetSourceType);
+                        return datasetGroupRepository.saveAndFlush(newParent);
                     });
 
             parentGroup.setUpdateAt(LocalDateTime.now());
 
-            // 🔹 BƯỚC 2: Tìm hoặc tạo Child DatasetGroup
             DatasetGroup childGroup = datasetGroupRepository
                     .findByParentAndCommuneAndDatasetSourceType(parentGroup, commune, datasetSourceType)
                     .orElseGet(() -> {
-                        DatasetGroup newChild = createChildDatasetGroup(parentGroup, commune, datasetInformation, datasetSourceType);
+                        DatasetGroup newChild = createChildDatasetGroup(parentGroup, commune, datasetType, datasetSourceType);
                         newChild.setParent(parentGroup);
-                        return datasetGroupRepository.saveAndFlush(newChild); // ✅ Save ngay lập tức
+                        return datasetGroupRepository.saveAndFlush(newChild);
                     });
 
-            // 🔹 BƯỚC 3: Xử lý Provider/Admin và tạo Dataset
             final Provider provider;
             final User admin;
 
-            Dataset dataset = new Dataset();
             dataset.setDatasetSourceType(datasetSourceType);
             dataset.setDatasetStatus(DatasetStatus.PENDING);
             dataset.setDatasetChildGroup(childGroup);
             dataset.setTitle(request.getTitle());
             dataset.setDescription(request.getDescription());
-            dataset.setRow_count(datasetInformation.getRowCount());
+            dataset.setRowCount(dataset.getRowCount());
+            dataset.setCommune(commune);
 
-            setDatasetPack(dataset, datasetInformation);
+            setDatasetPack(dataset);
 
             if (datasetSourceType.equals(DatasetSourceType.DATASET_PROVIDER)) {
                 provider = userService.findProviderByUserId(providerId);
@@ -184,22 +205,14 @@ public class DatasetServiceImpl implements DatasetService {
                 provider = null;
                 dataset.setModerator(admin);
                 dataset.setDatasetStatus(DatasetStatus.APPROVE);
-                datasetInformation.setStatus(DatasetInforStatus.APPROVED);
             }
 
-            // 🔹 BƯỚC 4: Liên kết DatasetInformation với Dataset (TRƯỚC KHI SAVE)
-            datasetInformation.setDataset(dataset);
-
-            // ✅ BƯỚC 5: SAVE DATASET TRƯỚC KHI TẠO TIMEGROUP
-            // Điều này quan trọng vì TimeGroup có thể reference đến Dataset
             dataset = datasetRepository.saveAndFlush(dataset);
 
-            // 🔹 BƯỚC 6: Tạo pricing nếu là moderator (sau khi dataset đã có ID)
             if (!datasetSourceType.equals(DatasetSourceType.DATASET_PROVIDER)) {
-                priceService.createPricingForDataset(dataset, datasetInformation, request);
+                priceService.createPricingForDataset(dataset, request);
             }
 
-            // 🔹 BƯỚC 6: Tìm hoặc tạo TimeGroup
             LocalDate datasetDate = DateUtil.parseToLocalDate(request.getDataset_time());
             final TimeGroup timeGroup;
 
@@ -231,26 +244,26 @@ public class DatasetServiceImpl implements DatasetService {
                         });
             }
 
-            // 🔹 BƯỚC 7: Cập nhật TimeGroup row count
             long existingRows = timeGroup.getRow_Count() != 0 ? timeGroup.getRow_Count() : 0L;
-            timeGroup.setRow_Count(existingRows + datasetInformation.getRowCount());
+            timeGroup.setRow_Count(existingRows + dataset.getRowCount());
 
-            // 🔹 BƯỚC 8: Liên kết Dataset với TimeGroup và cập nhật thông tin
             dataset.setTimeGroup(timeGroup);
-            datasetInformation.setDataset_time(datasetDate);
-            dataset.setRow_count(datasetInformation.getRowCount());
+            dataset.setDatasetTime(datasetDate);
 
-            // 🔹 BƯỚC 9: Upload file
+//            File sourceFile = new File(dataset.getFileUrl());
+            Dataset datasetWithFileInfo;
+
             if (datasetSourceType.equals(DatasetSourceType.DATASET_PROVIDER)) {
-                uploadCSVFileToPendingFolder(new File(datasetInformation.getFile_url()), dataset);
+                datasetWithFileInfo = uploadCSVFileToPendingFolder(fileFromRequest, dataset);
             } else {
-                uploadCSVFileToSytemFolder(new File(datasetInformation.getFile_url()), dataset);
+                datasetWithFileInfo = uploadCSVFileToSytemFolder(fileFromRequest, dataset);
             }
+
+            dataset.setFileKey(datasetWithFileInfo.getFileKey());
+            dataset.setFileUrl(datasetWithFileInfo.getFileUrl());
 
             logger.info("Dataset [{}] uploaded successfully (source: {})", dataset.getTitle(), datasetSourceType);
 
-            // 🔹 BƯỚC 10: Save final state
-            // Lưu theo thứ tự: TimeGroup -> Dataset -> ChildGroup -> ParentGroup
             timeGroupRepository.saveAndFlush(timeGroup);
             datasetRepository.saveAndFlush(dataset);
             datasetGroupRepository.saveAndFlush(childGroup);
@@ -262,28 +275,38 @@ public class DatasetServiceImpl implements DatasetService {
             logger.error("Error while processing dataset creation: {}", e.getMessage(), e);
             throw new RuntimeException("Error while creating dataset and groups", e);
         }
+//        finally {
+//            try {
+//
+//                System.out.println("-----------------------------------------\n" +
+//                        "Deleted dataset\n" +
+//                        "-----------------------------------------");
+//                Files.deleteIfExists(Paths.get(UPLOAD_BASE+"TEMP"+dataset.getName()));
+//            } catch (IOException e) {
+//                System.err.println("Can not delete current file: " + e.getMessage());
+//            }
+//        }
     }
-    private DatasetGroup createParentDatasetGroup(Commune commune, DatasetInformation info, DatasetSourceType datasetSourceType) {
+    private DatasetGroup createParentDatasetGroup(Commune commune, DatasetType datasetType, DatasetSourceType datasetSourceType) {
         DatasetGroup parent = new DatasetGroup();
         parent.setDatasetGroupType(DatasetGroupType.PARENT);
-        parent.setDatasetType(info.getDatasetType());
+        parent.setDatasetType(datasetType);
         parent.setProvince(commune.getProvince());
         parent.setUpdateAt(LocalDateTime.now());
         parent.setDatasetSourceType(datasetSourceType);
         return datasetGroupRepository.save(parent);
     }
 
-    private DatasetGroup createChildDatasetGroup(DatasetGroup parent, Commune commune, DatasetInformation info, DatasetSourceType datasetSourceType) {
+    private DatasetGroup createChildDatasetGroup(DatasetGroup parent, Commune commune, DatasetType datasetType, DatasetSourceType datasetSourceType) {
         DatasetGroup child = new DatasetGroup();
         child.setDatasetGroupType(DatasetGroupType.CHILD);
-        child.setDatasetType(info.getDatasetType());
+        child.setDatasetType(datasetType);
         child.setCommune(commune);
         child.setParent(parent);
         child.setDatasetSourceType(datasetSourceType);
         return datasetGroupRepository.save(child);
     }
 
-    // overload cho Provider (owner)
     private TimeGroup createTimeGroup(LocalDate date, DatasetGroup group, Provider provider, DatasetSourceType datasetSourceType) {
         TimeGroup tg = TimeGroup.fromDate(date);
         tg.setDatasetGroupChild(group);
@@ -292,7 +315,6 @@ public class DatasetServiceImpl implements DatasetService {
         return timeGroupRepository.save(tg);
     }
 
-    // overload cho Moderator (User)
     private TimeGroup createTimeGroup(LocalDate date, DatasetGroup group, User moderator, DatasetSourceType datasetSourceType) {
         TimeGroup tg = TimeGroup.fromDate(date);
         tg.setDatasetGroupChild(group);
@@ -301,18 +323,15 @@ public class DatasetServiceImpl implements DatasetService {
         return timeGroupRepository.save(tg);
     }
 
-
-
-
-    private void setDatasetPack(Dataset dataset, DatasetInformation datasetInformation) {
-        long dataset_row = datasetInformation.getRowCount();
-        if(dataset_row<1000){
-            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.DATASET_ROW_MIN_INVALID);
+    private void setDatasetPack(Dataset dataset) {
+        long datasetRow = dataset.getRowCount();
+        if(datasetRow < 1000){
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.DATASET_ROW_MIN_INVALID);
         }
-        if(dataset_row >1000 && dataset_row <= 10000){
+        if(datasetRow > 1000 && datasetRow <= 10000){
             dataset.setDatasetPack(DatasetPack.SMALL);
         }
-        else if(dataset_row >10000 && dataset_row <= 100000){
+        else if(datasetRow > 10000 && datasetRow <= 100000){
             dataset.setDatasetPack(DatasetPack.MEDIUM);
         }
         else{
@@ -320,33 +339,28 @@ public class DatasetServiceImpl implements DatasetService {
         }
     }
 
-    @Transactional
     @Override
-    public ResponseEntity<?> acceptDataset(long datasetInforId, HttpServletRequest request) {
+    public ResponseEntity<?> acceptDataset(long datasetId, HttpServletRequest request) {
+        Optional<Dataset> datasetOptional = datasetRepository.findById(datasetId);
+        long moderatorId = tokenService.getUserIdFromRequest(request);
 
-        Optional<DatasetInformation> datasetInformationOptional = datasetInforRepository.findById(datasetInforId);
-        long moderator_id = tokenService.getUserIdFromRequest(request);
-
-        if(datasetInformationOptional.isEmpty()){
+        if(datasetOptional.isEmpty()){
             throw new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_NOT_FOUND);
         }
 
-        if(!datasetInformationOptional.get().getDataset().getDatasetStatus().equals(DatasetStatus.PENDING)){
+        Dataset dataset = datasetOptional.get();
+
+        if(!dataset.getDatasetStatus().equals(DatasetStatus.PENDING)){
             throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.DATASET_NOT_PENDING);
         }
 
-        if(!datasetInformationOptional.get().getStatus().equals(DatasetInforStatus.CONTENT_APPROVED)){
+        if(!dataset.isContentChecked()){
             throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.DATASET_INFO_NOT_APPROVED);
         }
 
-        Dataset dataset = datasetInformationOptional.get().getDataset();
-        datasetInformationOptional.get().setStatus(DatasetInforStatus.APPROVED);
-
-        // Cập nhật thông tin của datasetGroup
         DatasetGroup child = dataset.getDatasetChildGroup();
         DatasetGroup parent = dataset.getDatasetChildGroup().getParent();
 
-        dataset.setVersion(child.getVersion() + 1);
         child.setVersion(child.getVersion() + 1);
         child.setUpdateAt(LocalDateTime.now());
 
@@ -357,76 +371,77 @@ public class DatasetServiceImpl implements DatasetService {
 
         dataset.setDatasetStatus(DatasetStatus.APPROVE);
 
-        // ✅ Save theo thứ tự đúng
         datasetGroupRepository.save(parent);
         datasetGroupRepository.save(child);
         datasetRepository.save(dataset);
 
-        // ✅ Tạo ReviewHistory và CHỈ SAVE 1 LẦN
         ReviewHistory reviewHistory = new ReviewHistory();
         reviewHistory.setDataset(dataset);
-        reviewHistory.setModerator(userService.findUserById(moderator_id));
-        reviewHistory.setProvider(datasetInformationOptional.get().getDataset().getProvider());
-        reviewHistory = reviewHistoryRepository.save(reviewHistory); // Chỉ save 1 lần
+        reviewHistory.setModerator(userService.findUserById(moderatorId));
+        reviewHistory.setProvider(dataset.getProvider());
+        reviewHistory = reviewHistoryRepository.save(reviewHistory);
 
-        // ✅ Convert sang DTO TRƯỚC KHI move file
-//        ReviewHistoryDto reviewHistoryDto = datasetMapper.toReviewHistoryDto(reviewHistory);
-
-//        // Move file
         moveFileFromPendingToApproveFolder(dataset);
-//
-//        // Tạo giá sau khi accept
-        priceService.createPricingForDataset(dataset, datasetInformationOptional.get(), new ProviderUploadDatasetRequest());
+
+        priceService.createPricingForDataset(dataset, new ProviderUploadDatasetRequest());
         priceService.createRevenueForProvider(dataset.getProvider(), dataset.getDatasetPack(), dataset);
 
-        return ResponseEntity.ok().body("Accept sucess");
+        return ResponseEntity.ok().body("Accept success");
     }
+
     @Override
-    public ResponseEntity<ApiResponse> rejectDataset(long datasetInforId,HttpServletRequest request,String reason) {
+    public ResponseEntity<ApiResponse> rejectDataset(long datasetId, HttpServletRequest request, String reason) {
+        long moderatorId = tokenService.getUserIdFromRequest(request);
+        Optional<Dataset> datasetOptional = datasetRepository.findById(datasetId);
 
-        long moderator_id = tokenService.getUserIdFromRequest(request);
-        Optional<DatasetInformation> datasetInformation = datasetInforRepository.findById(datasetInforId);
-
-        if(datasetInformation.isEmpty()){
-            throw new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND);
+        if(datasetOptional.isEmpty()){
+            throw new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_NOT_FOUND);
         }
 
-        if(!datasetInformation.get().getDataset().getDatasetStatus().equals(DatasetStatus.PENDING)){
-            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.DATASET_NOT_PENDING);
+        Dataset dataset = datasetOptional.get();
+
+        if(!dataset.getDatasetStatus().equals(DatasetStatus.PENDING)){
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.DATASET_NOT_PENDING);
         }
-        if(!datasetInformation.get().getStatus().equals(DatasetInforStatus.CONTENT_APPROVED)){
-            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.DATASET_INFO_NOT_APPROVED);
+
+        if(!dataset.isContentChecked()){
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.DATASET_INFO_NOT_APPROVED);
         }
 
         ReviewHistory reviewHistory = new ReviewHistory();
-        reviewHistory.setProvider(userService.findProviderById(datasetInformation.get().getProvider().getId()));
-        reviewHistory.setDataset(datasetInformation.get().getDataset());
-        reviewHistory.setModerator(userService.findUserById(moderator_id));
+        reviewHistory.setProvider(userService.findProviderById(dataset.getProvider().getId()));
+        reviewHistory.setDataset(dataset);
+        reviewHistory.setModerator(userService.findUserById(moderatorId));
         reviewHistory.setReason(reason);
-        datasetInformation.get().getDataset().setDatasetStatus(DatasetStatus.REJECT);
-        datasetInformation.get().setStatus(DatasetInforStatus.CONTENT_REJECTED);
-        return ResponseEntity.ok().body(new ApiResponse(true,"Dataset Reject Successfully",datasetMapper.toReviewHistoryDto(reviewHistoryRepository.save(reviewHistory))));
+        dataset.setDatasetStatus(DatasetStatus.REJECT);
+
+        datasetRepository.save(dataset);
+
+        return ResponseEntity.ok().body(new ApiResponse(true, "Dataset Reject Successfully",
+                datasetMapper.toReviewHistoryDto(reviewHistoryRepository.save(reviewHistory))));
     }
 
     @Override
     public ResponseEntity<?> getAllDatasetParent() {
-        List<DatasetParentReposonseDto> datasetReposonseDtoList = datasetGroupRepository.findByDatasetGroupTypeAndDatasetSourceType(DatasetGroupType.PARENT,DatasetSourceType.SYSTEM_DATASET)
+        List<DatasetParentReposonseDto> datasetReposonseDtoList = datasetGroupRepository
+                .findByDatasetGroupTypeAndDatasetSourceType(DatasetGroupType.PARENT, DatasetSourceType.SYSTEM_DATASET)
                 .stream()
                 .map(datasetMapper::toDatasetParentReposonseDto)
                 .collect(Collectors.toList());
-        return ResponseEntity.ok().body(new ApiResponse(true,"load dataset success",datasetReposonseDtoList));
+        return ResponseEntity.ok().body(new ApiResponse(true, "load dataset success", datasetReposonseDtoList));
     }
 
     @Override
     public DatasetParentReposonseDto getDatasetParentWithId(long datasetGroupId) {
-
-        DatasetGroup temp =  datasetGroupRepository.findByIdAndDatasetGroupType(datasetGroupId,DatasetGroupType.PARENT).orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
+        DatasetGroup temp = datasetGroupRepository.findByIdAndDatasetGroupType(datasetGroupId, DatasetGroupType.PARENT)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_NOT_FOUND));
         return datasetMapper.toDatasetParentReposonseDto(temp);
     }
 
     @Override
     public DatasetParentReposonseDto getDatasetParentDetailByDatasetId(long datasetId) {
-        Dataset temp = datasetRepository.findById(datasetId).orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
+        Dataset temp = datasetRepository.findById(datasetId)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_NOT_FOUND));
         DatasetGroup datasetGroupOfDataset = temp.getDatasetChildGroup().getParent();
         return datasetMapper.toDatasetParentReposonseDto(datasetGroupOfDataset);
     }
@@ -434,44 +449,32 @@ public class DatasetServiceImpl implements DatasetService {
     @Override
     public CheckoutResponseDTO checkoutDatasetPayment(CheckoutRequestDTO checkoutRequestDTO, HttpServletRequest request) {
         User consumer = userService.findUserById(tokenService.getUserIdFromRequest(request));
-
         CheckoutResponseDTO checkoutResponseDTO = new CheckoutResponseDTO();
 
-        System.out.println("dừng ở lần tìm đầu tiên");
-//        Dataset dataset = datasetRepository.findById(8).get();
-        Dataset dataset = datasetRepository.findById(checkoutRequestDTO.getDatasetId()).orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
+        Dataset dataset = datasetRepository.findById(checkoutRequestDTO.getDatasetId())
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_NOT_FOUND));
+
         if(checkoutRequestDTO.getIsHaveSub()){
-            System.out.println("vao được condition have sub");
-            ConsumerSubscription consumerSubscription = consumerSubRepo.findByConsumerAndIsUsing(consumer,true).orElseThrow(
-                    ()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.CONSUMER_SUB_NOT_FOUND)
-            );
+            ConsumerSubscription consumerSubscription = consumerSubRepo.findByConsumerAndIsUsing(consumer, true)
+                    .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.CONSUMER_SUB_NOT_FOUND));
 
             checkoutResponseDTO.setDataset(datasetMapper.toDatasetForCheckoutDTO(dataset));
-
             checkoutResponseDTO.setRow_amount_consumer_sub(consumerSubscription.getRow_amount());
-
-            checkoutResponseDTO.setRow_dataset(dataset.getRow_count());
-
-        }
-else {
-            System.out.println("dừng ở lần tìm thứ hai");
-
+            checkoutResponseDTO.setRow_dataset(dataset.getRowCount());
+        } else {
             DatasetDTO datasetDTO = datasetMapper.toDatasetForCheckoutDTO(dataset);
-
-            DatasetPricing datasetPricing = datasetPricingRepository.findById(checkoutRequestDTO.getDatasetPricingId()).orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_NOT_FOUND));
+            DatasetPricing datasetPricing = datasetPricingRepository.findById(checkoutRequestDTO.getDatasetPricingId())
+                    .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_NOT_FOUND));
             DatasetPricingDTO datasetPricingDTO = datasetMapper.toDatasetPricingDTO(datasetPricing);
 
             checkoutResponseDTO.setDatasetPricing(datasetPricingDTO);
             checkoutResponseDTO.setDataset(datasetDTO);
 
-
-            double remaing_amount = paymentService.calRemainingAmount(datasetPricingDTO.getPrice(), consumer);
-
-            if (remaing_amount >= 0) {
+            double remaingAmount = paymentService.calRemainingAmount(datasetPricingDTO.getPrice(), consumer);
+            if (remaingAmount >= 0) {
                 checkoutResponseDTO.setEnough(true);
             }
-
-            checkoutResponseDTO.setRemaining_amount(remaing_amount);
+            checkoutResponseDTO.setRemaining_amount(remaingAmount);
         }
 
         return checkoutResponseDTO;
@@ -480,35 +483,32 @@ else {
     @Override
     public ConsumerBuyResponseDTO buyDatasetRequest(ConsumerBuyRequestDTO buyRequestDTO, HttpServletRequest request) {
         Dataset dataset = datasetRepository.findById(buyRequestDTO.getDatasetId())
-                .orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_NOT_FOUND));
 
         User consumer = userService.findUserById(tokenService.getUserIdFromRequest(request));
 
         if(buyRequestDTO.getIsHaveSub()){
-            return createSubPayment(dataset,consumer);
-        }
-        else{
-            DatasetPricing datasetPricing = datasetPricingRepository.findById(buyRequestDTO.getDatasetPricingId()).orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_PRICING_NOT_FOUND));
-            return createOneTimePayment(dataset,datasetPricing,consumer);
+            return createSubPayment(dataset, consumer);
+        } else {
+            DatasetPricing datasetPricing = datasetPricingRepository.findById(buyRequestDTO.getDatasetPricingId())
+                    .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_PRICING_NOT_FOUND));
+            return createOneTimePayment(dataset, datasetPricing, consumer);
         }
     }
 
-
     @Override
     public ConsumerBuyResponseDTO subRegister(long pricingSubRuleId, HttpServletRequest request) {
-
         User consumer = userService.findUserById(tokenService.getUserIdFromRequest(request));
-
         PricingRule pricingRule = priceService.findSubPricingRuleById(pricingSubRuleId);
 
-        if(consumerSubRepo.existsByPricingRuleAndConsumerAndIsActive(pricingRule,consumer,true)){
-            throw new  CustomException(HttpStatus.BAD_REQUEST,ErrorCode.EXISTS_SUB);
+        if(consumerSubRepo.existsByPricingRuleAndConsumerAndIsActive(pricingRule, consumer, true)){
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.EXISTS_SUB);
         }
 
-        paymentService.updateWallet(TransferType.TODOWN,Double.parseDouble(String.valueOf(pricingRule.getBasePricePoint())),tokenService.getUserIdFromRequest(request),BuyType.BUY_SUB);
+        paymentService.updateWallet(TransferType.TODOWN, Double.parseDouble(String.valueOf(pricingRule.getBasePricePoint())),
+                tokenService.getUserIdFromRequest(request), BuyType.BUY_SUB);
 
-        List<ConsumerSubscription> consumerSubscriptionList = consumerSubRepo.findAllByConsumerAndIsUsing(consumer,true);
-
+        List<ConsumerSubscription> consumerSubscriptionList = consumerSubRepo.findAllByConsumerAndIsUsing(consumer, true);
         for(ConsumerSubscription consumerSubscription : consumerSubscriptionList){
             consumerSubscription.setUsing(false);
         }
@@ -523,9 +523,7 @@ else {
         consumerSubscription.setActive(true);
         consumerSubscription.setUsing(true);
 
-
-        return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.SUBSCRIPTION,consumerSubRepo.save(consumerSubscription));
-
+        return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.SUBSCRIPTION, consumerSubRepo.save(consumerSubscription));
     }
 
     @Override
@@ -535,18 +533,17 @@ else {
 
     @Override
     public ConsumerBuyResponseDTO selectSubPack(long consumerSubId, HttpServletRequest request) {
-
         User consumer = userService.findUserById(tokenService.getUserIdFromRequest(request));
         ConsumerSubscription consumerSubscription = consumerSubRepo.findById(consumerSubId)
-                .orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.SUB_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.SUB_NOT_FOUND));
 
         consumerSubscription.setUsing(true);
-        List<ConsumerSubscription> consumerSubscriptions = consumerSubRepo.findAllByConsumerAndIsUsing(consumer,true);
-        for(ConsumerSubscription consumerSubscription1 : consumerSubscriptions){
-            consumerSubscription1.setUsing(false);
+        List<ConsumerSubscription> consumerSubscriptions = consumerSubRepo.findAllByConsumerAndIsUsing(consumer, true);
+        for(ConsumerSubscription sub : consumerSubscriptions){
+            sub.setUsing(false);
         }
         consumerSubRepo.saveAll(consumerSubscriptions);
-        return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.SUBSCRIPTION,consumerSubRepo.save(consumerSubscription));
+        return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.SUBSCRIPTION, consumerSubRepo.save(consumerSubscription));
     }
 
     @Override
@@ -555,13 +552,12 @@ else {
                 .stream()
                 .map(datasetMapper::toTimeGroupDTO)
                 .collect(Collectors.toList());
-
     }
 
     @Override
     public List<DatasetDTO> findAllDatasetByTimeGroup(long datasetTimeGroupId) {
-        return timeGroupRepository.findById(datasetTimeGroupId).
-                orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND))
+        return timeGroupRepository.findById(datasetTimeGroupId)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_NOT_FOUND))
                 .getDatasets()
                 .stream()
                 .map(datasetMapper::toDatasetDTO)
@@ -570,16 +566,15 @@ else {
 
     @Override
     public ConsumerBuyResponseDTO buyWithTimeGroup(long timeGroupId, HttpServletRequest request) {
-        TimeGroup timeGroup = timeGroupRepository.findById(timeGroupId).orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.TIME_GROUP_NOT_FOUND));
+        TimeGroup timeGroup = timeGroupRepository.findById(timeGroupId)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.TIME_GROUP_NOT_FOUND));
 
-        double price = timeGroup.getPrice() ;
-        System.out.println(price);
+        double price = timeGroup.getPrice();
         User user = userService.findUserById(tokenService.getUserIdFromRequest(request));
-        paymentService.updateWallet(TransferType.TODOWN,price,user.getId(),BuyType.BUY_WITH_TIME_GROUP);
-        DownloadToken downloadToken = jwtUtil.generateDowloadToken(user,null,30,5,timeGroup);
+        paymentService.updateWallet(TransferType.TODOWN, price, user.getId(), BuyType.BUY_WITH_TIME_GROUP);
+        DownloadToken downloadToken = jwtUtil.generateDowloadToken(user, null, 30, 5, timeGroup);
 
-
-        return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.BUY_WITH_TIME_GROUP,downloadToken);
+        return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.BUY_WITH_TIME_GROUP, downloadToken);
     }
 
     @Override
@@ -587,43 +582,37 @@ else {
         timeGroupRepository.save(timeGroup);
     }
 
-
     private ConsumerBuyResponseDTO createSubPayment(Dataset dataset, User consumer) {
-        ConsumerSubscription consumerSubscription = consumerSubRepo.findByConsumerAndIsUsing(consumer,true)
-                .orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.SUB_NOT_FOUND));
+        ConsumerSubscription consumerSubscription = consumerSubRepo.findByConsumerAndIsUsing(consumer, true)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.SUB_NOT_FOUND));
 
-        long dataset_row = dataset.getRow_count();
+        long datasetRow = dataset.getRowCount();
 
-        if(consumerSubscription.getRow_amount()<dataset_row){
-            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.SUB_ROW_NOT_ENOUGH);
+        if(consumerSubscription.getRow_amount() < datasetRow){
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.SUB_ROW_NOT_ENOUGH);
         }
 
         if (consumerSubscription.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.SUB_EXPIRED);
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.SUB_EXPIRED);
         }
 
-        buyWithSubProcess(consumerSubscription,dataset_row);
+        buyWithSubProcess(consumerSubscription, datasetRow);
 
-        DownloadToken downloadToken = jwtUtil.generateDowloadToken(consumer,dataset,30,10,null);
-
+        DownloadToken downloadToken = jwtUtil.generateDowloadToken(consumer, dataset, 30, 10, null);
         consumer.getDownloadTokens().add(downloadToken);
-
         userService.saveUser(consumer);
 
         OrderRequest orderReq = new OrderRequest();
         orderReq.setDatasetId(dataset.getId());
         orderReq.setDatasetName(dataset.getName());
-        orderReq.setPrice(dataset_row);
+        orderReq.setPrice(datasetRow);
         orderReq.setPricingMethod(PricingMethod.SUBSCRIPTION);
 
-        ConsumerOrderResponse order = orderService.createOrder(
-                consumer.getId(),
-                List.of(orderReq)
-        );
+        ConsumerOrderResponse order = orderService.createOrder(consumer.getId(), List.of(orderReq));
 
         ConsumerBuyResponseDTO dto = datasetMapper.toConsumerBuyResponseDTO(PricingMethod.SUBSCRIPTION, consumerSubscription);
-
-        dto.getBuySubInfoDTO().setDownloadToken(downloadToken.getId().toString()); dto.setOrderId(order.getId());
+        dto.getBuySubInfoDTO().setDownloadToken(downloadToken.getId().toString());
+        dto.setOrderId(order.getId());
 
         return dto;
     }
@@ -639,8 +628,8 @@ else {
 
         paymentService.updateWallet(TransferType.TODOWN, pricing.getPrice(), consumer.getId(), BuyType.BUY_ONE_TIME_DATASET);
 
-        Wallet wallet = walletService.findWalletByUserId(consumer.getId()).orElseThrow(()
-        -> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.WALLET_NOT_FOUND));
+        Wallet wallet = walletService.findWalletByUserId(consumer.getId())
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.WALLET_NOT_FOUND));
 
         transactionService.createTransaction(TransferType.TODOWN, pricing.getPrice(), consumer.getId(), wallet, BuyType.BUY_ONE_TIME_DATASET);
 
@@ -650,80 +639,139 @@ else {
         item.setPrice(pricing.getPrice());
         item.setPricingMethod(PricingMethod.ONE_TIME);
 
-        ConsumerOrderResponse order = orderService.createOrder(
-                consumer.getId(),
-                List.of(item)
-        );
+        ConsumerOrderResponse order = orderService.createOrder(consumer.getId(), List.of(item));
 
         ConsumerBuyResponseDTO dto = datasetMapper.toConsumerBuyResponseDTO(PricingMethod.ONE_TIME, token.getId());
-
         dto.setOrderId(order.getId());
 
         return dto;
     }
 
-
     @Override
-    public Dataset uploadCSVFileToPendingFolder(File file, Dataset dataset) {
-        String fileName = file.getName();
-        String fileKey = "PENDING/" + UUID.randomUUID()  + fileName;
+    public Dataset uploadCSVFileToPendingFolder(MultipartFile file, Dataset dataset) {
+
+        String originalName = file.getOriginalFilename();
+        if (originalName == null) {
+            throw new RuntimeException("Invalid file name");
+        }
+
+        String fileKey = "PENDING/" + UUID.randomUUID() + "_" + originalName;
 
         try {
-            byte[] fileContent = Files.readAllBytes(file.toPath());
+            Path base = Paths.get(UPLOAD_BASE).toAbsolutePath().normalize();
+            Path pendingDir = base.resolve("PENDING");
+            Files.createDirectories(pendingDir);
 
-            s3Client.putObject(
-                    PutObjectRequest.builder()
-                            .bucket(BUCKET_NAME)
-                            .key(fileKey)
-                            .build(),
-                    RequestBody.fromBytes(fileContent)
-            );
+            Path destination = pendingDir.resolve(fileKey.substring(fileKey.indexOf("/") + 1));
+
+            logger.warn("Saving file to: {}", destination.toAbsolutePath());
+
+            // THE CORRECT AND ONLY WAY
+            file.transferTo(destination.toFile());
+
+            if (!Files.exists(destination) || Files.size(destination) == 0) {
+                throw new RuntimeException("File not saved properly");
+            }
+
+            logger.info("File saved SUCCESSFULLY at {}", destination.toAbsolutePath());
 
             dataset.setFileKey(fileKey);
-            dataset.setName(fileName);
+            dataset.setFileUrl(destination.toAbsolutePath().toString());
+            dataset.setName(originalName);
             dataset.setDatasetStatus(DatasetStatus.PENDING);
+
+            return dataset;
+
+        } catch (Exception e) {
+            logger.error("UPLOAD ERROR: {}", e.getMessage(), e);
+            throw new RuntimeException("UPLOAD ERROR", e);
+        }
+    }
+
+    @Override
+    public Dataset uploadCSVFileToSytemFolder(MultipartFile file, Dataset dataset) {
+        String originalFileName = file.getOriginalFilename();
+        String fileKey = "SYSTEM/" + UUID.randomUUID() + "_" + originalFileName;
+
+        try {
+            // Base folder (ví dụ: /uploads)
+            Path base = Paths.get(UPLOAD_BASE).toAbsolutePath().normalize();
+            Path systemDir = base.resolve("SYSTEM");
+
+            logger.info("[UPLOAD] Uploading to SYSTEM: {}", originalFileName);
+
+            // Tạo folder nếu chưa có
+            Files.createDirectories(systemDir);
+
+            // Tên file đích
+            String destFileName = fileKey.substring(fileKey.indexOf("/") + 1);
+            Path destination = systemDir.resolve(destFileName);
+
+            // Copy stream từ MultipartFile sang file hệ thống
+            try (InputStream inputStream = file.getInputStream()) {
+                Files.copy(inputStream, destination, StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            // Kiểm tra tồn tại
+            File destFile = destination.toFile();
+            if (!destFile.exists() || destFile.length() == 0) {
+                throw new IOException("File not copied correctly!");
+            }
+
+            logger.info("[UPLOAD] File uploaded: {} ({} bytes)",
+                    destination.toAbsolutePath(), destFile.length());
+
+            // Cập nhật dataset
+            dataset.setFileKey(fileKey);
+            dataset.setFileUrl(destination.toAbsolutePath().toString());
+            dataset.setName(originalFileName);
+            dataset.setDatasetStatus(DatasetStatus.APPROVE);
+
+            return dataset;
+
+        } catch (Exception e) {
+            logger.error("[UPLOAD] Error uploading file: {}", e.getMessage(), e);
+            throw new RuntimeException("Error uploading multipart file: " + file.getOriginalFilename(), e);
+        }
+    }
+
+    @Override
+    public Dataset moveFileFromPendingToApproveFolder(Dataset dataset) {
+        String oldFileUrl = dataset.getFileUrl();
+        String oldFileKey = dataset.getFileKey();
+
+        if (oldFileUrl == null || !oldFileKey.startsWith("PENDING/")) {
+            throw new IllegalArgumentException("Dataset file is not in pending folder");
+        }
+
+        try {
+            Path oldPath = Paths.get(oldFileUrl);
+
+            if (!Files.exists(oldPath)) {
+                throw new CustomException(HttpStatus.NOT_FOUND, ErrorCode.FILE_NOT_FOUND);
+            }
+
+            Path base = Paths.get(UPLOAD_BASE).toAbsolutePath().normalize();
+            Path approvedDir = base.resolve("APPROVED");
+            Files.createDirectories(approvedDir);
+
+            String fileName = oldPath.getFileName().toString();
+            String newFileKey = "APPROVED/" + UUID.randomUUID() + "_" + fileName;
+            Path newPath = approvedDir.resolve(newFileKey.substring(newFileKey.indexOf("/") + 1));
+
+            Files.move(oldPath, newPath, StandardCopyOption.REPLACE_EXISTING);
+
+            logger.info("[MOVE] File moved from PENDING to APPROVED: {}", newPath.toAbsolutePath());
+
+            dataset.setFileKey(newFileKey);
+            dataset.setFileUrl(newPath.toAbsolutePath().toString());
+            dataset.setDatasetStatus(DatasetStatus.APPROVE);
 
             return datasetRepository.save(dataset);
 
         } catch (IOException e) {
-            throw new RuntimeException("Error reading file: " + fileName, e);
-        } catch (S3Exception e) {
-            throw new RuntimeException("Error uploading to S3: " + e.awsErrorDetails().errorMessage(), e);
-        }
-    }
-    @Override
-    public Dataset moveFileFromPendingToApproveFolder(Dataset dataset) {
-        String oldKey = dataset.getFileKey(); // Ví dụ: PENDING/uuid/filename.csv
-        if (oldKey == null || !oldKey.startsWith("PENDING/")) {
-            throw new IllegalArgumentException("Dataset file is not in pending folder");
-        }
-
-        // Tạo key mới cho file trong folder APPROVE
-        String fileName = oldKey.substring(oldKey.lastIndexOf("/") + 1);
-        String newKey = "APPROVED/" + UUID.randomUUID()  + fileName;
-
-        try {
-            // 1️⃣ Copy từ PENDING sang APPROVE
-            s3Client.copyObject(CopyObjectRequest.builder()
-                    .sourceBucket(BUCKET_NAME)
-                    .sourceKey(oldKey)
-                    .destinationBucket(BUCKET_NAME)
-                    .destinationKey(newKey)
-                    .build());
-
-            // 2️⃣ Xóa file cũ trong PENDING
-            s3Client.deleteObject(DeleteObjectRequest.builder()
-                    .bucket(BUCKET_NAME)
-                    .key(oldKey)
-                    .build());
-
-            // 3️⃣ Cập nhật dataset trong DB
-            dataset.setFileKey(newKey);
-            dataset.setDatasetStatus(DatasetStatus.APPROVE);
-            return datasetRepository.save(dataset);
-
-        } catch (S3Exception e) {
-            throw new RuntimeException("Error moving file in S3: " + e.awsErrorDetails().errorMessage(), e);
+            logger.error("[MOVE] Error moving file: {}", e.getMessage(), e);
+            throw new RuntimeException("Error moving file from pending to approved: " + e.getMessage(), e);
         }
     }
 
@@ -731,20 +779,22 @@ else {
     public String getDownloadTokenOfDatasetForConsumer(long datasetId, HttpServletRequest request) {
         User user = userService.findUserById(tokenService.getUserIdFromRequest(request));
         Dataset dataset = findById(datasetId);
-        Optional<DownloadToken> downloadTokenOptional = downloadTokenRepository.findByConsumerAndDatasetAndIsActive(user,dataset,true);
+        Optional<DownloadToken> downloadTokenOptional = downloadTokenRepository.findByConsumerAndDatasetAndIsActive(user, dataset, true);
+
         if(downloadTokenOptional.isPresent()){
-            if(downloadTokenOptional.get().getUse_amount() <= 0||downloadTokenOptional.get().getExpiresAt().isBefore(LocalDateTime.now())) {
-                throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.TOKEN_IS_EXPIRED);
+            if(downloadTokenOptional.get().getUse_amount() <= 0 || downloadTokenOptional.get().getExpiresAt().isBefore(LocalDateTime.now())) {
+                throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.TOKEN_IS_EXPIRED);
             }
         }
         if(downloadTokenOptional.isEmpty()){
-            throw new CustomException(HttpStatus.NOT_FOUND,ErrorCode.TOKEN_NOT_FOUND);
+            throw new CustomException(HttpStatus.NOT_FOUND, ErrorCode.TOKEN_NOT_FOUND);
         }
         return downloadTokenOptional.get().getId().toString();
     }
 
     private Dataset findById(long datasetId) {
-    return datasetRepository.findById(datasetId).orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
+        return datasetRepository.findById(datasetId)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_NOT_FOUND));
     }
 
     @Override
@@ -753,26 +803,27 @@ else {
                 .stream()
                 .map(datasetMapper::toDatasetParentReposonseDto)
                 .collect(Collectors.toList());
-        return ResponseEntity.ok().body(new ApiResponse(true,"load dataset success",datasetReposonseDtoList));
+        return ResponseEntity.ok().body(new ApiResponse(true, "load dataset success", datasetReposonseDtoList));
     }
 
     @Override
     public ConsumerBuyResponseDTO buyTimeGroupWithSub(long timeGroupId, HttpServletRequest request) {
-        TimeGroup timeGroup = timeGroupRepository.findById(timeGroupId).orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.TIME_GROUP_NOT_FOUND));
+        TimeGroup timeGroup = timeGroupRepository.findById(timeGroupId)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.TIME_GROUP_NOT_FOUND));
 
         User consumer = userService.findUserById(tokenService.getUserIdFromRequest(request));
 
-        ConsumerSubscription consumerSubscription = consumerSubRepo.findByConsumerAndIsUsing(consumer,true).orElseThrow(()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.SUB_NOT_FOUND));
+        ConsumerSubscription consumerSubscription = consumerSubRepo.findByConsumerAndIsUsing(consumer, true)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.SUB_NOT_FOUND));
 
         long timeGroupRowCount = timeGroup.getRow_Count();
 
-        buyWithSubProcess(consumerSubscription,timeGroupRowCount);
+        buyWithSubProcess(consumerSubscription, timeGroupRowCount);
 
-        DownloadToken downloadToken = jwtUtil.generateDowloadToken(consumer,null,30,10,timeGroup);
+        DownloadToken downloadToken = jwtUtil.generateDowloadToken(consumer, null, 30, 10, timeGroup);
 
-        return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.BUY_WITH_TIME_GROUP,downloadToken);
+        return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.BUY_WITH_TIME_GROUP, downloadToken);
     }
-
 
     @Override
     public ConsumerBuyResponseDTO buyGroupByAPI(long timeGroupId, HttpServletRequest request) {
@@ -785,100 +836,116 @@ else {
         User user = userService.findUserById(tokenService.getUserIdFromRequest(request));
         double price = pricingRule.getBasePricePoint();
 
-        paymentService.updateWallet(TransferType.TODOWN,price,user.getId(),BuyType.BUY_API);
+        paymentService.updateWallet(TransferType.TODOWN, price, user.getId(), BuyType.BUY_API);
 
-        DownloadToken downloadToken = jwtUtil.generateDowloadToken(user,null,30,5,null);
+        DownloadToken downloadToken = jwtUtil.generateDowloadToken(user, null, 30, 5, null);
 
-        return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.API,downloadToken);
+        return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.API, downloadToken);
     }
 
-    public void buyWithSubProcess (ConsumerSubscription consumerSubscription,long rowCount){
-            long rowCountConsumer = consumerSubscription.getRow_amount();
+    public void buyWithSubProcess(ConsumerSubscription consumerSubscription, long rowCount){
+        long rowCountConsumer = consumerSubscription.getRow_amount();
 
-            if(rowCountConsumer<rowCount){
-                throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.SUB_ROW_NOT_ENOUGH);
-            }
-            consumerSubscription.setRow_amount(rowCountConsumer-rowCount);
-            consumerSubRepo.save(consumerSubscription);
+        if(rowCountConsumer < rowCount){
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.SUB_ROW_NOT_ENOUGH);
+        }
+        consumerSubscription.setRow_amount(rowCountConsumer - rowCount);
+        consumerSubRepo.save(consumerSubscription);
     }
-    @Transactional
+
+
     @Override
     public ResponseEntity<?> downloadDataset(String dowloadToken, HttpServletRequest request) {
 
-        //lay dowload token tu request checck xem nguoi dung co permussion de su dung hay khong
         Optional<DownloadToken> downloadTokenOptional = downloadTokenRepository.findById(UUID.fromString(dowloadToken));
         User user = userService.findUserById(tokenService.getUserIdFromRequest(request));
+
         if(downloadTokenOptional.isEmpty()){
-            throw new CustomException(HttpStatus.NOT_FOUND,ErrorCode.TOKEN_NOT_FOUND);
+            throw new CustomException(HttpStatus.NOT_FOUND, ErrorCode.TOKEN_NOT_FOUND);
         }
-        if(downloadTokenOptional.get().getConsumer()!= user) {
+        if(downloadTokenOptional.get().getConsumer() != user) {
             throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED);
         }
-        if(downloadTokenOptional.get().getUse_amount()==0){
-            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.TOKEN_IS_EXPIRED);
+        if(downloadTokenOptional.get().getUse_amount() == 0){
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.TOKEN_IS_EXPIRED);
         }
-        Dataset dataset = downloadTokenOptional.get().getDataset();
-
-        String fileKey = dataset.getFileKey();
 
         DownloadToken downloadToken = downloadTokenOptional.get();
-        downloadToken.setUse_amount(downloadToken.getUse_amount()-1);
-        if(downloadToken.getUse_amount()==0){
-            downloadToken.setActive(false);
+        Dataset dataset = downloadToken.getDataset();
+        String filePathStr = dataset.getFileUrl();
+
+        if (filePathStr == null || filePathStr.isEmpty()) {
+            throw new CustomException(HttpStatus.NOT_FOUND, ErrorCode.FILE_NOT_FOUND);
         }
 
-        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                .bucket(BUCKET_NAME)
-                .key(fileKey)
-                .build();
+        Path filePath = Paths.get(filePathStr);
+        if (!Files.exists(filePath)) {
+            throw new CustomException(HttpStatus.NOT_FOUND, ErrorCode.FILE_NOT_FOUND);
+        }
 
-        ResponseInputStream<GetObjectResponse> s3Object = s3Client.getObject(getObjectRequest);
-        InputStreamResource resource = new InputStreamResource(s3Object);
-        dataset.setDowload_count(dataset.getDowload_count()+1);
-        datasetRepository.save(dataset);
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"" + Paths.get(fileKey).getFileName().toString() + "\"")
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(resource);
+        try {
+            InputStreamResource resource = new InputStreamResource(Files.newInputStream(filePath));
+
+            downloadToken.setUse_amount(downloadToken.getUse_amount() - 1);
+            if(downloadToken.getUse_amount() == 0){
+                downloadToken.setActive(false);
+            }
+            downloadTokenRepository.save(downloadToken);
+
+            dataset.setDownloadCount(dataset.getDownloadCount() + 1);
+            datasetRepository.save(dataset);
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "attachment; filename=\"" + filePath.getFileName().toString() + "\"")
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .contentLength(Files.size(filePath))
+                    .body(resource);
+        } catch (IOException e) {
+            throw new RuntimeException("Error reading file for download: " + filePathStr, e);
+        }
     }
-    @Transactional
+
     @Override
     public ResponseEntity<?> downloadDatasetNoValidToken(Long datasetId) {
 
-        // Lấy dataset
         Dataset dataset = datasetRepository.findById(datasetId)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_NOT_FOUND));
 
-        String fileKey = dataset.getFileKey();
+        String fileUrl = dataset.getFileUrl();
+        System.out.println(fileUrl);
+        if (fileUrl == null || fileUrl.isEmpty()) {
+            throw new CustomException(HttpStatus.NOT_FOUND, ErrorCode.FILE_NOT_FOUND);
+        }
 
-        // Chuẩn bị request lên S3
-        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                .bucket(BUCKET_NAME)
-                .key(fileKey)
-                .build();
+        try {
+            Path filePath = Paths.get(fileUrl);
 
-        // Lấy file từ S3
-        ResponseInputStream<GetObjectResponse> s3Object = s3Client.getObject(getObjectRequest);
-        InputStreamResource resource = new InputStreamResource(s3Object);
+            if (!Files.exists(filePath)) {
+                throw new CustomException(HttpStatus.NOT_FOUND, ErrorCode.FILE_NOT_FOUND);
+            }
 
-        // Tăng lượt tải
-        dataset.setDowload_count(dataset.getDowload_count() + 1);
-        datasetRepository.save(dataset);
+            InputStreamResource resource = new InputStreamResource(Files.newInputStream(filePath));
 
-        // Trả file về client
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"" + Paths.get(fileKey).getFileName().toString() + "\"")
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(resource);
+            dataset.setDownloadCount(dataset.getDownloadCount() + 1);
+            datasetRepository.save(dataset);
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "attachment; filename=\"" + filePath.getFileName().toString() + "\"")
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .contentLength(Files.size(filePath))
+                    .body(resource);
+
+        } catch (IOException e) {
+            throw new RuntimeException("Error reading file from local storage: " + fileUrl, e);
+        }
     }
-
 
     @Override
     public List<DatasetDTO> findAllConsumerDataset(HttpServletRequest request) {
         User user = userService.findUserById(tokenService.getUserIdFromRequest(request));
-        return downloadTokenRepository.findByConsumerAndIsActive(user,true).stream()
+        return downloadTokenRepository.findByConsumerAndIsActive(user, true).stream()
                 .map(DownloadToken::getDataset)
                 .map(datasetMapper::toDatasetDTO)
                 .collect(Collectors.toList());
@@ -888,24 +955,21 @@ else {
     public ConsumerBuyResponseDTO buyDatasetWithSub(long datasetId, HttpServletRequest request) {
         User user = userService.findUserById(tokenService.getUserIdFromRequest(request));
 
-        ConsumerSubscription consumerSubscription = consumerSubRepo.findByConsumerAndIsUsing(user,true).orElseThrow(
-                ()-> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.SUB_NOT_FOUND)
-        );
+        ConsumerSubscription consumerSubscription = consumerSubRepo.findByConsumerAndIsUsing(user, true)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.SUB_NOT_FOUND));
         return null;
     }
 
     @Override
     public void moderatorCreateNewDatasetGroup(ModeratorCreateNewDatasetGroupRequest moderatorCreateNewDatasetGroupRequest) {
         DatasetGroup parentDatasetGroup = new DatasetGroup();
-        parentDatasetGroup.setDatasetType(datasetTypeRepository.findById(moderatorCreateNewDatasetGroupRequest.getDataset_type_id()).orElseThrow(
-                () -> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.INVALID_TYPE_ID)
-        ));
+        parentDatasetGroup.setDatasetType(datasetTypeRepository.findById(moderatorCreateNewDatasetGroupRequest.getDataset_type_id())
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.INVALID_TYPE_ID)));
 
         DatasetGroup childDatasetGroup = new DatasetGroup();
         childDatasetGroup.setParent(parentDatasetGroup);
         parentDatasetGroup.setDatasetSourceType(DatasetSourceType.SYSTEM_DATASET);
         childDatasetGroup.setDatasetSourceType(DatasetSourceType.SYSTEM_DATASET);
-
 
         datasetGroupRepository.save(childDatasetGroup);
         datasetGroupRepository.save(parentDatasetGroup);
@@ -913,7 +977,7 @@ else {
 
     @Override
     public List<DatasetParentReposonseDto> findAllSystamDatasetGroup() {
-        return datasetGroupRepository.findByDatasetGroupTypeAndDatasetSourceType(DatasetGroupType.PARENT,DatasetSourceType.SYSTEM_DATASET)
+        return datasetGroupRepository.findByDatasetGroupTypeAndDatasetSourceType(DatasetGroupType.PARENT, DatasetSourceType.SYSTEM_DATASET)
                 .stream()
                 .map(datasetMapper::toDatasetParentReposonseDto)
                 .collect(Collectors.toList());
@@ -921,7 +985,7 @@ else {
 
     @Override
     public List<DatasetParentReposonseDto> findAllProviderDataset() {
-        return datasetGroupRepository.findAllByDatasetGroupTypeAndDatasetSourceType(DatasetGroupType.PARENT,DatasetSourceType.DATASET_PROVIDER)
+        return datasetGroupRepository.findAllByDatasetGroupTypeAndDatasetSourceType(DatasetGroupType.PARENT, DatasetSourceType.DATASET_PROVIDER)
                 .stream()
                 .map(datasetMapper::toDatasetParentReposonseDto)
                 .collect(Collectors.toList());
@@ -936,50 +1000,47 @@ else {
     @Override
     public List<DatasetDTO> getAllProviderDataset(HttpServletRequest request) {
         Provider provider = userService.findProviderById(tokenService.getUserIdFromRequest(request));
-        return datasetRepository.findByProvider(provider).
-                stream().
-                map(datasetMapper::toDatasetDTO).
-                collect(Collectors.toList());
+        return datasetRepository.findByProvider(provider)
+                .stream()
+                .map(datasetMapper::toDatasetDTO)
+                .collect(Collectors.toList());
     }
 
     @Override
     public DatasetDTO getDatasetDetail(Long id, HttpServletRequest request) {
         Provider provider = userService.findProviderById(tokenService.getUserIdFromRequest(request));
-        Dataset dataset = datasetRepository.findByIdAndProvider(id,provider);
+        Dataset dataset = datasetRepository.findByIdAndProvider(id, provider);
         return datasetMapper.toDatasetDTO(dataset);
     }
 
     @Override
     public boolean cancelDataset(Long id, HttpServletRequest request) {
-            Dataset dataset = datasetRepository.findByIdAndProvider(id,userService.findProviderById(tokenService.getUserIdFromRequest(request)));
+        Dataset dataset = datasetRepository.findByIdAndProvider(id,
+                userService.findProviderById(tokenService.getUserIdFromRequest(request)));
 
-            if(!(dataset.getProvider().equals(userService.findProviderById(tokenService.getUserIdFromRequest(request))))){
-                throw new  CustomException(HttpStatus.NOT_FOUND,ErrorCode.CAN_NOT_CANCEL_DATASET);
-            }
+        if(!(dataset.getProvider().equals(userService.findProviderById(tokenService.getUserIdFromRequest(request))))){
+            throw new CustomException(HttpStatus.NOT_FOUND, ErrorCode.CAN_NOT_CANCEL_DATASET);
+        }
 
-            if(!(dataset.getDatasetStatus() == DatasetStatus.PENDING)){
-                throw new CustomException(HttpStatus.UNAUTHORIZED,ErrorCode.CAN_NOT_CANCEL_DATASET);
-            }
-            dataset.setDatasetStatus(DatasetStatus.CANCEL);
-            datasetRepository.save(dataset);
-            return true;
+        if(!(dataset.getDatasetStatus() == DatasetStatus.PENDING)){
+            throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.CAN_NOT_CANCEL_DATASET);
+        }
+
+        dataset.setDatasetStatus(DatasetStatus.CANCEL);
+        datasetRepository.save(dataset);
+        return true;
     }
 
     @Override
-    @Transactional
     public DatasetUpdateResponse updateDataset(Long id, DatasetUpdateRequest request) {
 
         Dataset dataset = datasetRepository.findById(id)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_NOT_FOUND));
 
         updateBasicFields(dataset, request);
-
         updateFileVersion(dataset, request);
-
         updateGroupRelations(dataset, request);
-
         updateTimeGroup(dataset, request);
-
         updatePricing(id, request);
 
         Dataset saved = datasetRepository.save(dataset);
@@ -1014,11 +1075,14 @@ else {
 
                 updatedPrice,
                 updatedPricePerRequest,
-                saved.getFileKey(),
-                saved.getVersion()
+                saved.getFileKey()
         );
     }
 
+    @Override
+    public List<Dataset> findAllByStatus(DatasetStatus datasetStatus) {
+        return datasetRepository.findALByDatasetStatus(datasetStatus);
+    }
 
     private void updateBasicFields(Dataset dataset, DatasetUpdateRequest request) {
         if (request.getDatasetName() != null) dataset.setName(request.getDatasetName());
@@ -1029,11 +1093,9 @@ else {
         if (request.getDatasetSourceType() != null) dataset.setDatasetSourceType(request.getDatasetSourceType());
     }
 
-
     private void updateFileVersion(Dataset dataset, DatasetUpdateRequest request) {
         if (request.getFileKey() != null && !request.getFileKey().equals(dataset.getFileKey())) {
             dataset.setFileKey(request.getFileKey());
-            dataset.setVersion(dataset.getVersion() + 1);
         }
     }
 
@@ -1042,14 +1104,12 @@ else {
         if (request.getDatasetChildGroupId() == null) return;
 
         DatasetGroup group = datasetGroupRepository.findById(request.getDatasetChildGroupId())
-                .orElseThrow(() ->
-                        new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_GROUP_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_GROUP_NOT_FOUND));
 
         if (request.getCommuneId() != null) {
 
             Commune commune = communeRepository.findById(request.getCommuneId())
-                    .orElseThrow(() ->
-                            new CustomException(HttpStatus.NOT_FOUND, ErrorCode.COMMUNE_NOT_FOUND));
+                    .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.COMMUNE_NOT_FOUND));
 
             group.setCommune(commune);
             group.setProvince(commune.getProvince());
@@ -1058,7 +1118,6 @@ else {
         datasetGroupRepository.save(group);
         dataset.setDatasetChildGroup(group);
     }
-
 
     private void updateTimeGroup(Dataset dataset, DatasetUpdateRequest request) {
         if (request.getTimeGroupId() == null) return;
@@ -1084,39 +1143,4 @@ else {
             pricing.setPricePerRequest(p.getPricePerRequest());
         }
     }
-
-
-
-
-    @Override
-    public Dataset uploadCSVFileToSytemFolder(File file, Dataset dataset) {
-        String fileName = file.getName();
-        String fileKey = "SYSTEM/" + UUID.randomUUID()  + fileName;
-
-        try {
-            byte[] fileContent = Files.readAllBytes(file.toPath());
-
-            s3Client.putObject(
-                    PutObjectRequest.builder()
-                            .bucket(BUCKET_NAME)
-                            .key(fileKey)
-                            .build(),
-                    RequestBody.fromBytes(fileContent)
-            );
-
-            dataset.setFileKey(fileKey);
-            dataset.setName(fileName);
-            dataset.setDatasetStatus(DatasetStatus.APPROVE);
-
-            return datasetRepository.save(dataset);
-
-        } catch (IOException e) {
-            throw new RuntimeException("Error reading file: " + fileName, e);
-        } catch (S3Exception e) {
-            throw new RuntimeException("Error uploading to S3: " + e.awsErrorDetails().errorMessage(), e);
-        }
-    }
-
-
-
 }

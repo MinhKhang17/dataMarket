@@ -1,7 +1,7 @@
 package com.example.datasetapi.mapper;
 
 import com.example.datasetapi.dto.response.*;
-import com.example.datasetapi.model.dataset.DatasetInformation;
+import com.example.datasetapi.model.dataset.Dataset;
 import com.example.datasetapi.model.userManager.*;
 import com.example.datasetapi.model.location.Commune;
 import com.example.datasetapi.model.location.Province;
@@ -24,7 +24,7 @@ public class UserMapper implements UserResponseDTOMapper {
     }
 
     @Override
-    public ModeratorDatasetInforResponseDto toModeratorDatasetInforResponseDto(DatasetInformation datasetInformation) {
+    public ModeratorDatasetInforResponseDto toModeratorDatasetInforResponseDto(Dataset datasetInformation) {
 
         ModeratorDatasetInforResponseDto moderatorDatasetInforResponseDto = new ModeratorDatasetInforResponseDto();
         moderatorDatasetInforResponseDto.setDataset_Type_Id(datasetInformation.getDatasetType().getId());
@@ -33,10 +33,10 @@ public class UserMapper implements UserResponseDTOMapper {
         moderatorDatasetInforResponseDto.setRow_count(datasetInformation.getRowCount());
         moderatorDatasetInforResponseDto.setProvider_id(datasetInformation.getProvider().getId());
         moderatorDatasetInforResponseDto.setCommuneDTO(toCommuneDTO(datasetInformation.getCommune()));
-        moderatorDatasetInforResponseDto.setCreatedAt(datasetInformation.getCreateAt());
-        moderatorDatasetInforResponseDto.setCheckContentAt(datasetInformation.getUpdateAt());
+        moderatorDatasetInforResponseDto.setCreatedAt(datasetInformation.getCreatedAt());
+        moderatorDatasetInforResponseDto.setCheckContentAt(datasetInformation.getUpdatedAt());
         List<DatasetValidationErrorDTO> datasetValidationErrorDTOList =
-                datasetInformation.getDatasetValidationErrorList()
+                datasetInformation.getDatasetValidationErrors()
                         .stream()
                         .map(datasetMapper::toDatasetValidationDto)
                         .collect(Collectors.toList());

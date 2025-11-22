@@ -11,7 +11,7 @@ public class DatasetModeration {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "dataset_id")
-    private DatasetInformation dataset;
+    private Dataset dataset;
 
     @Column private Double errorRate; // % tổng lỗi/(rows*columns) hoặc % lỗi bản ghi tùy cách tính
     @Column private Long totalRows;

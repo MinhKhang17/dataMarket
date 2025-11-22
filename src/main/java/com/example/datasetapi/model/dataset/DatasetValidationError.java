@@ -20,8 +20,8 @@ public class DatasetValidationError {
 
     // 🔗 Liên kết với DatasetInformation
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "dataset_information_id", nullable = false)
-    private DatasetInformation datasetInformation;
+    @JoinColumn(name = "dataset_id", nullable = false)
+    private Dataset dataset;
 
     // Loại lỗi: NULL_VALUE, DUPLICATE_ROW, INVALID_ENUM, VALUE_VARIATION, ...
     @Enumerated(EnumType.STRING)

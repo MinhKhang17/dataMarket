@@ -30,7 +30,7 @@ public class DatasetMapperImpl implements DatasetMapper {
     }
 
     @Override
-    public UploadHeaderResponseDto toUploadHeaderResponseDto(DatasetInformation ds) {
+    public UploadHeaderResponseDto toUploadHeaderResponseDto(Dataset ds) {
         UploadHeaderResponseDto uploadHeaderResponseDto = new UploadHeaderResponseDto();
         uploadHeaderResponseDto.setDatasetInformationId(ds.getId());
         if(ds.getValidationErrors()==null||!ds.getValidationErrors().isEmpty()){
@@ -43,7 +43,7 @@ public class DatasetMapperImpl implements DatasetMapper {
     public DatasetDTO toDatasetDTO(Dataset dataset) {
         DatasetDTO datasetDTO = new DatasetDTO();
         datasetDTO.setDatasetId(dataset.getId());
-        datasetDTO.setVersion(dataset.getVersion());
+//        datasetDTO.setVersion(dataset.getVersion());
             datasetDTO.setDatasetPLanWithPricingDTO(datasetPlanRepo.findALlByDatasetId(dataset.getId())
                     .stream()
                     .map(this::toDatasetPlanWithPricingDTO)
@@ -59,7 +59,7 @@ public class DatasetMapperImpl implements DatasetMapper {
         datasetDTO.setCommune(dataset.getDatasetChildGroup().getCommune().getName());
         datasetDTO.setDatasetTime(TimeGroup.toDate(dataset.getTimeGroup()));
         datasetDTO.setCategory(dataset.getDatasetChildGroup().getParent().getDatasetType().getCategories());
-datasetDTO.setRow_amount(dataset.getRow_count());
+datasetDTO.setRow_amount(dataset.getRowCount());
         return datasetDTO;
         }
 
@@ -67,7 +67,6 @@ datasetDTO.setRow_amount(dataset.getRow_count());
     public DatasetDTO toDatasetForCheckoutDTO(Dataset dataset) {
             DatasetDTO datasetDTO = new DatasetDTO();
             datasetDTO.setDatasetId(dataset.getId());
-            datasetDTO.setVersion(dataset.getVersion());
             datasetDTO.setDescription(dataset.getDescription());
             datasetDTO.setDatasetTime(TimeGroup.toDate(dataset.getTimeGroup()));
 //            datasetDTO.setProvider(toProviderDto(dataset.getProvider()));
@@ -270,7 +269,6 @@ datasetDTO.setRow_amount(dataset.getRow_count());
         DatasetDTO dto = new DatasetDTO();
         dto.setTitle(dataset.getTitle());
         dto.setDescription(dataset.getDescription());
-        dto.setVersion(dataset.getVersion());
 
 
         // ✅ CHỈ lấy tên, KHÔNG convert toàn bộ entity để tránh vòng lặp
@@ -379,13 +377,12 @@ private DatasetChildGroupDTO toDatasetChildGroupDTO(DatasetGroup datasetGroup){
     private DatasetDTO toDatasetDto(Dataset dataset) {
             DatasetDTO datasetDTO = new DatasetDTO();
             datasetDTO.setDatasetId(dataset.getId());
-            datasetDTO.setVersion(dataset.getVersion());
             datasetDTO.setTitle(dataset.getTitle());
             datasetDTO.setDescription(dataset.getDescription());
             datasetDTO.setDatasetTime(TimeGroup.toDate(dataset.getTimeGroup()));
 //            datasetDTO.setProvider(toProviderDto(dataset.getProvider()));
             datasetDTO.setDatasetPLanWithPricingDTO(dataset.getDatasetPlans().stream().map(this::toDatasetPlanWithPricingDTO).collect(Collectors.toList()));
-            datasetDTO.setRow_amount(dataset.getRow_count());
+            datasetDTO.setRow_amount(dataset.getRowCount());
             return datasetDTO;
     }
 

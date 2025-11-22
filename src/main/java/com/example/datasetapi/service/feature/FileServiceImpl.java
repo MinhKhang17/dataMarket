@@ -1,20 +1,13 @@
 package com.example.datasetapi.service.feature;
 
 import com.example.datasetapi.dto.response.ValidationErrorDto;
-import com.example.datasetapi.enums.Datasets.DatasetInforStatus;
-import com.example.datasetapi.enums.Datasets.ErrorCode;
-import com.example.datasetapi.enums.Datasets.FileExtension;
-import com.example.datasetapi.enums.Datasets.ValidationPhase;
-import com.example.datasetapi.model.dataset.DatasetInformation;
-import com.example.datasetapi.model.dataset.DatasetType;
-import com.example.datasetapi.model.dataset.DatasetTypeColumn;
-import com.example.datasetapi.model.dataset.DatasetValidationError;
-import com.example.datasetapi.model.userManager.Provider;
-import com.example.datasetapi.model.userManager.User;
-import com.example.datasetapi.repository.DatasetInforRepository;
+import com.example.datasetapi.enums.Datasets.*;
+import com.example.datasetapi.model.dataset.*;
+import com.example.datasetapi.repository.DatasetRepository;
 import com.example.datasetapi.repository.DatasetTypeRepository;
 import com.example.datasetapi.repository.DatasetValidationErrorRepository;
 import com.example.datasetapi.service.dataset.AnalysisService;
+import com.example.datasetapi.service.user.UserService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.csv.CSVFormat;
@@ -31,11 +24,13 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Value;
 
 /**
  * Chỉnh sửa để:
@@ -51,10 +46,12 @@ public class FileServiceImpl implements FileService {
     @Autowired
     private DatasetTypeRepository datasetTypeRepository;
     @Autowired
-    private DatasetInforRepository datasetInforRepository;
+    private DatasetRepository datasetRepository;
     @Autowired
     private DatasetValidationErrorRepository errorRepository;
-
+    @Value("${app.upload.base}")
+    private String TEMP_DIR;
+@Autowired private UserService userService;
     @Autowired
     private ObjectMapper objectMapper;
 
@@ -73,7 +70,8 @@ public class FileServiceImpl implements FileService {
     private final int MAX_ERRORS_TO_SAVE = 1000;
 
     @Override
-    public boolean checkHeader(MultipartFile file, long datasetTypeId, DatasetInformation ds, User provider) {
+    public boolean checkHeader(MultipartFile file, long datasetTypeId, Dataset ds, long user_id, DatasetSourceType datasetSourceType) {
+
         String tempPath = null;
         try{
             log.info("-----------------------------------------\nStart reading Dataset\n-----------------------------------------");
@@ -89,18 +87,20 @@ public class FileServiceImpl implements FileService {
                 extension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1);
             }
 
-            ds.setFile_url(tempPath);
-            ds.setStatus(DatasetInforStatus.PENDING);
+            ds.setFileUrl(tempPath);
+            ds.setDatasetStatus(DatasetStatus.PENDING);
             try {
                 ds.setDatasetExtension(FileExtension.valueOf(extension));
             } catch (Exception ex) {
                 // ignore if extension unknown
             }
             // do not set headerChecked here — wait until schema validated
-            ds.setProvider(provider);
+            if(datasetSourceType==DatasetSourceType.DATASET_PROVIDER){ds.setProvider(userService.findProviderById(user_id));}
+            else {ds.setModerator(userService.findUserById(user_id));}
+
             ds.setDatasetType(type);
-            ds.setUpdateAt(LocalDateTime.now());
-            ds = datasetInforRepository.save(ds);
+            ds.setUpdatedAt(LocalDateTime.now());
+            ds = datasetRepository.save(ds);
 
             try (Reader r = new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8)) {
                 CSVParser parser = CSVFormat.DEFAULT.withFirstRecordAsHeader().withTrim().parse(r);
@@ -112,16 +112,16 @@ public class FileServiceImpl implements FileService {
                 List<ValidationErrorDto> errors = validateSchema(type, parser.getHeaderMap().keySet(), parser.getRecords().size());
 
                 if (!errors.isEmpty()) {
-                    ds.setStatus(DatasetInforStatus.SCHEMA_FAILED);
+                    ds.setDatasetStatus(DatasetStatus.SCHEMA_FAILED);
                     ds.setValidationErrors(errors);
                     ds.setHeaderChecked(false);
-                    ds = datasetInforRepository.save(ds);
+                    ds = datasetRepository.save(ds);
                     return false;
                 } else {
-                    ds.setStatus(DatasetInforStatus.PENDING_MODERATION);
+                    ds.setDatasetStatus(DatasetStatus.PENDING_MODERATION);
                     ds.setHeaderChecked(true);
                     ds.setRowCount((long) rowCount);
-                    ds = datasetInforRepository.save(ds);
+                    ds = datasetRepository.save(ds);
 
                     return true;
                 }
@@ -142,17 +142,17 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public DatasetInformation uploadAndSchemaCheckByUrl(Long datasetTypeId, String fileUrl, String name, String description) {
+    public Dataset uploadAndSchemaCheckByUrl(Long datasetTypeId, String fileUrl, String name, String description) {
         try {
             DatasetType type = datasetTypeRepository.findById(datasetTypeId)
                     .orElseThrow(() -> new IllegalArgumentException("DatasetType not found: " + datasetTypeId));
 
-            DatasetInformation ds = new DatasetInformation();
+            Dataset ds = new Dataset();
             ds.setName(name);
 
-            ds.setFile_url(fileUrl);
-            ds.setStatus(DatasetInforStatus.PENDING);
-            ds = datasetInforRepository.save(ds);
+            ds.setFileUrl(fileUrl);
+            ds.setDatasetStatus(DatasetStatus.PENDING);
+            ds = datasetRepository.save(ds);
 
             URL url = new URL(fileUrl);
             try (Reader r = new InputStreamReader(url.openStream(), StandardCharsets.UTF_8)) {
@@ -160,15 +160,15 @@ public class FileServiceImpl implements FileService {
                 List<ValidationErrorDto> errors = validateSchema(type, parser.getHeaderMap().keySet(), parser.getRecords().size());
 
                 if (!errors.isEmpty()) {
-                    ds.setStatus(DatasetInforStatus.SCHEMA_FAILED);
+                    ds.setDatasetStatus(DatasetStatus.SCHEMA_FAILED);
                     ds.setValidationErrors(errors);
                     ds.setHeaderChecked(false);
-                    datasetInforRepository.save(ds);
+                    datasetRepository.save(ds);
                 } else {
-                    ds.setStatus(DatasetInforStatus.PENDING_MODERATION);
+                    ds.setDatasetStatus(DatasetStatus.PENDING_MODERATION);
                     ds.setHeaderChecked(true);
                     ds.setRowCount((long) parser.getRecords().size());
-                    ds = datasetInforRepository.save(ds);
+                    ds = datasetRepository.save(ds);
                 }
             }
             return ds;
@@ -183,10 +183,10 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public void saveErrors(DatasetInformation datasetInformation, List<DatasetValidationError> errors) {
+    public void saveErrors(Dataset datasetInformation, List<DatasetValidationError> errors) {
         try {
-            errorRepository.deleteByDatasetInformation(datasetInformation);
-            errors.forEach(e -> e.setDatasetInformation(datasetInformation));
+            errorRepository.deleteByDataset(datasetInformation);
+            errors.forEach(e -> e.setDataset(datasetInformation));
             List<DatasetValidationError> toSave = errors.size() > MAX_ERRORS_TO_SAVE ? errors.subList(0, MAX_ERRORS_TO_SAVE) : errors;
             errorRepository.saveAll(toSave);
         } catch (Exception e) {
@@ -196,9 +196,9 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public List<DatasetValidationError> getErrorsByDataset(DatasetInformation datasetInformation) {
+    public List<DatasetValidationError> getErrorsByDataset(Dataset datasetInformation) {
         try {
-            List<DatasetValidationError> errors = errorRepository.findByDatasetInformation(datasetInformation);
+            List<DatasetValidationError> errors = errorRepository.findByDataset(datasetInformation);
             return errors;
         } catch (Exception e) {
             log.error("Failed to retrieve moderation errors", e);
@@ -216,7 +216,7 @@ public class FileServiceImpl implements FileService {
      * - Lưu artifacts qua AnalysisService
      */
     @Override
-    public Map<String, Object> moderate(DatasetInformation ds) {
+    public Map<String, Object> moderate(Dataset ds) {
 
         try {
 
@@ -229,7 +229,7 @@ public class FileServiceImpl implements FileService {
                     .stream().map(DatasetTypeColumn::getColumnName).toList();
 
             // open CSV file
-            try (InputStream in = openInputStream(ds.getFile_url());
+            try (InputStream in = openInputStream(ds.getFileUrl());
                  Reader reader = new InputStreamReader(in, StandardCharsets.UTF_8);
                  CSVParser parser = CSVFormat.DEFAULT.withFirstRecordAsHeader().withTrim().parse(reader)) {
 
@@ -252,7 +252,7 @@ public class FileServiceImpl implements FileService {
                         if (value == null || value.isBlank()) {
                             totalErrors++;
                             errors.add(DatasetValidationError.builder()
-                                    .datasetInformation(ds)
+                                    .dataset(ds)
                                     .validationPhase(ValidationPhase.MODERATION)
                                     .errorCode(ErrorCode.NULL_VALUE)
                                     .columnName(col)
@@ -276,7 +276,7 @@ public class FileServiceImpl implements FileService {
                         if (!seen.add(signature)) {
                             totalErrors += csvHeaders.size();
                             errors.add(DatasetValidationError.builder()
-                                    .datasetInformation(ds)
+                                    .dataset(ds)
                                     .validationPhase(ValidationPhase.MODERATION)
                                     .errorCode(ErrorCode.DUPLICATE_ROW)
                                     .rowIndex((long) i)
@@ -306,7 +306,7 @@ public class FileServiceImpl implements FileService {
                         } catch (NumberFormatException ex) {
                             totalErrors++;
                             errors.add(DatasetValidationError.builder()
-                                    .datasetInformation(ds)
+                                    .dataset(ds)
                                     .validationPhase(ValidationPhase.MODERATION)
                                     .errorCode(ErrorCode.INVALID_FORMAT)
                                     .columnName(col)
@@ -340,7 +340,7 @@ public class FileServiceImpl implements FileService {
                             if (num < lower || num > upper) {
                                 totalErrors++;
                                 errors.add(DatasetValidationError.builder()
-                                        .datasetInformation(ds)
+                                        .dataset(ds)
                                         .validationPhase(ValidationPhase.MODERATION)
                                         .errorCode(ErrorCode.OUT_OF_RANGE)
                                         .columnName(col)
@@ -413,18 +413,18 @@ public class FileServiceImpl implements FileService {
 
                 // continue previous save / delete logic
                 if (!pass) {
-                    datasetInforRepository.deleteById(ds.getId());
+                    datasetRepository.deleteById(ds.getId());
                 }
                 else {
-                    ds.setStatus(DatasetInforStatus.CONTENT_APPROVED);
+                    ds.setDatasetStatus(DatasetStatus.CONTENT_APPROVED);
                     ds.setContentChecked(true);
-                    datasetInforRepository.save(ds);
+                    datasetRepository.save(ds);
 
                     // save validation errors (moderation)
                     try {
-                        errorRepository.deleteByDatasetInformation(ds);
+                        errorRepository.deleteByDataset(ds);
                         List<DatasetValidationError> toSave = errors.size() > MAX_ERRORS_TO_SAVE ? errors.subList(0, MAX_ERRORS_TO_SAVE) : errors;
-                        toSave.forEach(e -> e.setDatasetInformation(ds));
+                        toSave.forEach(e -> e.setDataset(ds));
                         errorRepository.saveAll(toSave);
                     } catch (Exception ex) {
                         log.error("Failed to save moderation errors", ex);
@@ -444,7 +444,7 @@ public class FileServiceImpl implements FileService {
                 // return response (include coreMetrics + previous info + ai response if any)
                 Map<String, Object> response = new HashMap<>();
                 response.put("datasetId", ds.getId());
-                response.put("status", ds.getStatus());
+                response.put("status", ds.getDatasetStatus());
                 response.put("errorRatePercent", rate);
                 response.put("totalErrors", totalErrors);
                 response.put("errors", errors.stream().map(e -> {
@@ -949,12 +949,22 @@ sampleCsv (reference only):
     }
 
     private String saveTemp(MultipartFile file) throws IOException {
-        Path tempDir = Files.createTempDirectory("uploads");
-        Path target = tempDir.resolve(file.getOriginalFilename());
+        // Use your custom folder instead of OS temp
+        Path tempDir = Paths.get(TEMP_DIR+"/TEMP").toAbsolutePath().normalize();
+
+        // Create folder if missing
+        Files.createDirectories(tempDir);
+
+        // unique file name
+        String newName = UUID.randomUUID() + "_" + file.getOriginalFilename();
+        Path target = tempDir.resolve(newName);
+
+        // Copy file
         Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
-        // return absolute path
+
         return target.toAbsolutePath().toString();
     }
+
 
     private InputStream openInputStream(String path) throws IOException {
         if (path == null) throw new FileNotFoundException("File URL null");

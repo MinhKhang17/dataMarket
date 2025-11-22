@@ -18,7 +18,7 @@ public interface DatasetMapper {
 
     ReviewHistoryDto toReviewHistoryDto(ReviewHistory save);
 
-    UploadHeaderResponseDto toUploadHeaderResponseDto(DatasetInformation ds);
+    UploadHeaderResponseDto toUploadHeaderResponseDto(Dataset ds);
 
     CommuneDTO toCommuneDTO(Commune commune);
 
