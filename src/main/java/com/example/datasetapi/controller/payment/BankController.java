@@ -20,7 +20,7 @@ public class BankController {
     }
 
     @GetMapping("/list")
-    public ResponseEntity<ApiResponse> listbank() {
+    public ResponseEntity<ApiResponse> listBank() {
         return bankAccountService.listbank();
     }
 

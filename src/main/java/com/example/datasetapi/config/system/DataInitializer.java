@@ -536,6 +536,7 @@ public class DataInitializer implements CommandLineRunner {
         user.setActive(true);
         user.setPassword(passwordEncoder.encode("password"));
         user.setEmail("consumer@gmail.com");
+        user.setIsEmailValid(true);
         user.setRole(roleRepository.findByName("CONSUMER").get());
 
         Wallet wallet = new Wallet();
