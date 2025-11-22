@@ -5,6 +5,9 @@ import com.example.datasetapi.model.dataset.Dataset;
 import com.example.datasetapi.model.dataset.DatasetValidationError;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
@@ -22,4 +25,8 @@ public interface FileService {
 
     List<DatasetValidationError> getErrorsByDataset(Dataset datasetInformation);
 
+
+    List<Map<String, Object>> csvToJson(File file) throws IOException;
+
+    File convertCsvToJsonFile(Path csvPath) throws IOException;
 }

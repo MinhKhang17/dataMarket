@@ -8,6 +8,8 @@ import com.example.datasetapi.repository.DatasetTypeRepository;
 import com.example.datasetapi.repository.DatasetValidationErrorRepository;
 import com.example.datasetapi.service.dataset.AnalysisService;
 import com.example.datasetapi.service.user.UserService;
+import com.fasterxml.jackson.core.JsonEncoding;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.csv.CSVFormat;
@@ -22,10 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -1061,6 +1060,75 @@ sampleCsv (reference only):
         if (s == null) return null;
         if (s.length() <= max) return s;
         return s.substring(0, max);
+    }
+
+    @Override
+    public List<Map<String, Object>> csvToJson(File file) throws IOException {
+        try (Reader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)) {
+
+            CSVParser parser = CSVFormat.DEFAULT
+                    .withFirstRecordAsHeader()
+                    .withTrim()
+                    .parse(reader);
+
+            List<Map<String, Object>> jsonList = new ArrayList<>();
+
+            for (CSVRecord record : parser) {
+                Map<String, Object> jsonObject = new LinkedHashMap<>();
+
+                for (String header : parser.getHeaderMap().keySet()) {
+                    jsonObject.put(header, record.get(header));
+                }
+
+                jsonList.add(jsonObject);
+            }
+
+            return jsonList;
+        }
+    }
+@Override
+public File convertCsvToJsonFile(Path csvPath) throws IOException {
+        if (csvPath == null || !Files.exists(csvPath)) {
+            throw new FileNotFoundException("CSV file not found: " + csvPath);
+        }
+
+        // create temp file
+        String baseName = csvPath.getFileName().toString().replaceAll("(?i)\\.csv$", "");
+        Path tmp = Files.createTempFile(baseName + "-", ".json");
+        File tmpFile = tmp.toFile();
+
+        ObjectMapper mapper = new ObjectMapper();
+        // Use JsonGenerator to stream JSON array into file
+        try (OutputStream os = Files.newOutputStream(tmp, StandardOpenOption.WRITE);
+             JsonGenerator gen = mapper.getFactory().createGenerator(os, JsonEncoding.UTF8);
+             Reader reader = Files.newBufferedReader(csvPath, StandardCharsets.UTF_8);
+             CSVParser parser = CSVFormat.DEFAULT
+                     .withFirstRecordAsHeader()
+                     .withTrim()
+                     .parse(reader)) {
+
+            // do not let generator close underlying stream explicitly (we are in try-with-resources anyway)
+            gen.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
+
+            gen.writeStartArray(); // [
+
+            for (CSVRecord record : parser) {
+                Map<String, String> obj = new LinkedHashMap<>();
+                for (String header : parser.getHeaderMap().keySet()) {
+                    obj.put(header, record.get(header));
+                }
+                mapper.writeValue(gen, obj); // write object to stream
+            }
+
+            gen.writeEndArray(); // ]
+            gen.flush();
+        } catch (IOException ex) {
+            // Clean up temp file on error
+            try { Files.deleteIfExists(tmp); } catch (IOException ignored) {}
+            throw ex;
+        }
+
+        return tmpFile;
     }
 
 }

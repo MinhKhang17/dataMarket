@@ -4,6 +4,7 @@ import com.example.datasetapi.dto.request.*;
 import com.example.datasetapi.dto.response.*;
 import com.example.datasetapi.dto.service.DatasetGroupInfor;
 import com.example.datasetapi.enums.Datasets.*;
+import com.example.datasetapi.enums.DowloadType;
 import com.example.datasetapi.enums.TransferType;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
@@ -24,6 +25,7 @@ import com.example.datasetapi.service.user.TokenService;
 import com.example.datasetapi.service.user.UserService;
 import com.example.datasetapi.util.DateUtil;
 import com.example.datasetapi.util.JwtUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -855,18 +857,18 @@ public class DatasetServiceImpl implements DatasetService {
 
 
     @Override
-    public ResponseEntity<?> downloadDataset(String dowloadToken, HttpServletRequest request) {
+    public ResponseEntity<?> downloadDataset(String dowloadToken, HttpServletRequest request, DowloadType dowloadType) {
 
         Optional<DownloadToken> downloadTokenOptional = downloadTokenRepository.findById(UUID.fromString(dowloadToken));
         User user = userService.findUserById(tokenService.getUserIdFromRequest(request));
 
-        if(downloadTokenOptional.isEmpty()){
+        if (downloadTokenOptional.isEmpty()) {
             throw new CustomException(HttpStatus.NOT_FOUND, ErrorCode.TOKEN_NOT_FOUND);
         }
-        if(downloadTokenOptional.get().getConsumer() != user) {
+        if (downloadTokenOptional.get().getConsumer() != user) {
             throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED);
         }
-        if(downloadTokenOptional.get().getUse_amount() == 0){
+        if (downloadTokenOptional.get().getUse_amount() == 0) {
             throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.TOKEN_IS_EXPIRED);
         }
 
@@ -884,10 +886,49 @@ public class DatasetServiceImpl implements DatasetService {
         }
 
         try {
+            // nếu user yêu cầu JSON -> chuyển CSV thành JSON
+            if (dowloadType == DowloadType.JSON) {
+                String lower = filePathStr.toLowerCase();
+                if (!lower.endsWith(".csv")) {
+                    // Bạn có thể đổi ErrorCode này thành mã hợp lý trong project của bạn
+                    throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.FILE_NOT_FOUND);
+                }
+
+                File csvFile = filePath.toFile();
+                List<Map<String, Object>> jsonList = fileService.csvToJson(csvFile); // method bạn đã viết
+
+                // chuyển List thành JSON string (dùng Jackson)
+                ObjectMapper mapper = new ObjectMapper();
+                // nếu muốn pretty print:
+                // mapper.enable(SerializationFeature.INDENT_OUTPUT);
+                byte[] jsonBytes = mapper.writeValueAsBytes(jsonList);
+
+                // cập nhật token & dataset giống như trước
+                downloadToken.setUse_amount(downloadToken.getUse_amount() - 1);
+                if (downloadToken.getUse_amount() == 0) {
+                    downloadToken.setActive(false);
+                }
+                downloadTokenRepository.save(downloadToken);
+
+                dataset.setDownloadCount(dataset.getDownloadCount() + 1);
+                datasetRepository.save(dataset);
+
+                // trả về JSON như một file đính kèm với tên đổi thành .json
+                String jsonFileName = filePath.getFileName().toString().replaceAll("\\.csv$", ".json");
+                InputStreamResource resource = new InputStreamResource(new ByteArrayInputStream(jsonBytes));
+
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + jsonFileName + "\"")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .contentLength(jsonBytes.length)
+                        .body(resource);
+            }
+
+            // Nếu không phải JSON, trả về file gốc (nhị phân) như cũ
             InputStreamResource resource = new InputStreamResource(Files.newInputStream(filePath));
 
             downloadToken.setUse_amount(downloadToken.getUse_amount() - 1);
-            if(downloadToken.getUse_amount() == 0){
+            if (downloadToken.getUse_amount() == 0) {
                 downloadToken.setActive(false);
             }
             downloadTokenRepository.save(downloadToken);
@@ -901,6 +942,7 @@ public class DatasetServiceImpl implements DatasetService {
                     .contentType(MediaType.APPLICATION_OCTET_STREAM)
                     .contentLength(Files.size(filePath))
                     .body(resource);
+
         } catch (IOException e) {
             throw new RuntimeException("Error reading file for download: " + filePathStr, e);
         }
