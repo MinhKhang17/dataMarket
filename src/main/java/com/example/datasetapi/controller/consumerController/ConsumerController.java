@@ -52,17 +52,11 @@ public class ConsumerController {
     @PostMapping("/dataset/api/buying")
     public ResponseEntity<ApiResponse> buyAPiDataset(
             @ModelAttribute ConsumerBuyRequestDTO buyRequestDTO,
-            @RequestParam(value = "isHaveSub", required = false, defaultValue = "false") boolean isHaveSub,
-            @RequestParam(value = "subType", required = false) String subType,
             HttpServletRequest request) {
 
         try {
             // set các thông tin từ query/params vào DTO nếu cần
-            buyRequestDTO.setIsHaveSub(isHaveSub);
-            buyRequestDTO.setSubType(subType);
-            if (subType != null && !subType.isBlank()) {
-                buyRequestDTO.setSubType(subType);
-            }
+
 
             ConsumerBuyResponseDTO consumerBuyResponseDTO = datasetService.buyAPIPack(buyRequestDTO, request);
 

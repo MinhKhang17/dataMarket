@@ -98,7 +98,7 @@ public class DatasetServiceImpl implements DatasetService {
     private ProvinceRepository provinceRepository;
     @Autowired
     private FileService fileService;
-
+    @Autowired private PricingRuleRepo pricingRuleRepo;
     @Autowired private  DatasetPreviewRepository datasetPreviewRepository;
     @Autowired  private  ObjectMapper objectMapper;
 
@@ -1135,24 +1135,24 @@ public class DatasetServiceImpl implements DatasetService {
 
     @Override
     public ConsumerBuyResponseDTO buyAPIPack(ConsumerBuyRequestDTO buyRequestDTO, HttpServletRequest request) {
-        DatasetPricing datasetPricing = datasetPricingRepository.findById(buyRequestDTO.getDatasetPricingId()).orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.API_PACK_NOT_FOUND));
+        PricingRule datasetPricing = pricingRuleRepo.findById(buyRequestDTO.getDatasetPricingId()).orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.API_PACK_NOT_FOUND));
         Dataset dataset = datasetRepository.findById(buyRequestDTO.getDatasetId()).orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
         double price = 0.0;
         String apiToken="";
         if(buyRequestDTO.getSubType()==null) {
             System.out.println(buyRequestDTO.getDatasetPricingId());
-            price = datasetPricing.getPrice();
+            price = datasetPricing.getBasePricePoint();
 
             paymentService.updateWallet(TransferType.PAYOUT, price, tokenService.getUserIdFromRequest(request), BuyType.BUY_API);
 
-            apiToken = jwtUtil.generateApiSaleToken(userService.findUserById(tokenService.getUserIdFromRequest(request)), dataset, 31L, datasetPricing.getPricingRule().getRequestLimit());
+            apiToken = jwtUtil.generateApiSaleToken(userService.findUserById(tokenService.getUserIdFromRequest(request)), dataset, 31L, datasetPricing.getRequestLimit());
         }
         else {
             if (buyRequestDTO.getSubType().equalsIgnoreCase("LARGE")) {
                 if (!consumerSubRepo.existsByConsumerAndIsActiveAndIsUsing(userService.findUserById(tokenService.getUserIdFromRequest(request)), true, true)) {
                     throw new CustomException(HttpStatus.NOT_FOUND, ErrorCode.CONSUMER_SUB_NOT_FOUND);
                 }
-                 apiToken = jwtUtil.generateApiSaleToken(userService.findUserById(tokenService.getUserIdFromRequest(request)), dataset, 31L, datasetPricing.getPricingRule().getRequestLimit());
+                 apiToken = jwtUtil.generateApiSaleToken(userService.findUserById(tokenService.getUserIdFromRequest(request)), dataset, 31L, datasetPricing.getRequestLimit());
             }
         }
         List<OrderRequest> orderRequests = new ArrayList<>();
