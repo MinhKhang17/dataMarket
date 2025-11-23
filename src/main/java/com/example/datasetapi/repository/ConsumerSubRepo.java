@@ -23,5 +23,5 @@ public interface ConsumerSubRepo extends JpaRepository<ConsumerSubscription,Long
 
     boolean existsByConsumerAndIsActiveAndIsUsing(User consumer, boolean isActive, boolean isUsing);
 
-    String findByConsumerAndIsActiveAndIsUsing(User consumer, boolean isActive, boolean isUsing);
+    ConsumerSubscription findByConsumerAndIsActiveAndIsUsing(User consumer, boolean isActive, boolean isUsing);
 }

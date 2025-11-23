@@ -117,4 +117,6 @@ public interface DatasetService {
     ConsumerBuyResponseDTO buyAPIPack(ConsumerBuyRequestDTO buyRequestDTO, HttpServletRequest request);
 
     ResponseEntity<?> getDataForApiBuying(String token);
+
+    List<ApiTokenResponse> findAllTokenForConsumer();
 }

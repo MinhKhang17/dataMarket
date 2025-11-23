@@ -204,6 +204,17 @@ datasetDTO.setRow_amount(dataset.getRowCount());
         return new ProviderRevenueDTO(toDatasetDTO(providerRevenue.getDataset()),providerRevenue.getRevenue_amount(),providerRevenue.getId(),providerRevenue.getCreatedAt());
     }
 
+    @Override
+    public ApiTokenResponse toApiTokenResponse(ApiAccessToken apiAccessToken) {
+        ApiTokenResponse apiTokenResponse = new ApiTokenResponse();
+        apiTokenResponse.setToken_id(apiAccessToken.getId());
+        apiTokenResponse.setDataset(toDatasetDTO(apiAccessToken.getDataset()));
+        apiTokenResponse.setUserAmount(apiAccessToken.getUseAmount());
+        apiTokenResponse.setUserCount(apiAccessToken.getUsesCount());
+        apiTokenResponse.setExpiresAt(apiAccessToken.getExpiresAt());
+        return apiTokenResponse;
+    }
+
     private BuySubInfoDTO toBuySubInfoDTO(ConsumerSubscription infor) {
         BuySubInfoDTO buySubInfoDTO = new BuySubInfoDTO();
         buySubInfoDTO.setSubType(infor.getSubType());

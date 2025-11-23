@@ -149,6 +149,12 @@ public class ConsumerController {
     public ResponseEntity<ApiResponse> viewOrderById(@PathVariable Long orderId){
         return orderService.getOrderById(orderId);
     }
+
+    @PreAuthorize("hasRole('CONSUMER')")
+    @GetMapping("api/token")
+    public ResponseEntity<?> viewApiToken(){
+        return  ResponseEntity.ok().body(datasetService.findAllTokenForConsumer());
+    }
 //    @PostMapping("dataset/sub/buy")
 //    public ResponseEntity<ApiResponse> buyDatasetWithSub(@RequestBody long datasetId,HttpServletRequest request){
 //        ConsumerBuyResponseDTO consumerBuyResponseDTO = datasetService.buyDatasetWithSub(datasetId,request);

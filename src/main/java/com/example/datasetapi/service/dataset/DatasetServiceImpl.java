@@ -53,6 +53,8 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 public class DatasetServiceImpl implements DatasetService {
     @Autowired
+    private HttpServletRequest request;
+    @Autowired
     private JwtUtil jwtUtil;
     @Autowired
     private DatasetRepository datasetRepository;
@@ -1206,6 +1208,11 @@ public class DatasetServiceImpl implements DatasetService {
                             "message", "Lỗi xử lý API: " + e.getMessage()
                     ));
         }
+    }
+
+    @Override
+    public List<ApiTokenResponse> findAllTokenForConsumer() {
+        return tokenService.findAllDownloadTokenForConsumer(userService.findUserById(tokenService.getUserIdFromRequest(request))).stream().map(datasetMapper::toApiTokenResponse).collect(Collectors.toList());
     }
 
 
