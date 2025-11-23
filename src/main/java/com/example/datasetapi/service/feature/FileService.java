@@ -29,4 +29,6 @@ public interface FileService {
     List<Map<String, Object>> csvToJson(File file) throws IOException;
 
     File convertCsvToJsonFile(Path csvPath) throws IOException;
+
+    File getFileFromDataset(Dataset dataset);
 }

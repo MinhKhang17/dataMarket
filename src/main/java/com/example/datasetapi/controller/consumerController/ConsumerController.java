@@ -9,7 +9,9 @@ import com.example.datasetapi.service.order.OrderService;
 import com.example.datasetapi.service.user.ConsumerService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -45,6 +47,43 @@ public class ConsumerController {
         ConsumerBuyResponseDTO consumerBuyResponseDTO = datasetService.buyDatasetRequest(buyRequestDTO,request);
         return ResponseEntity.ok().body(new ApiResponse(true,"Buy loading success",consumerBuyResponseDTO));
     }
+    @PreAuthorize("hasRole('CONSUMER')")
+    @PostMapping("/dataset/api/buying")
+    public ResponseEntity<ApiResponse> buyAPiDataset(
+            @ModelAttribute ConsumerBuyRequestDTO buyRequestDTO,
+            @RequestParam(value = "isHaveSub", required = false, defaultValue = "false") boolean isHaveSub,
+            @RequestParam(value = "subType", required = false) String subType,
+            HttpServletRequest request) {
+
+        try {
+            // set các thông tin từ query/params vào DTO nếu cần
+            buyRequestDTO.setIsHaveSub(isHaveSub);
+            buyRequestDTO.setSubType(subType);
+            if (subType != null && !subType.isBlank()) {
+                buyRequestDTO.setSubType(subType);
+            }
+
+            ConsumerBuyResponseDTO consumerBuyResponseDTO = datasetService.buyAPIPack(buyRequestDTO, request);
+
+            if (consumerBuyResponseDTO == null) {
+                // service trả null -> coi là lỗi xử lý
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(new ApiResponse(false, "Buy failed: internal error", null));
+            }
+
+            return ResponseEntity.ok(new ApiResponse(true, "Buy loading success", consumerBuyResponseDTO));
+        } catch (IllegalArgumentException iae) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, iae.getMessage(), null));
+        } catch (AccessDeniedException ade) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiResponse(false, "Access denied", null));
+        } catch (Exception e) {
+            // log lỗi ở đây nếu bạn có logger
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(false, "Unexpected error: " + e.getMessage(), null));
+        }
+    }
+
 
     @PreAuthorize("hasRole('CONSUMER')")
     @PostMapping("/subRegister")

@@ -88,7 +88,7 @@ datasetDTO.setRow_amount(dataset.getRowCount());
         DatasetPricingDTO datasetPricingDTO = new DatasetPricingDTO();
         if(datasetPricing.getPricingRule().getMethod()== PricingMethod.API){
             datasetPricingDTO.setPricingId(datasetPricing.getId());
-            datasetPricingDTO.setPrice(datasetPricing.getPricePerRequest());
+            datasetPricingDTO.setPrice(datasetPricing.getPrice());
             datasetPricingDTO.setPricingMethod(datasetPricing.getPricingRule().getMethod());
             return datasetPricingDTO;
         }
@@ -122,16 +122,16 @@ datasetDTO.setRow_amount(dataset.getRowCount());
             }
             case API -> {
                 ConsumerBuyResponseDTO consumerBuyResponseDTO = new ConsumerBuyResponseDTO();
-                consumerBuyResponseDTO.setBuyApiInforDTO(toBuyApiInfoDTO((DownloadToken)infor));
+                consumerBuyResponseDTO.setBuyApiInforDTO(toBuyApiInfoDTO((String)infor));
                 return consumerBuyResponseDTO;
             }
         }
         return null;
     }
 
-    private BuyApiInforDTO toBuyApiInfoDTO(DownloadToken infor) {
+    private BuyApiInforDTO toBuyApiInfoDTO(String infor) {
         BuyApiInforDTO buyApiInforDTO = new BuyApiInforDTO();
-        buyApiInforDTO.setDownLoadToken(infor.getId().toString());
+        buyApiInforDTO.setDownLoadToken(infor);
         return  buyApiInforDTO;
     }
 

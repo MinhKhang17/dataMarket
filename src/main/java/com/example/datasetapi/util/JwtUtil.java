@@ -1,20 +1,28 @@
 package com.example.datasetapi.util;
 
+import com.example.datasetapi.exception.CustomException;
+import com.example.datasetapi.exception.ErrorCode;
+import com.example.datasetapi.model.dataset.ApiAccessToken;
 import com.example.datasetapi.model.dataset.Dataset;
 import com.example.datasetapi.model.dataset.DownloadToken;
 import com.example.datasetapi.model.userManager.User;
 import com.example.datasetapi.model.dataset.TimeGroup;
+import com.example.datasetapi.repository.ApiAccessTokenRepository;
 import com.example.datasetapi.repository.DownloadTokenRepository;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.security.Key;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @Component
@@ -24,6 +32,8 @@ public class JwtUtil {
 
     @Autowired
     private DownloadTokenRepository downloadTokenRepository;
+    @Autowired
+    private ApiAccessTokenRepository apiAccessTokenRepository;
 
     @Autowired
     public JwtUtil(@Value("${jwt.secret}") String secret,
@@ -123,5 +133,66 @@ public class JwtUtil {
             System.out.println("Token rỗng hoặc null: " + e.getMessage());
         }
         return null;
+    }
+    public String generateApiSaleToken(User buyer, Dataset dataset, long daysValid, long useAmount) {
+        // tạo jti
+        String jti = UUID.randomUUID().toString();
+        long nowMillis = System.currentTimeMillis();
+        Date issuedAt = new Date(nowMillis);
+        Date exp = new Date(nowMillis + daysValid * 24L * 60L * 60L * 1000L); // days -> ms
+
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("buyerId", buyer != null ? buyer.getId() : null);
+        claims.put("datasetId", dataset != null ? dataset.getId() : null);
+
+        claims.put("useAmount", useAmount);
+
+        String token = Jwts.builder()
+                .setId(jti)
+                .setSubject(buyer != null ? String.valueOf(buyer.getId()) : "anonymous")
+                .setClaims(claims)
+                .setIssuedAt(issuedAt)
+                .setExpiration(exp)
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+
+        // Lưu vào DB
+        ApiAccessToken apiToken = new ApiAccessToken();
+        apiToken.setId(UUID.fromString(jti));
+        apiToken.setToken(token); // production: lưu hash(token) thay vì token raw
+        apiToken.setBuyer(buyer);
+        apiToken.setDataset(dataset);
+        apiToken.setUseAmount(useAmount);
+        apiToken.setUsesCount(0);
+        apiToken.setRevoked(false);
+        apiToken.setCreatedAt(LocalDateTime.now());
+        apiToken.setExpiresAt(LocalDateTime.now().plusDays(daysValid));
+
+        apiAccessTokenRepository.save(apiToken);
+
+        return token;
+    }
+    @Transactional
+    public boolean consumeApiToken(String token) {
+        try {
+            System.out.println(token);
+            ApiAccessToken t = apiAccessTokenRepository.findByToken(token)
+                    .orElseThrow(() -> new RuntimeException("Token not found"));
+
+            if (Boolean.TRUE.equals(t.getRevoked())) return false;
+            if (t.getExpiresAt() != null && t.getExpiresAt().isBefore(LocalDateTime.now())) return false;
+            if (t.getUseAmount() != null && t.getUseAmount() >= 0) {
+                if (t.getUsesCount() >= t.getUseAmount()) return false;
+                t.setUsesCount(t.getUsesCount() + 1);
+            }
+            apiAccessTokenRepository.save(t);
+            return true;
+        } catch (JwtException | IllegalArgumentException ex) {
+            return false;
+        }
+    }
+
+    public Dataset finđDatasetFromAPIToken(String token) {
+        return apiAccessTokenRepository.findByToken(token).orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.TOKEN_NOT_FOUND)).getDataset();
     }
 }

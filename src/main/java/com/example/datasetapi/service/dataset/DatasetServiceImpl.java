@@ -1122,6 +1122,84 @@ public class DatasetServiceImpl implements DatasetService {
     }
 
     @Override
+    public ConsumerBuyResponseDTO buyAPIPack(ConsumerBuyRequestDTO buyRequestDTO, HttpServletRequest request) {
+        DatasetPricing datasetPricing = datasetPricingRepository.findById(buyRequestDTO.getDatasetPricingId()).orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.API_PACK_NOT_FOUND));
+        Dataset dataset = datasetRepository.findById(buyRequestDTO.getDatasetId()).orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
+        if(buyRequestDTO.getSubType()==null){      System.out.println(buyRequestDTO.getDatasetPricingId());
+            double price = datasetPricing.getPrice();
+
+            paymentService.updateWallet(TransferType.TODOWN, price, tokenService.getUserIdFromRequest(request), BuyType.BUY_API);
+
+            String apiToken = jwtUtil.generateApiSaleToken(userService.findUserById(tokenService.getUserIdFromRequest(request)), dataset, 31L, datasetPricing.getPricingRule().getRequestLimit());
+            return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.API, apiToken);}
+        else {
+            if (buyRequestDTO.getSubType().equalsIgnoreCase("LARGE")) {
+                if (!consumerSubRepo.existsByConsumerAndIsActiveAndIsUsing(userService.findUserById(tokenService.getUserIdFromRequest(request)), true, true)) {
+                    throw new CustomException(HttpStatus.NOT_FOUND, ErrorCode.CONSUMER_SUB_NOT_FOUND);
+                }
+                String apiToken = jwtUtil.generateApiSaleToken(userService.findUserById(tokenService.getUserIdFromRequest(request)), dataset, 31L, datasetPricing.getPricingRule().getRequestLimit());
+                return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.API, apiToken);
+            }
+        }
+            return null;
+        }
+
+    @Override
+    public ResponseEntity<?> getDataForApiBuying(String token) {
+        try {
+            // 1. Kiểm tra token hợp lệ + chưa hết hạn + chưa bị revoke + chưa hết lượt
+            if (!jwtUtil.consumeApiToken(token)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of(
+                                "success", false,
+                                "message", "Token không hợp lệ hoặc đã hết hạn / hết lượt sử dụng"
+                        ));
+            }
+
+            // 2. Lấy dataset từ token
+            Dataset dataset = jwtUtil.finđDatasetFromAPIToken(token);
+            if (dataset == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of(
+                                "success", false,
+                                "message", "Không tìm thấy dataset trong token"
+                        ));
+            }
+
+            // 3. Lấy đường dẫn file từ dataset (tùy model của bạn)
+            File file = fileService.getFileFromDataset(dataset);
+            if (file == null || !file.exists()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of(
+                                "success", false,
+                                "message", "File dữ liệu không tồn tại"
+                        ));
+            }
+
+            // 4. Convert CSV → JSON
+            Object jsonResult = fileService.csvToJson(file);
+
+            // 5. Trả kết quả cho client
+            return ResponseEntity.ok(
+                    Map.of(
+                            "success", true,
+                            "datasetId", dataset.getId(),
+                            "data", jsonResult
+                    )
+            );
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "success", false,
+                            "message", "Lỗi xử lý API: " + e.getMessage()
+                    ));
+        }
+    }
+
+
+    @Override
     public List<Dataset> findAllByStatus(DatasetStatus datasetStatus) {
         return datasetRepository.findALByDatasetStatus(datasetStatus);
     }

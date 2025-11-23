@@ -706,6 +706,7 @@ public class UserServiceImpl implements UserService {
                     userResponse.setHaveSub(false);
                 }
                 else{
+                    userResponse.setSubType(consumerSubRepo.findByConsumerAndIsActiveAndIsUsing(user,true,true));
                     userResponse.setHaveSub(true);
                     userResponse.setConsumerSubInfo(datasetMapper.toConsumerSubReponseDTO(consumerSubRepo.findByConsumerAndIsUsing(user,true).orElseThrow(
                                     ()-> new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.COMMUNE_NOT_FOUND)

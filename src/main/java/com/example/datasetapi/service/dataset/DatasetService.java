@@ -114,4 +114,7 @@ public interface DatasetService {
 
     DatasetUpdateResponse updateDataset(Long id, DatasetUpdateRequest request);
 
+    ConsumerBuyResponseDTO buyAPIPack(ConsumerBuyRequestDTO buyRequestDTO, HttpServletRequest request);
+
+    ResponseEntity<?> getDataForApiBuying(String token);
 }

@@ -1131,4 +1131,11 @@ public File convertCsvToJsonFile(Path csvPath) throws IOException {
         return tmpFile;
     }
 
+    @Override
+    public File getFileFromDataset(Dataset dataset) {
+        if (dataset == null || dataset.getFileUrl() == null) return null;
+        return new File(dataset.getFileUrl());
+    }
+
+
 }

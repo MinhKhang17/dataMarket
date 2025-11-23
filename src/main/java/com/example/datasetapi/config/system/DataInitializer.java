@@ -229,6 +229,33 @@ public class DataInitializer implements CommandLineRunner {
         r10.setNote("Lợi Nhuận cho provider với gói lớn");
         rules.add(r10);
 
+        PricingRule r11 = new PricingRule();
+        r11.setMethod(PricingMethod.API);
+        r11.setPlanName("Consumer API small pack");
+        r11.setDatasetPack(DatasetPack.SMALL);
+        r11.setBasePricePoint(2500000.0);
+        r11.setNote("Lợi Nhuận cho provider với gói lớn");
+        r11.setRequestLimit(100l);
+        rules.add(r11);
+
+        PricingRule r12 = new PricingRule();
+        r12.setMethod(PricingMethod.API);
+        r12.setPlanName("Consumer API Medium Pack");
+        r12.setBasePricePoint(2500000.0);
+        r12.setDatasetPack(DatasetPack.MEDIUM);
+        r12.setNote("Lợi Nhuận cho provider với gói lớn");
+        r12.setRequestLimit(100L);
+        rules.add(r12);
+
+        PricingRule r13 = new PricingRule();
+        r13.setMethod(PricingMethod.API);
+        r13.setPlanName("Consumer API Large Pack");
+        r13.setBasePricePoint(2500000.0);
+        r13.setDatasetPack(DatasetPack.LARGE);
+        r13.setNote("Lợi Nhuận cho provider với gói lớn");
+        r13.setRequestLimit(100L);
+        rules.add(r13);
+
 
         pricingRuleRepo.saveAll(rules);
     }
