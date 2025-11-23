@@ -89,9 +89,19 @@ public class ModeratorController {
     }
 
 
-    @PostMapping("dataset/{id}/update")
+    @PostMapping("/{id}")
     public ResponseEntity<?> updateDataSet(@PathVariable Long id,
-                                           @RequestParam DatasetUpdateRequest dataset) {
+                                           @RequestBody DatasetUpdateRequest dataset) {
         return ResponseEntity.ok().body(new ApiResponse(true, "Update dataset success", datasetService.updateDataset(id, dataset)));
+    }
+
+    @GetMapping("")
+    public ResponseEntity<?> getAllDataset() {
+        return ResponseEntity.ok().body(new ApiResponse(true, "List dataset", datasetService.getAll()));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getDetailDataset(@PathVariable Long id) {
+        return ResponseEntity.ok().body(new ApiResponse(true, "Detail datatset", datasetService.getDetailDataset(id)));
     }
 }

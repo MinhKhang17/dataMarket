@@ -18,9 +18,5 @@ public class DatasetUpdateResponse {
     private String name;
     private String title;
     private String description;
-    private String commune;
-    private String province;
-    private Double price;
-    private Double pricePerRequest;
-    private String fileKey;
+    private String Status;
 }

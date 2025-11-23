@@ -1074,52 +1074,101 @@ public class DatasetServiceImpl implements DatasetService {
         return true;
     }
 
+
     @Override
-    public DatasetUpdateResponse updateDataset(Long id, DatasetUpdateRequest request) {
+    public DatasetUpdateResponse updateDataset(Long id, DatasetUpdateRequest datasetUpdateRequest) {
+        String token = tokenService.resolveToken(request);
+        if(token == null) {
+            throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.INVALID_TOKEN);
+        }
+        Long userId = jwtUtil.getUserIdFromToken(token);
+        if(userId == null) {
+            throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.USER_NOT_FOUND);
+        }
+        User moderator = userService.findUserById(userId);
+        if(!moderator.getRole().getName().equalsIgnoreCase("MODERATOR")){
+            throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED);
+        }
+
+        if(datasetUpdateRequest.getDatasetName() == null || datasetUpdateRequest.getDatasetName().isEmpty()) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
+        }
+
+        if(datasetUpdateRequest.getTitle() == null || datasetUpdateRequest.getTitle().isEmpty()) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
+        }
+
+        if(datasetUpdateRequest.getDescription() == null || datasetUpdateRequest.getDescription().isEmpty()) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
+        }
+
+        if(datasetUpdateRequest.getStatus() == null) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
+        }
 
         Dataset dataset = datasetRepository.findById(id)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_NOT_FOUND));
 
-        updateBasicFields(dataset, request);
-        updateFileVersion(dataset, request);
-        updateGroupRelations(dataset, request);
-        updateTimeGroup(dataset, request);
-        updatePricing(id, request);
-
         Dataset saved = datasetRepository.save(dataset);
-
-        Double updatedPrice = null;
-        Double updatedPricePerRequest = null;
-
-        if (request.getPricingList() != null && !request.getPricingList().isEmpty()) {
-            DatasetPricingUpdateRequest last = request.getPricingList()
-                    .get(request.getPricingList().size() - 1);
-
-            updatedPrice = last.getPrice();
-            updatedPricePerRequest = last.getPricePerRequest();
-        }
 
         return new DatasetUpdateResponse(
                 saved.getId(),
                 saved.getName(),
                 saved.getTitle(),
                 saved.getDescription(),
-
-                saved.getDatasetChildGroup() != null &&
-                        saved.getDatasetChildGroup().getCommune() != null
-                        ? saved.getDatasetChildGroup().getCommune().getName()
-                        : null,
-
-                saved.getDatasetChildGroup() != null &&
-                        saved.getDatasetChildGroup().getCommune() != null &&
-                        saved.getDatasetChildGroup().getCommune().getProvince() != null
-                        ? saved.getDatasetChildGroup().getCommune().getProvince().getName()
-                        : null,
-
-                updatedPrice,
-                updatedPricePerRequest,
-                saved.getFileKey()
+                saved.getDatasetStatus().name()
         );
+    }
+
+    @Override
+    public List<ListUpdateDatasetResponse> getAll() {
+        String token = tokenService.resolveToken(request);
+        if(token == null) {
+            throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.INVALID_TOKEN);
+        }
+        Long userId = jwtUtil.getUserIdFromToken(token);
+        if(userId == null) {
+            throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.USER_NOT_FOUND);
+        }
+        User moderator = userService.findUserById(userId);
+        if(!moderator.getRole().getName().equalsIgnoreCase("MODERATOR")){
+            throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED);
+        }
+        List<Dataset> dataset = datasetRepository.findAll();
+        List<ListUpdateDatasetResponse> datasetResponseList = dataset.stream()
+                .map(l ->
+                        new ListUpdateDatasetResponse(
+                                l.getId(),
+                                l.getName(),
+                                l.getDatasetStatus()
+                        )).toList();
+        return datasetResponseList;
+    }
+
+    @Override
+    public DatasetUpdateResponse getDetailDataset(Long id) {
+        String token = tokenService.resolveToken(request);
+        if(token == null) {
+            throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.INVALID_TOKEN);
+        }
+        Long userId = jwtUtil.getUserIdFromToken(token);
+        if(userId == null) {
+            throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.USER_NOT_FOUND);
+        }
+        User moderator = userService.findUserById(userId);
+        if(!moderator.getRole().getName().equalsIgnoreCase("MODERATOR")){
+            throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED);
+        }
+        Dataset dataset = datasetRepository.findById(id)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_NOT_FOUND));
+
+
+        return new DatasetUpdateResponse(
+                dataset.getId(),
+                dataset.getName(),
+                dataset.getTitle(),
+                dataset.getDescription(),
+                dataset.getDatasetStatus().name());
     }
 
     @Override
@@ -1219,65 +1268,5 @@ public class DatasetServiceImpl implements DatasetService {
     @Override
     public List<Dataset> findAllByStatus(DatasetStatus datasetStatus) {
         return datasetRepository.findAllByDatasetStatus(datasetStatus);
-    }
-
-    private void updateBasicFields(Dataset dataset, DatasetUpdateRequest request) {
-        if (request.getDatasetName() != null) dataset.setName(request.getDatasetName());
-        if (request.getTitle() != null) dataset.setTitle(request.getTitle());
-        if (request.getDescription() != null) dataset.setDescription(request.getDescription());
-        if (request.getStatus() != null) dataset.setDatasetStatus(request.getStatus());
-        if (request.getDatasetPack() != null) dataset.setDatasetPack(request.getDatasetPack());
-        if (request.getDatasetSourceType() != null) dataset.setDatasetSourceType(request.getDatasetSourceType());
-    }
-
-    private void updateFileVersion(Dataset dataset, DatasetUpdateRequest request) {
-        if (request.getFileKey() != null && !request.getFileKey().equals(dataset.getFileKey())) {
-            dataset.setFileKey(request.getFileKey());
-        }
-    }
-
-    private void updateGroupRelations(Dataset dataset, DatasetUpdateRequest request) {
-
-        if (request.getDatasetChildGroupId() == null) return;
-
-        DatasetGroup group = datasetGroupRepository.findById(request.getDatasetChildGroupId())
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_GROUP_NOT_FOUND));
-
-        if (request.getCommuneId() != null) {
-
-            Commune commune = communeRepository.findById(request.getCommuneId())
-                    .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.COMMUNE_NOT_FOUND));
-
-            group.setCommune(commune);
-            group.setProvince(commune.getProvince());
-        }
-
-        datasetGroupRepository.save(group);
-        dataset.setDatasetChildGroup(group);
-    }
-
-    private void updateTimeGroup(Dataset dataset, DatasetUpdateRequest request) {
-        if (request.getTimeGroupId() == null) return;
-
-        TimeGroup time = timeGroupRepository.findById(request.getTimeGroupId())
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.TIME_GROUP_NOT_FOUND));
-        dataset.setTimeGroup(time);
-    }
-
-    private void updatePricing(Long datasetId, DatasetUpdateRequest request) {
-        if (request.getPricingList() == null) return;
-
-        for (DatasetPricingUpdateRequest p : request.getPricingList()) {
-
-            DatasetPricing pricing = datasetPricingRepository.findById(p.getPricingId())
-                    .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_PRICING_NOT_FOUND));
-
-            if (!pricing.getDatasetPlan().getDataset().getId().equals(datasetId)) {
-                throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.DATASET_PRICING_NOT_BELONG_TO_DATASET);
-            }
-
-            pricing.setPrice(p.getPrice());
-            pricing.setPricePerRequest(p.getPricePerRequest());
-        }
     }
 }
