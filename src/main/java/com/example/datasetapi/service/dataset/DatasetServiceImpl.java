@@ -522,8 +522,7 @@ public class DatasetServiceImpl implements DatasetService {
             throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.EXISTS_SUB);
         }
 
-        paymentService.updateWallet(TransferType.PAYOUT, Double.parseDouble(String.valueOf(pricingRule.getBasePricePoint())),
-                tokenService.getUserIdFromRequest(request), BuyType.BUY_SUB);
+        paymentService.updateWallet(TransferType.PAYOUT, Double.parseDouble(String.valueOf(pricingRule.getBasePricePoint())), tokenService.getUserIdFromRequest(request), BuyType.BUY_SUB);
 
         List<ConsumerSubscription> consumerSubscriptionList = consumerSubRepo.findAllByConsumerAndIsUsing(consumer, true);
         for(ConsumerSubscription consumerSubscription : consumerSubscriptionList){
@@ -1162,7 +1161,8 @@ public class DatasetServiceImpl implements DatasetService {
         orderRequest.setDatasetName(dataset.getName());
         orderRequest.setPrice(price);
         orderRequest.setPricingMethod(PricingMethod.API);
-    orderRequests.add(orderRequest);
+        orderRequests.add(orderRequest);
+
         orderService.createOrder(tokenService.getUserIdFromRequest(request),orderRequests);
         return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.API, apiToken);
     }
