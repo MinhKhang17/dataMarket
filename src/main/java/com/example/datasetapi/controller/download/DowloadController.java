@@ -1,5 +1,6 @@
 package com.example.datasetapi.controller.download;
 
+import com.example.datasetapi.enums.DowloadType;
 import com.example.datasetapi.service.dataset.DatasetService;
 import com.example.datasetapi.service.user.TokenService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,11 +31,11 @@ public class DowloadController {
 //        }
 
     @PreAuthorize("hasAnyRole('PROVIDER', 'ADMIN', 'MODERATOR','CONSUMER')")
-    @GetMapping("/download")
+    @PostMapping("/download")
     public ResponseEntity<?> downloadFile(
-            @RequestParam String dowloadToken, HttpServletRequest request
+            @RequestParam String dowloadToken, HttpServletRequest request,@RequestParam DowloadType dowloadType
     ) {
-        return datasetService.downloadDataset(dowloadToken,request);
+        return datasetService.downloadDataset(dowloadToken,request,dowloadType);
     }
 
 

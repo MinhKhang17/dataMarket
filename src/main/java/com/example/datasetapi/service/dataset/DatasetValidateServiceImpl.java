@@ -137,7 +137,9 @@ try {
     }
     @Override
     public ResponseEntity<?> getAllDatasetErrorWithDatasetInfor() {
-        List<Dataset> datasetInformationList = datasetService.findAllByStatus(DatasetStatus.CONTENT_APPROVED);
+        List<Dataset> datasetInformationList = datasetService.findAllByStatus(DatasetStatus.PENDING);
+        if(!datasetInformationList.isEmpty()){
+            System.out.println("khong empty list");}
         datasetInformationList.forEach(datasetInformation -> {
             datasetInformation.getDatasetType().getName();
             datasetInformation.getProvider().getId();
@@ -145,7 +147,7 @@ try {
         });
         return ResponseEntity.ok().body(new ApiResponse(true,"Load success",datasetInformationList
                 .stream()
-                .filter(datasetInformation -> datasetInformation.getDatasetStatus()== DatasetStatus.CONTENT_APPROVED)
+                .filter(datasetInformation -> datasetInformation.getDatasetStatus()== DatasetStatus.PENDING)
                 .map(userResponseDTOMapper :: toModeratorDatasetInforResponseDto )
                 .collect(Collectors.toList())
 ));

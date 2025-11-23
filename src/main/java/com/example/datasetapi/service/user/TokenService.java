@@ -1,6 +1,7 @@
 package com.example.datasetapi.service.user;
 
 import com.example.datasetapi.dto.response.ApiResponse;
+import com.example.datasetapi.model.dataset.ApiAccessToken;
 import com.example.datasetapi.model.dataset.DownloadToken;
 import com.example.datasetapi.model.userManager.Token;
 import com.example.datasetapi.model.userManager.User;
@@ -9,6 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import org.springframework.http.ResponseEntity;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface TokenService {
@@ -30,6 +32,9 @@ public interface TokenService {
     String generateVerifyEmailToken(User user);
 
     String verifyEmailToken(String token);
+
+
+    List<ApiAccessToken> findAllDownloadTokenForConsumer(User buyer);
 
 //    public ResponseEntity<ApiResponse> getDownloadToken(long datasetId, HttpServletRequest request);
 

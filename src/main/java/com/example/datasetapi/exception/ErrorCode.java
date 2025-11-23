@@ -94,7 +94,8 @@ public enum ErrorCode {
     CONSUMER_SUB_NOT_FOUND("CONSUMER_SUB_NOT_FOUND","Không tìm thấy gói thuê bao của người dùng" ),
     CAN_NOT_CANCEL_DATASET("CAN_NOT_CANCEL_DATASET","không thể cancel dataset" ),
     SUB_NOT_AVAILABLE("SUB_NOT_AVAILABLE","gói sub không hợp lệ" ),
-    FILE_NOT_FOUND("FILE_NOT_FOUND","Không tìm thấy file" );
+    FILE_NOT_FOUND("FILE_NOT_FOUND","Không tìm thấy file" ),
+    API_PACK_NOT_FOUND("API_PACK_NOT_FOUND","không tìm thấy gói API" );
 
     private final String code;
     private final String message;

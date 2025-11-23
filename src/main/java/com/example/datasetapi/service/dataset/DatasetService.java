@@ -8,6 +8,7 @@ import com.example.datasetapi.dto.response.DatasetParentReposonseDto;
 import com.example.datasetapi.dto.service.DatasetGroupInfor;
 import com.example.datasetapi.enums.Datasets.DatasetSourceType;
 import com.example.datasetapi.enums.Datasets.DatasetStatus;
+import com.example.datasetapi.enums.DowloadType;
 import com.example.datasetapi.model.dataset.Dataset;
 import com.example.datasetapi.model.userManager.ConsumerSubscription;
 import com.example.datasetapi.model.userManager.User;
@@ -86,7 +87,7 @@ public interface DatasetService {
 
     String getDownloadTokenOfDatasetForConsumer(long datasetId, HttpServletRequest request);
 
-    ResponseEntity<?> downloadDataset(String dowloadToken,HttpServletRequest request);
+    ResponseEntity<?> downloadDataset(String dowloadToken, HttpServletRequest request, DowloadType dowloadType);
 
     @Transactional
     ResponseEntity<?> downloadDatasetNoValidToken(Long datasetId);
@@ -113,4 +114,9 @@ public interface DatasetService {
 
     DatasetUpdateResponse updateDataset(Long id, DatasetUpdateRequest request);
 
+    ConsumerBuyResponseDTO buyAPIPack(ConsumerBuyRequestDTO buyRequestDTO, HttpServletRequest request);
+
+    ResponseEntity<?> getDataForApiBuying(String token);
+
+    List<ApiTokenResponse> findAllTokenForConsumer();
 }

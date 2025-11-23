@@ -41,4 +41,6 @@ public interface DatasetMapper {
     DatasetGroupInfor toDatasetGroupInfor(DatasetGroup datasetGroup);
 
     ProviderRevenueDTO toProviderRevenueDTO(ProviderRevenue providerRevenue);
+
+    ApiTokenResponse toApiTokenResponse(ApiAccessToken apiAccessToken);
 }

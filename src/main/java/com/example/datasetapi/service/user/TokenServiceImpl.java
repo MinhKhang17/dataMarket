@@ -3,9 +3,12 @@ package com.example.datasetapi.service.user;
 import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
+import com.example.datasetapi.mapper.DatasetMapper;
+import com.example.datasetapi.model.dataset.ApiAccessToken;
 import com.example.datasetapi.model.dataset.DownloadToken;
 import com.example.datasetapi.model.userManager.Token;
 import com.example.datasetapi.model.userManager.User;
+import com.example.datasetapi.repository.ApiAccessTokenRepository;
 import com.example.datasetapi.repository.DownloadTokenRepository;
 import com.example.datasetapi.repository.TokenRepository;
 import com.example.datasetapi.repository.UserRepository;
@@ -21,12 +24,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
 public class TokenServiceImpl implements TokenService {
 
     @Autowired private UserRepository userRepository;
+    @Autowired private ApiAccessTokenRepository apiAccessTokenRepository;
+    @Autowired
+    private DatasetMapper datasetMapper;
+
     @Override
     public long getUserIdFromRequest(HttpServletRequest request) {
         return jwtUtil.getUserIdFromToken(resolveToken(request));
@@ -157,6 +165,11 @@ public class TokenServiceImpl implements TokenService {
 
         // 6. Trả kết quả
         return "Email verified successfully";
+    }
+
+    @Override
+    public List<ApiAccessToken> findAllDownloadTokenForConsumer(User buyer) {
+        return apiAccessTokenRepository.findAllByBuyer(buyer);
     }
 
 

@@ -4,6 +4,7 @@ import com.example.datasetapi.dto.request.*;
 import com.example.datasetapi.dto.response.*;
 import com.example.datasetapi.dto.service.DatasetGroupInfor;
 import com.example.datasetapi.enums.Datasets.*;
+import com.example.datasetapi.enums.DowloadType;
 import com.example.datasetapi.enums.TransferType;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
@@ -24,6 +25,7 @@ import com.example.datasetapi.service.user.TokenService;
 import com.example.datasetapi.service.user.UserService;
 import com.example.datasetapi.util.DateUtil;
 import com.example.datasetapi.util.JwtUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +52,8 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 @Service
 public class DatasetServiceImpl implements DatasetService {
+    @Autowired
+    private HttpServletRequest request;
     @Autowired
     private JwtUtil jwtUtil;
     @Autowired
@@ -855,18 +859,18 @@ public class DatasetServiceImpl implements DatasetService {
 
 
     @Override
-    public ResponseEntity<?> downloadDataset(String dowloadToken, HttpServletRequest request) {
+    public ResponseEntity<?> downloadDataset(String dowloadToken, HttpServletRequest request, DowloadType dowloadType) {
 
         Optional<DownloadToken> downloadTokenOptional = downloadTokenRepository.findById(UUID.fromString(dowloadToken));
         User user = userService.findUserById(tokenService.getUserIdFromRequest(request));
 
-        if(downloadTokenOptional.isEmpty()){
+        if (downloadTokenOptional.isEmpty()) {
             throw new CustomException(HttpStatus.NOT_FOUND, ErrorCode.TOKEN_NOT_FOUND);
         }
-        if(downloadTokenOptional.get().getConsumer() != user) {
+        if (downloadTokenOptional.get().getConsumer() != user) {
             throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED);
         }
-        if(downloadTokenOptional.get().getUse_amount() == 0){
+        if (downloadTokenOptional.get().getUse_amount() == 0) {
             throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.TOKEN_IS_EXPIRED);
         }
 
@@ -884,10 +888,49 @@ public class DatasetServiceImpl implements DatasetService {
         }
 
         try {
+            // nếu user yêu cầu JSON -> chuyển CSV thành JSON
+            if (dowloadType == DowloadType.JSON) {
+                String lower = filePathStr.toLowerCase();
+                if (!lower.endsWith(".csv")) {
+                    // Bạn có thể đổi ErrorCode này thành mã hợp lý trong project của bạn
+                    throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.FILE_NOT_FOUND);
+                }
+
+                File csvFile = filePath.toFile();
+                List<Map<String, Object>> jsonList = fileService.csvToJson(csvFile); // method bạn đã viết
+
+                // chuyển List thành JSON string (dùng Jackson)
+                ObjectMapper mapper = new ObjectMapper();
+                // nếu muốn pretty print:
+                // mapper.enable(SerializationFeature.INDENT_OUTPUT);
+                byte[] jsonBytes = mapper.writeValueAsBytes(jsonList);
+
+                // cập nhật token & dataset giống như trước
+                downloadToken.setUse_amount(downloadToken.getUse_amount() - 1);
+                if (downloadToken.getUse_amount() == 0) {
+                    downloadToken.setActive(false);
+                }
+                downloadTokenRepository.save(downloadToken);
+
+                dataset.setDownloadCount(dataset.getDownloadCount() + 1);
+                datasetRepository.save(dataset);
+
+                // trả về JSON như một file đính kèm với tên đổi thành .json
+                String jsonFileName = filePath.getFileName().toString().replaceAll("\\.csv$", ".json");
+                InputStreamResource resource = new InputStreamResource(new ByteArrayInputStream(jsonBytes));
+
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + jsonFileName + "\"")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .contentLength(jsonBytes.length)
+                        .body(resource);
+            }
+
+            // Nếu không phải JSON, trả về file gốc (nhị phân) như cũ
             InputStreamResource resource = new InputStreamResource(Files.newInputStream(filePath));
 
             downloadToken.setUse_amount(downloadToken.getUse_amount() - 1);
-            if(downloadToken.getUse_amount() == 0){
+            if (downloadToken.getUse_amount() == 0) {
                 downloadToken.setActive(false);
             }
             downloadTokenRepository.save(downloadToken);
@@ -901,6 +944,7 @@ public class DatasetServiceImpl implements DatasetService {
                     .contentType(MediaType.APPLICATION_OCTET_STREAM)
                     .contentLength(Files.size(filePath))
                     .body(resource);
+
         } catch (IOException e) {
             throw new RuntimeException("Error reading file for download: " + filePathStr, e);
         }
@@ -1080,8 +1124,101 @@ public class DatasetServiceImpl implements DatasetService {
     }
 
     @Override
+    public ConsumerBuyResponseDTO buyAPIPack(ConsumerBuyRequestDTO buyRequestDTO, HttpServletRequest request) {
+        DatasetPricing datasetPricing = datasetPricingRepository.findById(buyRequestDTO.getDatasetPricingId()).orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.API_PACK_NOT_FOUND));
+        Dataset dataset = datasetRepository.findById(buyRequestDTO.getDatasetId()).orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
+        double price = 0.0;
+        String apiToken="";
+        if(buyRequestDTO.getSubType()==null) {
+            System.out.println(buyRequestDTO.getDatasetPricingId());
+            price = datasetPricing.getPrice();
+
+            paymentService.updateWallet(TransferType.TODOWN, price, tokenService.getUserIdFromRequest(request), BuyType.BUY_API);
+
+            apiToken = jwtUtil.generateApiSaleToken(userService.findUserById(tokenService.getUserIdFromRequest(request)), dataset, 31L, datasetPricing.getPricingRule().getRequestLimit());
+        }
+        else {
+            if (buyRequestDTO.getSubType().equalsIgnoreCase("LARGE")) {
+                if (!consumerSubRepo.existsByConsumerAndIsActiveAndIsUsing(userService.findUserById(tokenService.getUserIdFromRequest(request)), true, true)) {
+                    throw new CustomException(HttpStatus.NOT_FOUND, ErrorCode.CONSUMER_SUB_NOT_FOUND);
+                }
+                 apiToken = jwtUtil.generateApiSaleToken(userService.findUserById(tokenService.getUserIdFromRequest(request)), dataset, 31L, datasetPricing.getPricingRule().getRequestLimit());
+            }
+        }
+        List<OrderRequest> orderRequests = new ArrayList<>();
+        OrderRequest orderRequest = new OrderRequest();
+        orderRequest.setDatasetId(dataset.getId());
+        orderRequest.setDatasetName(dataset.getName());
+        orderRequest.setPrice(price);
+        orderRequest.setPricingMethod(PricingMethod.API);
+    orderRequests.add(orderRequest);
+        orderService.createOrder(tokenService.getUserIdFromRequest(request),orderRequests);
+        return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.API, apiToken);
+    }
+
+    @Override
+    public ResponseEntity<?> getDataForApiBuying(String token) {
+        try {
+            // 1. Kiểm tra token hợp lệ + chưa hết hạn + chưa bị revoke + chưa hết lượt
+            if (!jwtUtil.consumeApiToken(token)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of(
+                                "success", false,
+                                "message", "Token không hợp lệ hoặc đã hết hạn / hết lượt sử dụng"
+                        ));
+            }
+
+            // 2. Lấy dataset từ token
+            Dataset dataset = jwtUtil.finđDatasetFromAPIToken(token);
+            if (dataset == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of(
+                                "success", false,
+                                "message", "Không tìm thấy dataset trong token"
+                        ));
+            }
+
+            // 3. Lấy đường dẫn file từ dataset (tùy model của bạn)
+            File file = fileService.getFileFromDataset(dataset);
+            if (file == null || !file.exists()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of(
+                                "success", false,
+                                "message", "File dữ liệu không tồn tại"
+                        ));
+            }
+
+            // 4. Convert CSV → JSON
+            Object jsonResult = fileService.csvToJson(file);
+
+            // 5. Trả kết quả cho client
+            return ResponseEntity.ok(
+                    Map.of(
+                            "success", true,
+                            "datasetId", dataset.getId(),
+                            "data", jsonResult
+                    )
+            );
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "success", false,
+                            "message", "Lỗi xử lý API: " + e.getMessage()
+                    ));
+        }
+    }
+
+    @Override
+    public List<ApiTokenResponse> findAllTokenForConsumer() {
+        return tokenService.findAllDownloadTokenForConsumer(userService.findUserById(tokenService.getUserIdFromRequest(request))).stream().map(datasetMapper::toApiTokenResponse).collect(Collectors.toList());
+    }
+
+
+    @Override
     public List<Dataset> findAllByStatus(DatasetStatus datasetStatus) {
-        return datasetRepository.findALByDatasetStatus(datasetStatus);
+        return datasetRepository.findAllByDatasetStatus(datasetStatus);
     }
 
     private void updateBasicFields(Dataset dataset, DatasetUpdateRequest request) {

@@ -132,13 +132,25 @@ private ProviderRevenueRepo providerRevenueRepo;
 
         Set<DatasetPricing> subPricings = calculatePricing(PricingMethod.SUBSCRIPTION, datasetPack, dataset.getRowCount(), subTypePlan, dataset, request);
 
-        // ✅ Set quan hệ 2 chiều
-        for (DatasetPricing pricing : subPricings) {
-            pricing.setDatasetPlan(subTypePlan);
-        }
-        subTypePlan.setDatasetPricingList(subPricings);
+//        // ✅ Set quan hệ 2 chiều
+//        for (DatasetPricing pricing : subPricings) {
+//            pricing.setDatasetPlan(subTypePlan);
+//        }
+//        subTypePlan.setDatasetPricingList(subPricings);
+//
+//        datasetPlans.add(subTypePlan);
+//
+        DatasetPlan apiTypePlan = new DatasetPlan();
+        apiTypePlan.setPricingMethod(PricingMethod.API);
+        apiTypePlan.setDataset(dataset);
+        apiTypePlan.setDatasetPack(datasetPack);
 
-        datasetPlans.add(subTypePlan);
+        Set<DatasetPricing> apiPricing = calculatePricing(PricingMethod.API, datasetPack, dataset.getRowCount(), apiTypePlan, dataset, request);
+        for (DatasetPricing pricing : apiPricing) {
+            pricing.setDatasetPlan(apiTypePlan);
+        }
+        apiTypePlan.setDatasetPricingList(apiPricing);
+        datasetPlans.add(apiTypePlan);
 
         // ✅ Save all
         datasetPlanRepo.saveAll(datasetPlans);
@@ -189,29 +201,34 @@ private ProviderRevenueRepo providerRevenueRepo;
            return list;
        }
        else {
-           PricingRule pricingRule = pricingRuleRepo.findByMethodAndSubType(pricingMethod, SubType.SMALL);
-           DatasetPricing smallApi = new DatasetPricing();
-           smallApi.setPricingRule(pricingRule);
-           smallApi.setPricePerRequest(apiPricingCal(pricingRule));
-           smallApi.setDatasetPack(DatasetPack.SMALL);
-           smallApi.setPricingMethod(pricingMethod);
-           list.add(smallApi);
 
-           DatasetPricing mediumApi = new DatasetPricing();
-           pricingRule = pricingRuleRepo.findByMethodAndSubType(pricingMethod, SubType.MEDIUM);
-           mediumApi.setPricingRule(pricingRule);
-           mediumApi.setPricingMethod(pricingMethod);
-           mediumApi.setPricePerRequest(apiPricingCal(pricingRule));
-           mediumApi.setDatasetPack(DatasetPack.MEDIUM);
-           list.add(mediumApi);
+               PricingRule pricingRule = pricingRuleRepo.findByMethodAndDatasetPack(pricingMethod, DatasetPack.SMALL);
+               DatasetPricing smallApi = new DatasetPricing();
+               smallApi.setPricingRule(pricingRule);
+               smallApi.setPrice(apiPricingCal(pricingRule));
+               smallApi.setDatasetPack(DatasetPack.SMALL);
+               smallApi.setPricingMethod(pricingMethod);
+               list.add(smallApi);
 
-           DatasetPricing largeApi = new DatasetPricing();
-           pricingRule= pricingRuleRepo.findByMethodAndSubType(pricingMethod, SubType.LARGE);
-           largeApi.setPricingRule(pricingRule);
-           largeApi.setPricingMethod(pricingMethod);
-           largeApi.setPricePerRequest(apiPricingCal(pricingRule));
-           largeApi.setDatasetPack(DatasetPack.LARGE);
-           list.add(largeApi);
+
+               DatasetPricing mediumApi = new DatasetPricing();
+               pricingRule = pricingRuleRepo.findByMethodAndDatasetPack(pricingMethod, DatasetPack.MEDIUM);
+               mediumApi.setPricingRule(pricingRule);
+               mediumApi.setPricingMethod(pricingMethod);
+               mediumApi.setPrice(apiPricingCal(pricingRule));
+               mediumApi.setDatasetPack(DatasetPack.MEDIUM);
+               list.add(mediumApi);
+
+
+
+               DatasetPricing largeApi = new DatasetPricing();
+               pricingRule = pricingRuleRepo.findByMethodAndDatasetPack(pricingMethod, DatasetPack.LARGE);
+               largeApi.setPricingRule(pricingRule);
+               largeApi.setPricingMethod(pricingMethod);
+               largeApi.setPrice(apiPricingCal(pricingRule));
+               largeApi.setDatasetPack(DatasetPack.LARGE);
+               list.add(largeApi);
+
            return list;
         }
     }

@@ -229,7 +229,7 @@ public class UserServiceImpl implements UserService {
         // lưu user
         try {
             userRepository.save(user);
-            emailService.sendVerfiMail  (tokenService.generateVerifyEmailToken(user),user.getEmail());
+//            emailService.sendVerfiMail  (tokenService.generateVerifyEmailToken(user),user.getEmail());
             walletService.createWallet(user);
 
         } catch (Exception e) {
@@ -691,7 +691,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public ResponseEntity<ApiResponse> getUserInformationFromRequest(HttpServletRequest request) {
         try {
-            long userIdFromRequest = jwtUtil.getUserIdFromToken(tokenService.resolveToken(request));
+            long userIdFromRequest = tokenService.getUserIdFromRequest(request);
 
 
             Optional<User> userOptional = userRepository.findById(userIdFromRequest);
@@ -706,6 +706,7 @@ public class UserServiceImpl implements UserService {
                     userResponse.setHaveSub(false);
                 }
                 else{
+                    userResponse.setSubType(consumerSubRepo.findByConsumerAndIsActiveAndIsUsing(user,true,true).getSubType().toString());
                     userResponse.setHaveSub(true);
                     userResponse.setConsumerSubInfo(datasetMapper.toConsumerSubReponseDTO(consumerSubRepo.findByConsumerAndIsUsing(user,true).orElseThrow(
                                     ()-> new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.COMMUNE_NOT_FOUND)
