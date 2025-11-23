@@ -32,6 +32,6 @@ public interface DatasetRepository extends JpaRepository<Dataset, Long>, JpaSpec
     Dataset findByIdAndProvider(Long id, Provider provider);
 
 
-    List<Dataset> findALByDatasetStatus(DatasetStatus datasetStatus);
+    List<Dataset> findAllByDatasetStatus(DatasetStatus datasetStatus);
 
 }

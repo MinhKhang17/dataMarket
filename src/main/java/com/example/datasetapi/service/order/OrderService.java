@@ -5,9 +5,10 @@ import com.example.datasetapi.dto.response.ApiResponse;
 import com.example.datasetapi.dto.response.ConsumerOrderResponse;
 import com.example.datasetapi.model.order.Order;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
-
+@Service
 public interface OrderService {
     ResponseEntity<ApiResponse> getAllOrders();
 

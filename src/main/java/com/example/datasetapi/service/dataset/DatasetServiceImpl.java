@@ -1125,24 +1125,34 @@ public class DatasetServiceImpl implements DatasetService {
     public ConsumerBuyResponseDTO buyAPIPack(ConsumerBuyRequestDTO buyRequestDTO, HttpServletRequest request) {
         DatasetPricing datasetPricing = datasetPricingRepository.findById(buyRequestDTO.getDatasetPricingId()).orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.API_PACK_NOT_FOUND));
         Dataset dataset = datasetRepository.findById(buyRequestDTO.getDatasetId()).orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
-        if(buyRequestDTO.getSubType()==null){      System.out.println(buyRequestDTO.getDatasetPricingId());
-            double price = datasetPricing.getPrice();
+        double price = 0.0;
+        String apiToken="";
+        if(buyRequestDTO.getSubType()==null) {
+            System.out.println(buyRequestDTO.getDatasetPricingId());
+            price = datasetPricing.getPrice();
 
             paymentService.updateWallet(TransferType.TODOWN, price, tokenService.getUserIdFromRequest(request), BuyType.BUY_API);
 
-            String apiToken = jwtUtil.generateApiSaleToken(userService.findUserById(tokenService.getUserIdFromRequest(request)), dataset, 31L, datasetPricing.getPricingRule().getRequestLimit());
-            return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.API, apiToken);}
+            apiToken = jwtUtil.generateApiSaleToken(userService.findUserById(tokenService.getUserIdFromRequest(request)), dataset, 31L, datasetPricing.getPricingRule().getRequestLimit());
+        }
         else {
             if (buyRequestDTO.getSubType().equalsIgnoreCase("LARGE")) {
                 if (!consumerSubRepo.existsByConsumerAndIsActiveAndIsUsing(userService.findUserById(tokenService.getUserIdFromRequest(request)), true, true)) {
                     throw new CustomException(HttpStatus.NOT_FOUND, ErrorCode.CONSUMER_SUB_NOT_FOUND);
                 }
-                String apiToken = jwtUtil.generateApiSaleToken(userService.findUserById(tokenService.getUserIdFromRequest(request)), dataset, 31L, datasetPricing.getPricingRule().getRequestLimit());
-                return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.API, apiToken);
+                 apiToken = jwtUtil.generateApiSaleToken(userService.findUserById(tokenService.getUserIdFromRequest(request)), dataset, 31L, datasetPricing.getPricingRule().getRequestLimit());
             }
         }
-            return null;
-        }
+        List<OrderRequest> orderRequests = new ArrayList<>();
+        OrderRequest orderRequest = new OrderRequest();
+        orderRequest.setDatasetId(dataset.getId());
+        orderRequest.setDatasetName(dataset.getName());
+        orderRequest.setPrice(price);
+        orderRequest.setPricingMethod(PricingMethod.API);
+    orderRequests.add(orderRequest);
+        orderService.createOrder(tokenService.getUserIdFromRequest(request),orderRequests);
+        return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.API, apiToken);
+    }
 
     @Override
     public ResponseEntity<?> getDataForApiBuying(String token) {
@@ -1201,7 +1211,7 @@ public class DatasetServiceImpl implements DatasetService {
 
     @Override
     public List<Dataset> findAllByStatus(DatasetStatus datasetStatus) {
-        return datasetRepository.findALByDatasetStatus(datasetStatus);
+        return datasetRepository.findAllByDatasetStatus(datasetStatus);
     }
 
     private void updateBasicFields(Dataset dataset, DatasetUpdateRequest request) {
