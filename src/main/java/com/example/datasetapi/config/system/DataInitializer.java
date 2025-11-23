@@ -566,7 +566,7 @@ public class DataInitializer implements CommandLineRunner {
 
         Wallet wallet = new Wallet();
         wallet.setUser(user);
-        wallet.setBalance(1000000000);
+        wallet.setAmount(1000000000);
         wallet.setHoldBalance(0.0);
 
         BankAccount bankAccount = new BankAccount();

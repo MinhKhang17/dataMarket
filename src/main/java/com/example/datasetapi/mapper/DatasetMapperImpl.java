@@ -13,6 +13,11 @@ import com.example.datasetapi.model.userManager.ConsumerSubscription;
 import com.example.datasetapi.model.location.Commune;
 import com.example.datasetapi.model.location.Province;
 import com.example.datasetapi.repository.DatasetPlanRepo;
+import com.example.datasetapi.repository.DatasetPreviewRepository;
+import com.example.datasetapi.service.dataset.DatasetServiceImpl;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -21,14 +26,17 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 
+
 @Component
 public class DatasetMapperImpl implements DatasetMapper {
     @Autowired
     private DatasetPlanRepo datasetPlanRepo;
-
+    @Autowired private DatasetPreviewRepository datasetPreviewRepository;
     public DatasetMapperImpl() {
     }
-
+    private static final Logger logger = LoggerFactory.getLogger(DatasetServiceImpl.class);
+    @Autowired
+    private ObjectMapper objectMapper;
     @Override
     public UploadHeaderResponseDto toUploadHeaderResponseDto(Dataset ds) {
         UploadHeaderResponseDto uploadHeaderResponseDto = new UploadHeaderResponseDto();
@@ -60,6 +68,16 @@ public class DatasetMapperImpl implements DatasetMapper {
         datasetDTO.setDatasetTime(TimeGroup.toDate(dataset.getTimeGroup()));
         datasetDTO.setCategory(dataset.getDatasetChildGroup().getParent().getDatasetType().getCategories());
 datasetDTO.setRow_amount(dataset.getRowCount());
+        DatasetPreview preview = datasetPreviewRepository.findByDataset(dataset).orElse(null);
+            if (preview==null){
+                System.out.println("null roi");}
+        if (preview != null) {
+            try {
+                datasetDTO.setPreviewHeaders(objectMapper.readValue(preview.getHeadersJson(), List.class));
+                datasetDTO.setPreviewRows(objectMapper.readValue(preview.getRowsJson(), List.class));
+            } catch (Exception e) {
+            }
+        }
         return datasetDTO;
         }
 
@@ -90,6 +108,7 @@ datasetDTO.setRow_amount(dataset.getRowCount());
             datasetPricingDTO.setPricingId(datasetPricing.getId());
             datasetPricingDTO.setPrice(datasetPricing.getPrice());
             datasetPricingDTO.setPricingMethod(datasetPricing.getPricingRule().getMethod());
+            datasetPricingDTO.setRequestLimit(datasetPricing.getPricingRule().getRequestLimit());
             return datasetPricingDTO;
         }
         datasetPricingDTO.setPrice(datasetPricing.getPrice());
@@ -394,7 +413,15 @@ private DatasetChildGroupDTO toDatasetChildGroupDTO(DatasetGroup datasetGroup){
 //            datasetDTO.setProvider(toProviderDto(dataset.getProvider()));
             datasetDTO.setDatasetPLanWithPricingDTO(dataset.getDatasetPlans().stream().map(this::toDatasetPlanWithPricingDTO).collect(Collectors.toList()));
             datasetDTO.setRow_amount(dataset.getRowCount());
-            return datasetDTO;
+        DatasetPreview preview = datasetPreviewRepository.findByDataset(dataset).orElse(null);
+        if (preview != null) {
+            try {
+                datasetDTO.setPreviewHeaders(objectMapper.readValue(preview.getHeadersJson(), List.class));
+                datasetDTO.setPreviewRows(objectMapper.readValue(preview.getRowsJson(), List.class));
+            } catch (Exception e) {
+            }
+        }
+        return datasetDTO;
     }
 
     private DatasetTypeDto toDatasetTypeDto(DatasetType datasetType) {

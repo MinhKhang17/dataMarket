@@ -66,14 +66,14 @@ public class PaymentServiceImpl implements PaymentService{
         }
 
         wallet.setHoldBalance(wallet.getHoldBalance() - amount);
-        wallet.setBalance(wallet.getBalance() + amount);
+        wallet.setAmount(wallet.getAmount() + amount);
 
         //luu vao transaction
         transactionService.createTransaction(type,amount,userId,wallet, BuyType.WITHDRAW);
         //save vao repo
         walletRepository.save(wallet);
 
-        System.out.println("Successfully refund " + amount + " from user " + userId + ". New balance: " + wallet.getBalance());
+        System.out.println("Successfully refund " + amount + " from user " + userId + ". New balance: " + wallet.getAmount());
         return true;
     }
 
@@ -96,7 +96,7 @@ public class PaymentServiceImpl implements PaymentService{
         //save vao repo
         walletRepository.save(wallet);
 
-        System.out.println("Successfully withdraw " + amount + " from user " + userId + ". New balance: " + wallet.getBalance());
+        System.out.println("Successfully withdraw " + amount + " from user " + userId + ". New balance: " + wallet.getAmount());
         return true;
     }
 
@@ -110,11 +110,11 @@ public class PaymentServiceImpl implements PaymentService{
         }
 
         //cap nhat wallet
-        if(wallet.getBalance() < amount){
+        if(wallet.getAmount() < amount){
             throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.AMOUNT_NOT_ENOUGH);
         }
 
-        wallet.setBalance(wallet.getBalance()-amount);
+        wallet.setAmount(wallet.getAmount()-amount);
         transactionService.createTransaction(type,amount,userId,wallet,buyType);
         walletRepository.save(wallet);
         return true;
@@ -126,7 +126,7 @@ public class PaymentServiceImpl implements PaymentService{
 
         double consumer_amount = walletRepository.findByUserId(consumer.getId())
                 .orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.WALLET_NOT_FOUND))
-                .getBalance();
+                .getAmount();
 
         remaining_amount = consumer_amount - price;
         return remaining_amount;
@@ -142,18 +142,18 @@ public class PaymentServiceImpl implements PaymentService{
             throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.INVALID_AMOUNT);
         }
 
-        if(wallet.getBalance() < amount){
+        if(wallet.getAmount() < amount){
             throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.AMOUNT_NOT_ENOUGH);
         }
 
-        wallet.setBalance(wallet.getBalance() - amount);
+        wallet.setAmount(wallet.getAmount() - amount);
         wallet.setHoldBalance(wallet.getHoldBalance() + amount);
         //luu vao transaction
         transactionService.createTransaction(type,amount,userId,wallet, BuyType.WITHDRAW);
         //save vao repo
         walletRepository.save(wallet);
 
-        System.out.println("Successfully withdraw " + amount + " from user " + userId + ". New balance: " + wallet.getBalance());
+        System.out.println("Successfully withdraw " + amount + " from user " + userId + ". New balance: " + wallet.getAmount());
         return true;
     }
 
@@ -166,13 +166,13 @@ public class PaymentServiceImpl implements PaymentService{
             throw new  CustomException(HttpStatus.BAD_REQUEST,ErrorCode.AMOUNT_NOT_ENOUGH);
         }
 
-        double oldAmount = wallet.getBalance();
+        double oldAmount = wallet.getAmount();
 
-        wallet.setBalance(wallet.getBalance() + amount);
+        wallet.setAmount(wallet.getAmount() + amount);
         transactionService.createTransaction(type,amount,userId,wallet, BuyType.TOP_UP);
         walletRepository.save(wallet);
 
-        System.out.println("Successfully added " + amount + " to user " + userId + ". Old balance: " + oldAmount + ", New balance: " + wallet.getBalance());
+        System.out.println("Successfully added " + amount + " to user " + userId + ". Old balance: " + oldAmount + ", New balance: " + wallet.getAmount());
         return true;
     }
 }

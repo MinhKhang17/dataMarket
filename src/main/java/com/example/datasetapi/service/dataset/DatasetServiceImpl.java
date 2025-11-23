@@ -28,6 +28,7 @@ import com.example.datasetapi.util.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +41,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -97,6 +99,11 @@ public class DatasetServiceImpl implements DatasetService {
     @Autowired
     private FileService fileService;
 
+    @Autowired private  DatasetPreviewRepository datasetPreviewRepository;
+    @Autowired  private  ObjectMapper objectMapper;
+
+    // Số dòng preview mặc định (không tính header)
+    private static final int DEFAULT_PREVIEW_ROWS = 10;
     @Value("${app.upload.base}")
     private String UPLOAD_BASE;
     private static final Logger logger = LoggerFactory.getLogger(DatasetServiceImpl.class);
@@ -213,7 +220,22 @@ public class DatasetServiceImpl implements DatasetService {
                 dataset.setDatasetStatus(DatasetStatus.APPROVE);
             }
 
+            // Persist dataset first to ensure dataset.id available for preview FK
             dataset = datasetRepository.saveAndFlush(dataset);
+
+            // === TẠO PREVIEW (header + tối đa DEFAULT_PREVIEW_ROWS) ===
+            // Gọi method bạn đã triển khai. Bọc try/catch để không phá luồng upload nếu preview thất bại.
+            try {
+                Optional<DatasetPreview> maybePreview = createAndSavePreviewFromMultipart(fileFromRequest, dataset, DEFAULT_PREVIEW_ROWS);
+                if (maybePreview.isPresent()) {
+                    logger.info("Preview created for dataset id={} previewId={}", dataset.getId(), maybePreview.get().getId());
+                } else {
+                    logger.warn("Preview creation returned empty for dataset id={}", dataset.getId());
+                }
+            } catch (Exception ex) {
+                // Không ném, chỉ log — preview không bắt buộc
+                logger.warn("Failed to create preview for dataset id={} (ignored): {}", dataset.getId(), ex.getMessage(), ex);
+            }
 
             if (!datasetSourceType.equals(DatasetSourceType.DATASET_PROVIDER)) {
                 priceService.createPricingForDataset(dataset, request);
@@ -256,7 +278,6 @@ public class DatasetServiceImpl implements DatasetService {
             dataset.setTimeGroup(timeGroup);
             dataset.setDatasetTime(datasetDate);
 
-//            File sourceFile = new File(dataset.getFileUrl());
             Dataset datasetWithFileInfo;
 
             if (datasetSourceType.equals(DatasetSourceType.DATASET_PROVIDER)) {
@@ -281,18 +302,8 @@ public class DatasetServiceImpl implements DatasetService {
             logger.error("Error while processing dataset creation: {}", e.getMessage(), e);
             throw new RuntimeException("Error while creating dataset and groups", e);
         }
-//        finally {
-//            try {
-//
-//                System.out.println("-----------------------------------------\n" +
-//                        "Deleted dataset\n" +
-//                        "-----------------------------------------");
-//                Files.deleteIfExists(Paths.get(UPLOAD_BASE+"TEMP"+dataset.getName()));
-//            } catch (IOException e) {
-//                System.err.println("Can not delete current file: " + e.getMessage());
-//            }
-//        }
     }
+
     private DatasetGroup createParentDatasetGroup(Commune commune, DatasetType datasetType, DatasetSourceType datasetSourceType) {
         DatasetGroup parent = new DatasetGroup();
         parent.setDatasetGroupType(DatasetGroupType.PARENT);
@@ -634,10 +645,8 @@ public class DatasetServiceImpl implements DatasetService {
 
         paymentService.updateWallet(TransferType.PAYOUT, pricing.getPrice(), consumer.getId(), BuyType.BUY_ONE_TIME_DATASET);
 
-        Wallet wallet = walletService.findWalletByUserId(consumer.getId())
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.WALLET_NOT_FOUND));
 
-        transactionService.createTransaction(TransferType.PAYOUT, pricing.getPrice(), consumer.getId(), wallet, BuyType.BUY_ONE_TIME_DATASET);
+
 
         OrderRequest item = new OrderRequest();
         item.setDatasetId(dataset.getId());
@@ -1287,5 +1296,117 @@ public class DatasetServiceImpl implements DatasetService {
             pricing.setPrice(p.getPrice());
             pricing.setPricePerRequest(p.getPricePerRequest());
         }
+    }
+    @Transactional
+    public Optional<DatasetPreview> createAndSavePreviewFromMultipart(MultipartFile multipartFile,
+                                                                      com.example.datasetapi.model.dataset.Dataset dataset) {
+        return createAndSavePreviewFromMultipart(multipartFile, dataset, DEFAULT_PREVIEW_ROWS);
+    }
+
+    @Transactional
+    public Optional<DatasetPreview> createAndSavePreviewFromMultipart(MultipartFile multipartFile,
+                                                                      com.example.datasetapi.model.dataset.Dataset dataset,
+                                                                      int maxRows) {
+        File tmpFile = null;
+        try {
+            // 1. Tạo temp file và copy nội dung MultipartFile vào đó bằng stream (KHÔNG dùng multipartFile.transferTo)
+            tmpFile = File.createTempFile("dataset-upload-", ".csv");
+            try (InputStream in = multipartFile.getInputStream()) {
+                // copy stream to tmpFile
+                Files.copy(in, tmpFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            // 2. Đọc header + maxRows từ tmpFile
+            try (BufferedReader br = Files.newBufferedReader(tmpFile.toPath(), StandardCharsets.UTF_8)) {
+                String headerLine = br.readLine();
+                if (headerLine == null) {
+                    logger.warn("Preview: file empty for dataset id={}", dataset.getId());
+                    DatasetPreview previewEmpty = new DatasetPreview();
+                    previewEmpty.setDataset(dataset);
+                    previewEmpty.setHeadersJson(objectMapper.writeValueAsString(Collections.emptyList()));
+                    previewEmpty.setRowsJson(objectMapper.writeValueAsString(Collections.emptyList()));
+                    previewEmpty.setCreatedAt(LocalDateTime.now());
+                    previewEmpty.setUpdatedAt(LocalDateTime.now());
+                    datasetPreviewRepository.save(previewEmpty);
+                    return Optional.of(previewEmpty);
+                }
+
+                List<String> headers = Arrays.stream(splitCSVLine(headerLine))
+                        .map(this::unquote)
+                        .collect(Collectors.toList());
+
+                List<Map<String, String>> rows = new ArrayList<>();
+                String line;
+                int count = 0;
+                while ((line = br.readLine()) != null && count < maxRows) {
+                    String[] parts = splitCSVLine(line);
+                    Map<String, String> rowMap = new LinkedHashMap<>();
+                    for (int i = 0; i < headers.size(); i++) {
+                        String key = headers.get(i);
+                        String val = i < parts.length ? unquote(parts[i]) : "";
+                        rowMap.put(key, val);
+                    }
+                    rows.add(rowMap);
+                    count++;
+                }
+
+                // 3. Serialize JSON strings
+                String headersJson = objectMapper.writeValueAsString(headers);
+                String rowsJson = objectMapper.writeValueAsString(rows);
+
+                // 4. Build and save DatasetPreview
+                DatasetPreview preview = new DatasetPreview();
+                preview.setDataset(dataset);
+                preview.setHeadersJson(headersJson);
+                preview.setRowsJson(rowsJson);
+                preview.setCreatedAt(LocalDateTime.now());
+                preview.setUpdatedAt(LocalDateTime.now());
+
+                DatasetPreview saved = datasetPreviewRepository.saveAndFlush(preview);
+                logger.info("Created dataset preview id={} for dataset id={}", saved.getId(), dataset.getId());
+                return Optional.of(saved);
+            }
+
+        } catch (Exception ex) {
+            logger.warn("Failed to create preview for dataset id={} : {}",
+                    dataset != null ? dataset.getId() : "null", ex.getMessage(), ex);
+            return Optional.empty();
+        } finally {
+            // cleanup temp file
+            if (tmpFile != null && tmpFile.exists()) {
+                try {
+                    Files.deleteIfExists(tmpFile.toPath());
+                } catch (IOException ignore) {
+                    tmpFile.deleteOnExit();
+                }
+            }
+        }
+    }
+
+    /**
+     * Naive CSV split — regex hỗ trợ bỏ qua dấu phẩy trong dấu nháy kép.
+     * Không xử lý mọi edge-case cực kỳ phức tạp nhưng đủ tốt cho hầu hết CSV chuẩn.
+     */
+    private String[] splitCSVLine(String line) {
+        if (line == null) return new String[0];
+        // regex: split on commas not inside quotes
+        return line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+    }
+
+    /**
+     * Loại bỏ dấu nháy bao bọc và thay thế double-quote escaped.
+     */
+    private String unquote(String s) {
+        if (s == null) return null;
+        String out = s;
+        // trim whitespace
+        out = out.trim();
+        // remove surrounding quotes nếu có
+        if (out.length() >= 2 && out.startsWith("\"") && out.endsWith("\"")) {
+            out = out.substring(1, out.length() - 1);
+            // replace double double-quotes with single double-quote
+            out = out.replace("\"\"", "\"");
+        }
+        return out;
     }
 }

@@ -98,7 +98,7 @@ public class WithdrawServiceImpl implements WithdrawService {
             if (amount == null || amount <= 0) {
                 throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.INVALID_WITHDRAW_AMOUNT);
             }
-            if (wallet.getBalance() < amount) {
+            if (wallet.getAmount() < amount) {
                 throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.INSUFFICIENT_FUNDS);
             }
 
@@ -134,7 +134,7 @@ public class WithdrawServiceImpl implements WithdrawService {
                             null,
                             withdraw.getBankAccount().getBankName() ,
                             withdraw.getBankAccount().getAccountNumber(),
-                            wallet.getBalance(),
+                            wallet.getAmount(),
                             wallet.getHoldBalance())));
     }
 
@@ -171,7 +171,7 @@ public class WithdrawServiceImpl implements WithdrawService {
                 withdraw.getProofImageUrl(),
                 withdraw.getBankAccount().getBankName(),
                 withdraw.getBankAccount().getAccountNumber(),
-                wallet.getBalance(),
+                wallet.getAmount(),
                 wallet.getHoldBalance()
         )));
 
@@ -205,7 +205,7 @@ public class WithdrawServiceImpl implements WithdrawService {
                 withdraw.getProofImageUrl(),
                 withdraw.getBankAccount().getBankName(),
                 withdraw.getBankAccount().getAccountNumber(),
-                wallet.getBalance(),
+                wallet.getAmount(),
                 wallet.getHoldBalance()
         )));
     }
@@ -290,7 +290,7 @@ public class WithdrawServiceImpl implements WithdrawService {
                         withdraw.getProofImageUrl(),
                         withdraw.getBankAccount().getBankName(),
                         withdraw.getBankAccount().getAccountNumber(),
-                        withdraw.getWallet().getBalance(),
+                        withdraw.getWallet().getAmount(),
                         withdraw.getWallet().getHoldBalance()
                 )
         ));

@@ -8,6 +8,7 @@ import lombok.Data;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @Data
 public class DatasetDTO {
@@ -24,4 +25,7 @@ public class DatasetDTO {
     private LocalDate date;
     private long row_amount;
     private DatasetSourceType datasetType;
+
+    private List<String> previewHeaders;
+    private List<Map<String, String>> previewRows;
 }
