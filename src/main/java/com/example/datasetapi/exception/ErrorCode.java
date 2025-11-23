@@ -85,6 +85,7 @@ public enum ErrorCode {
     FILE_TOO_BIG("FILE_TOO_BIG", "File size too large"),
     DATASET_PRICING_NOT_FOUND("DATASET_PRICING_NOT_FOUND", "Dataset pricing not found"),
     DATASET_PRICING_NOT_BELONG_TO_DATASET("DATASET_PRICING_NOT_BELONG_TO_DATASET", "Data set pricing not belong to dataset"),
+    INVALID_PRICING_METHOD("INVALID_PRICING_METHOD", "Invalid pricing method"),
 
     RuleNotFound("RuleNotFound", "Package not found"),
     EXISTS_SUB("EXISTS_SUB", "User has already purchased this package"),

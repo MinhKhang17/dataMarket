@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 @Service
@@ -36,21 +37,22 @@ public class OrderServiceImpl implements OrderService {
         }
         Long adminId = jwtUtil.getUserIdFromToken(token);
         User admin = userService.findUserById(adminId);
-        if (!admin.getRole().getName().equals("ADMIN")) {
+        if (!admin.getRole().getName().equalsIgnoreCase("ADMIN")) {
             throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED);
         }
 
         List<Order> orders = orderRepository.findAll();
         List<OrderSummaryResponse> response = orders.stream()
-                .map(o -> {
-                    return new OrderSummaryResponse(
+                .map(o ->
+                     new OrderSummaryResponse(
                             o.getId(),
+                            o.getUser().getUsername(),
                             o.getCreatedAt(),
                             o.getTotalAmount(),
                             o.getPurchaseMethod(),
-                            orders.size())
-                            ;
-                }).toList();
+                            o.getItems().size()
+                    )
+                ).toList();
 
         return ResponseEntity.ok().body(new ApiResponse(true, "Orders retrieved successfully", response));
     }
@@ -69,31 +71,28 @@ public class OrderServiceImpl implements OrderService {
 
         List<Order> orders = orderRepository.findByUserId(userId);
         if(orders.isEmpty()) {
-            return ResponseEntity.ok().body(new ApiResponse(false, "Orders not found", List.of()));
+            return ResponseEntity.ok().body(new ApiResponse(true, "No orders available", List.of()));
         }
 
         List<OrderSummaryResponse> response = orders.stream()
-                .map(o -> {
-                    return new OrderSummaryResponse(
-                            o.getId(),
-                            o.getCreatedAt(),
-                            o.getTotalAmount(),
-                            o.getPurchaseMethod(),
-                            o.getItems().size())
-                            ;
-                }).toList();
+                .map(o ->
+                     new OrderSummaryResponse(
+                             o.getId(),
+                             o.getUser().getUsername(),
+                             o.getCreatedAt(),
+                             o.getTotalAmount(),
+                             o.getPurchaseMethod(),
+                             o.getItems().size()
+                     )).toList();
 
         return ResponseEntity.ok().body(new ApiResponse(true, "Orders retrieved successfully", response));
     }
 
     @Override
+    @Transactional
     public ConsumerOrderResponse createOrder(Long userId, List<OrderRequest> orderRequest) {
 
         User user = userService.findUserById(userId);
-
-        if (user == null) {
-            throw new CustomException(HttpStatus.NOT_FOUND, ErrorCode.USER_NOT_FOUND);
-        }
 
         if (orderRequest == null || orderRequest.isEmpty()) {
             throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
@@ -114,13 +113,19 @@ public class OrderServiceImpl implements OrderService {
 
         datasetOrder.setItems(items);
 
-        double total = (long) items.stream()
+        double total = items.stream()
                 .mapToDouble(OrderItem::getPriceAtPurchase)
                 .sum();
         datasetOrder.setTotalAmount(total);
 
-        datasetOrder.setPurchaseMethod(orderRequest.get(0).getPricingMethod());
+        PricingMethod method = orderRequest.get(0).getPricingMethod();
+        boolean allSame = orderRequest.stream()
+                .allMatch(o -> o.getPricingMethod().equals(method));
 
+        if (!allSame) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.INVALID_PRICING_METHOD);
+        }
+        datasetOrder.setPurchaseMethod(method);
         Order saved = orderRepository.save(datasetOrder);
 
         List<OrderItemDetailResponse> itemsDetail = items.stream()
@@ -155,23 +160,25 @@ public class OrderServiceImpl implements OrderService {
             User user = userService.findUserById(userId);
             Order order = orderRepository.findById(orderId)
                     .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.ORDER_NOT_FOUND));
+
             User requester = order.getUser();
+
             if(!user.getRole().getName().equalsIgnoreCase("ADMIN")
                     && !requester.getId().equals(user.getId())) {
                 throw new CustomException(HttpStatus.FORBIDDEN, ErrorCode.FORBIDDEN);
             }
 
             List<OrderItemDetailResponse> itemsDetail = order.getItems().stream()
-                    .map(i -> {
-                        return new OrderItemDetailResponse(
+                    .map(i ->
+                         new OrderItemDetailResponse(
                                 i.getDatasetId(),
                                 i.getDatasetName(),
                                 i.getPriceAtPurchase()
-                        );
-                    }).toList();
+                        )).toList();
 
             if(user.getRole().getName().equalsIgnoreCase("CONSUMER")) {
-                ConsumerOrderResponse consumerResponse = new ConsumerOrderResponse(orderId,
+                ConsumerOrderResponse consumerResponse = new ConsumerOrderResponse(
+                        orderId,
                         order.getTotalAmount(),
                         itemsDetail,
                         order.getPurchaseMethod(),

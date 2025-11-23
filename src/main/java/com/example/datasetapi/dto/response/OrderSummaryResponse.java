@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class OrderSummaryResponse {
     private Long orderId;
+    private String userName;
     private LocalDateTime purchaseDate;
     private double totalAmount;
     private PricingMethod purchaseMethod;
