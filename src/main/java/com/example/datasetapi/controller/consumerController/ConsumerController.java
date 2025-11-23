@@ -16,6 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("api/consumer/")
@@ -154,6 +155,11 @@ public class ConsumerController {
     @GetMapping("api/token")
     public ResponseEntity<?> viewApiToken(){
         return  ResponseEntity.ok().body(datasetService.findAllTokenForConsumer());
+    }
+    @PreAuthorize("hasRole('CONSUMER')")
+    @GetMapping("api/token/detail")
+    public ResponseEntity<?> viewApiTokenDetail(@RequestParam UUID token_id){
+        return ResponseEntity.ok().body(datasetService.findTokenById(token_id));
     }
 //    @PostMapping("dataset/sub/buy")
 //    public ResponseEntity<ApiResponse> buyDatasetWithSub(@RequestBody long datasetId,HttpServletRequest request){

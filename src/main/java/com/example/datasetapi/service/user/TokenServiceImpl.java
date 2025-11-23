@@ -172,6 +172,11 @@ public class TokenServiceImpl implements TokenService {
         return apiAccessTokenRepository.findAllByBuyer(buyer);
     }
 
+    @Override
+    public String findAccessTokenById(UUID tokenId) {
+        return apiAccessTokenRepository.findById(tokenId).orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.TOKEN_NOT_FOUND)).getToken();
+    }
+
 
 //    @Override
 //    public ResponseEntity<ApiResponse> getDownloadToken(long datasetId, HttpServletRequest request) {

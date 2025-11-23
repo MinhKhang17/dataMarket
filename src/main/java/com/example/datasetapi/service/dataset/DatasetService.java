@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public interface DatasetService {
@@ -119,4 +120,6 @@ public interface DatasetService {
     ResponseEntity<?> getDataForApiBuying(String token);
 
     List<ApiTokenResponse> findAllTokenForConsumer();
+
+    String findTokenById(UUID tokenId);
 }

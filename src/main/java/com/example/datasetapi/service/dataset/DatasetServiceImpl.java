@@ -100,6 +100,8 @@ public class DatasetServiceImpl implements DatasetService {
     @Value("${app.upload.base}")
     private String UPLOAD_BASE;
     private static final Logger logger = LoggerFactory.getLogger(DatasetServiceImpl.class);
+    @Autowired
+    private ApiAccessTokenRepository apiAccessTokenRepository;
 
     @PostConstruct
     public void initUploadDirs() {
@@ -1213,6 +1215,12 @@ public class DatasetServiceImpl implements DatasetService {
     @Override
     public List<ApiTokenResponse> findAllTokenForConsumer() {
         return tokenService.findAllDownloadTokenForConsumer(userService.findUserById(tokenService.getUserIdFromRequest(request))).stream().map(datasetMapper::toApiTokenResponse).collect(Collectors.toList());
+    }
+
+    @Override
+    public String findTokenById(UUID tokenId) {
+        return tokenService.findAccessTokenById(tokenId);
+
     }
 
 

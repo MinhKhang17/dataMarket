@@ -36,6 +36,8 @@ public interface TokenService {
 
     List<ApiAccessToken> findAllDownloadTokenForConsumer(User buyer);
 
+    String findAccessTokenById(UUID tokenId);
+
 //    public ResponseEntity<ApiResponse> getDownloadToken(long datasetId, HttpServletRequest request);
 
 }
