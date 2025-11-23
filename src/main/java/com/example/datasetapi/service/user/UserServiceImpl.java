@@ -352,7 +352,7 @@ public class UserServiceImpl implements UserService {
                     .orElseThrow(() -> new RuntimeException("Wallet not found for userId: " + userId));
 
             return ResponseEntity.ok(
-                    new ApiResponse(true, "Wallet Amount Available", wallet.getAmount())
+                    new ApiResponse(true, "Wallet Amount Available", wallet.getBalance())
             );
 
         } catch (Exception e) {

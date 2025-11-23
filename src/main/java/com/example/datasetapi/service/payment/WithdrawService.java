@@ -9,6 +9,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 
 public interface WithdrawService {
+
+    void sendRequestMail();
     ResponseEntity<ApiResponse> withdrawRequest(WithdrawRequest withdrawRequest);
     ResponseEntity<ApiResponse> processWithdrawApprove(ProcessWithdrawRequest withdrawRequest, MultipartFile file) throws IOException;
     ResponseEntity<ApiResponse> processWithdrawReject(ProcessWithdrawRequest withdrawRequest);

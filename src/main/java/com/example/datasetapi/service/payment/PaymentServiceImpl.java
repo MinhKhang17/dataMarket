@@ -4,24 +4,20 @@ import com.example.datasetapi.enums.Datasets.BuyType;
 import com.example.datasetapi.enums.TransferType;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
-import com.example.datasetapi.model.dataset.ProviderRevenue;
 import com.example.datasetapi.model.userManager.User;
 import com.example.datasetapi.model.paySystem.Wallet;
 import com.example.datasetapi.repository.WalletRepository;
 import com.example.datasetapi.service.user.TokenServiceImpl;
 import com.example.datasetapi.util.JwtUtil;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Optional;
 
 @Service
 public class PaymentServiceImpl implements PaymentService{
-    private final JwtUtil jwtUtil;
-    private final TokenServiceImpl tokenServiceImpl;
     private final WalletRepository walletRepository;
     private final TransactionService transactionService;
 
@@ -29,8 +25,6 @@ public class PaymentServiceImpl implements PaymentService{
     @Autowired
     public PaymentServiceImpl(WalletRepository walletRepository, JwtUtil jwtUtil, TokenServiceImpl tokenServiceImpl, TransactionService transactionService) {
         this.walletRepository = walletRepository;
-        this.jwtUtil = jwtUtil;
-        this.tokenServiceImpl = tokenServiceImpl;
         this.transactionService = transactionService;
     }
 
@@ -38,38 +32,91 @@ public class PaymentServiceImpl implements PaymentService{
     public boolean updateWallet(TransferType type, double amount, long user_id, BuyType buyType) {
         boolean isUpdateSuccess = false;
         switch (type){
-            case TOUP:
-                isUpdateSuccess = updateToUp(amount,user_id,type);
+            case TOPUP:
+                isUpdateSuccess = topUp(amount,user_id,type);
                 break;
-                case WITHDRAW:
-                 isUpdateSuccess = updateWithdraw(amount,user_id,type);
+            case WITHDRAW_HOLD:
+                isUpdateSuccess = holdWithdraw(amount,user_id,type);
                 break;
-            case TODOWN:
-                isUpdateSuccess = updateToDown(amount,user_id,type,buyType);
+            case WITHDRAW_APPROVE:
+                isUpdateSuccess = approveWithdraw(amount, user_id, type);
+                break;
+
+            case WITHDRAW_REJECT:
+                isUpdateSuccess = rejectWithdraw(amount, user_id, type);
+                break;
+            case PAYOUT:
+                isUpdateSuccess = payOut(amount,user_id,type,buyType);
                 break;
         }
         return isUpdateSuccess;
     }
 
-    private boolean updateToDown(double amount, long userId, TransferType type, BuyType buyType) {
-        Optional<Wallet> wallet = walletRepository.findByUserId(userId);
-
-        if(!wallet.isPresent()){
-            throw new CustomException(HttpStatus.NOT_FOUND,ErrorCode.WALLET_NOT_FOUND);
-        }
+    @Transactional
+    protected boolean rejectWithdraw(double amount, long userId, TransferType type) {
+        Wallet wallet = walletRepository.findByUserId(userId)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.WALLET_NOT_FOUND));
 
         if(amount<=0){
+            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.INVALID_AMOUNT);
+        }
+
+        if(wallet.getHoldBalance() < amount){
             throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.AMOUNT_NOT_ENOUGH);
+        }
+
+        wallet.setHoldBalance(wallet.getHoldBalance() - amount);
+        wallet.setBalance(wallet.getBalance() + amount);
+
+        //luu vao transaction
+        transactionService.createTransaction(type,amount,userId,wallet, BuyType.WITHDRAW);
+        //save vao repo
+        walletRepository.save(wallet);
+
+        System.out.println("Successfully refund " + amount + " from user " + userId + ". New balance: " + wallet.getBalance());
+        return true;
+    }
+
+    @Transactional
+    protected boolean approveWithdraw(double amount, long userId, TransferType type) {
+        Wallet wallet = walletRepository.findByUserId(userId)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.WALLET_NOT_FOUND));
+
+        if(amount<=0){
+            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.INVALID_AMOUNT);
+        }
+
+        if(wallet.getHoldBalance() < amount){
+            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.AMOUNT_NOT_ENOUGH);
+        }
+
+        wallet.setHoldBalance(wallet.getHoldBalance() - amount);
+        //luu vao transaction
+        transactionService.createTransaction(type,amount,userId,wallet, BuyType.WITHDRAW);
+        //save vao repo
+        walletRepository.save(wallet);
+
+        System.out.println("Successfully withdraw " + amount + " from user " + userId + ". New balance: " + wallet.getBalance());
+        return true;
+    }
+
+    @Transactional
+    protected boolean payOut(double amount, long userId, TransferType type, BuyType buyType) {
+        Wallet wallet = walletRepository.findByUserId(userId)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.WALLET_NOT_FOUND));
+
+        if(amount<=0){
+            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.INVALID_AMOUNT);
         }
 
         //cap nhat wallet
-        if(wallet.get().getAmount() < amount){
+        if(wallet.getBalance() < amount){
             throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.AMOUNT_NOT_ENOUGH);
         }
 
-        wallet.get().setAmount(wallet.get().getAmount()-amount);
-        transactionService.createTransaction(type,amount,userId,wallet.get(),buyType);
-        walletRepository.save(wallet.get());
+        wallet.setBalance(wallet.getBalance()-amount);
+        transactionService.createTransaction(type,amount,userId,wallet,buyType);
+        walletRepository.save(wallet);
         return true;
     }
 
@@ -79,56 +126,53 @@ public class PaymentServiceImpl implements PaymentService{
 
         double consumer_amount = walletRepository.findByUserId(consumer.getId())
                 .orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.WALLET_NOT_FOUND))
-                .getAmount();
+                .getBalance();
 
         remaining_amount = consumer_amount - price;
         return remaining_amount;
     }
 
 
-    private boolean updateWithdraw(double amount, long userId, TransferType type) {
-        Optional<Wallet> wallet = walletRepository.findByUserId(userId);
-
-        if(!wallet.isPresent()){
-        throw new CustomException(HttpStatus.NOT_FOUND,ErrorCode.WALLET_NOT_FOUND);
-        }
+    @Transactional
+    protected boolean holdWithdraw(double amount, long userId, TransferType type) {
+        Wallet wallet = walletRepository.findByUserId(userId)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.WALLET_NOT_FOUND));
 
         if(amount<=0){
+            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.INVALID_AMOUNT);
+        }
+
+        if(wallet.getBalance() < amount){
             throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.AMOUNT_NOT_ENOUGH);
         }
 
-        //cap nhat wallet
-        if(wallet.get().getAmount() < amount){
-            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.AMOUNT_NOT_ENOUGH);
-        }
-
-        wallet.get().setAmount(wallet.get().getAmount()-amount);
+        wallet.setBalance(wallet.getBalance() - amount);
+        wallet.setHoldBalance(wallet.getHoldBalance() + amount);
         //luu vao transaction
-         transactionService.createTransaction(type,amount,userId,wallet.get(), BuyType.OTHER);
+        transactionService.createTransaction(type,amount,userId,wallet, BuyType.WITHDRAW);
         //save vao repo
-        walletRepository.save(wallet.get());
+        walletRepository.save(wallet);
 
-        System.out.println("Successfully withdrawn " + amount + " from user " + userId + ". New balance: " + wallet.get().getAmount());
+        System.out.println("Successfully withdraw " + amount + " from user " + userId + ". New balance: " + wallet.getBalance());
         return true;
     }
 
-    private boolean updateToUp(double amount, long userId, TransferType type) {
-        Optional<Wallet> wallet = walletRepository.findByUserId(userId);
-        if(!wallet.isPresent()){
-            throw new CustomException(HttpStatus.NOT_FOUND,ErrorCode.WALLET_NOT_FOUND);
-        }
+    @Transactional
+    protected boolean topUp(double amount, long userId, TransferType type) {
+        Wallet wallet = walletRepository.findByUserId(userId)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.WALLET_NOT_FOUND));
+
         if(amount<=0){
             throw new  CustomException(HttpStatus.BAD_REQUEST,ErrorCode.AMOUNT_NOT_ENOUGH);
         }
 
-        double oldAmount = wallet.get().getAmount();
+        double oldAmount = wallet.getBalance();
 
+        wallet.setBalance(wallet.getBalance() + amount);
+        transactionService.createTransaction(type,amount,userId,wallet, BuyType.TOP_UP);
+        walletRepository.save(wallet);
 
-        wallet.get().setAmount(wallet.get().getAmount()+amount);
-        transactionService.createTransaction(type,amount,userId,wallet.get(), BuyType.OTHER);
-        walletRepository.save(wallet.get());
-
-        System.out.println("Successfully added " + amount + " to user " + userId + ". Old balance: " + oldAmount + ", New balance: " + wallet.get().getAmount());
+        System.out.println("Successfully added " + amount + " to user " + userId + ". Old balance: " + oldAmount + ", New balance: " + wallet.getBalance());
         return true;
     }
 }

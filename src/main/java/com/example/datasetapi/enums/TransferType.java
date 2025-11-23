@@ -1,5 +1,9 @@
 package com.example.datasetapi.enums;
 
 public enum TransferType {
-    TOUP,TODOWN,WITHDRAW
+    TOPUP,
+    PAYOUT,
+    WITHDRAW_HOLD,
+    WITHDRAW_APPROVE,
+    WITHDRAW_REJECT
 }

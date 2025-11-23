@@ -3,6 +3,7 @@ package com.example.datasetapi.controller.payment;
 import com.example.datasetapi.dto.request.ProcessWithdrawRequest;
 import com.example.datasetapi.dto.request.WithdrawRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
+import com.example.datasetapi.service.feature.EmailService;
 import com.example.datasetapi.service.feature.ImageService;
 import com.example.datasetapi.service.payment.WithdrawService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,6 +20,13 @@ import java.io.IOException;
 public class WithdrawController {
     private final ImageService imageService;
     private final WithdrawService withdrawService;
+    private final EmailService emailService;
+
+    @PostMapping("verify-code")
+    public ResponseEntity<?> sendRequestOtp(){
+        withdrawService.sendRequestMail();
+        return ResponseEntity.ok().body(new ApiResponse(true, "Send mail success", null));
+    }
 
     @PostMapping("/request")
     public ResponseEntity<ApiResponse> withdrawRequest(@RequestBody WithdrawRequest withdrawRequest) {

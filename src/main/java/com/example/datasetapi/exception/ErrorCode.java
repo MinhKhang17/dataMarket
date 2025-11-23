@@ -51,6 +51,9 @@ public enum ErrorCode {
     INVALID_WITHDRAW_AMOUNT("INVALID_WITHDRAW_AMOUNT", "Withdraw amount must be greater than 0"),
     INSUFFICIENT_FUNDS("INSUFFICIENT_FUNDS", "Not enough balance in wallet"),
     AMOUNT_NOT_ENOUGH("AMOUNT_NOT_ENOUGH", "Insufficient balance"),
+    WITHDRAW_OTP_NOT_FOUND("WITHDRAW_OTP_NOT_FOUND", "Withdraw otp not found"),
+    INVALID_OTP("INVALID_OTP", "Invalid opt"),
+    OTP_EXPIRED("OTP_EXPIRED", "Otp is expired"),
 
     //Order errors
     ORDER_NOT_FOUND("ORDER_NOT_FOUND", "Order not found"),

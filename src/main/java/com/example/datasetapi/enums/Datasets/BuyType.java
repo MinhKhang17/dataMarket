@@ -6,5 +6,9 @@ public enum BuyType {
     BUY_API,
     BUY_WITH_TIME_GROUP,
     PROVIDER_REVENUE,
-    OTHER
+    OTHER,
+    REFUND,
+    TOP_UP,
+    PAY_OUT,
+    WITHDRAW
 }

@@ -139,18 +139,18 @@ public class VnPayService {
                     Wallet w = new Wallet();
                     User u = userService.findUserById(uid);
                     w.setUser(u);
-                    w.setAmount(0L);
+                    w.setBalance(0L);
                     return walletRepository.save(w);
                 });
 
                 // 4. Update wallet
-                wallet.setAmount(wallet.getAmount() + points);
+                wallet.setBalance(wallet.getBalance() + points);
                 walletRepository.save(wallet);
 
                 // 5. Save transaction kèm createdAt
                 Transaction t = new Transaction();
                 t.setAmount(points);
-                t.setType(TransferType.TOUP);
+                t.setType(TransferType.TOPUP);
                 t.setWallet(wallet);
                 t.setTxnRef(txnRef);
                 // createdAt sẽ tự set nhờ @PrePersist

@@ -93,7 +93,7 @@ private ProviderRevenueRepo providerRevenueRepo;
 
         createProviderRevenue(provider,basePricePoint,dataset);
 
-        paymentService.updateWallet(TransferType.TOUP,basePricePoint,provider.getUser().getId(),BuyType.PROVIDER_REVENUE);
+        paymentService.updateWallet(TransferType.TOPUP,basePricePoint,provider.getUser().getId(),BuyType.PROVIDER_REVENUE);
     }
 
     private void createProviderRevenue(Provider provider, double point, Dataset dataset) {

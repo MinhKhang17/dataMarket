@@ -509,7 +509,7 @@ public class DatasetServiceImpl implements DatasetService {
             throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.EXISTS_SUB);
         }
 
-        paymentService.updateWallet(TransferType.TODOWN, Double.parseDouble(String.valueOf(pricingRule.getBasePricePoint())),
+        paymentService.updateWallet(TransferType.PAYOUT, Double.parseDouble(String.valueOf(pricingRule.getBasePricePoint())),
                 tokenService.getUserIdFromRequest(request), BuyType.BUY_SUB);
 
         List<ConsumerSubscription> consumerSubscriptionList = consumerSubRepo.findAllByConsumerAndIsUsing(consumer, true);
@@ -575,7 +575,7 @@ public class DatasetServiceImpl implements DatasetService {
 
         double price = timeGroup.getPrice();
         User user = userService.findUserById(tokenService.getUserIdFromRequest(request));
-        paymentService.updateWallet(TransferType.TODOWN, price, user.getId(), BuyType.BUY_WITH_TIME_GROUP);
+        paymentService.updateWallet(TransferType.PAYOUT, price, user.getId(), BuyType.BUY_WITH_TIME_GROUP);
         DownloadToken downloadToken = jwtUtil.generateDowloadToken(user, null, 30, 5, timeGroup);
 
         return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.BUY_WITH_TIME_GROUP, downloadToken);
@@ -630,12 +630,12 @@ public class DatasetServiceImpl implements DatasetService {
         consumer.getDownloadTokens().add(token);
         userService.saveUser(consumer);
 
-        paymentService.updateWallet(TransferType.TODOWN, pricing.getPrice(), consumer.getId(), BuyType.BUY_ONE_TIME_DATASET);
+        paymentService.updateWallet(TransferType.PAYOUT, pricing.getPrice(), consumer.getId(), BuyType.BUY_ONE_TIME_DATASET);
 
         Wallet wallet = walletService.findWalletByUserId(consumer.getId())
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.WALLET_NOT_FOUND));
 
-        transactionService.createTransaction(TransferType.TODOWN, pricing.getPrice(), consumer.getId(), wallet, BuyType.BUY_ONE_TIME_DATASET);
+        transactionService.createTransaction(TransferType.PAYOUT, pricing.getPrice(), consumer.getId(), wallet, BuyType.BUY_ONE_TIME_DATASET);
 
         OrderRequest item = new OrderRequest();
         item.setDatasetId(dataset.getId());
@@ -840,7 +840,7 @@ public class DatasetServiceImpl implements DatasetService {
         User user = userService.findUserById(tokenService.getUserIdFromRequest(request));
         double price = pricingRule.getBasePricePoint();
 
-        paymentService.updateWallet(TransferType.TODOWN, price, user.getId(), BuyType.BUY_API);
+        paymentService.updateWallet(TransferType.PAYOUT, price, user.getId(), BuyType.BUY_API);
 
         DownloadToken downloadToken = jwtUtil.generateDowloadToken(user, null, 30, 5, null);
 
@@ -1133,7 +1133,7 @@ public class DatasetServiceImpl implements DatasetService {
             System.out.println(buyRequestDTO.getDatasetPricingId());
             price = datasetPricing.getPrice();
 
-            paymentService.updateWallet(TransferType.TODOWN, price, tokenService.getUserIdFromRequest(request), BuyType.BUY_API);
+            paymentService.updateWallet(TransferType.PAYOUT, price, tokenService.getUserIdFromRequest(request), BuyType.BUY_API);
 
             apiToken = jwtUtil.generateApiSaleToken(userService.findUserById(tokenService.getUserIdFromRequest(request)), dataset, 31L, datasetPricing.getPricingRule().getRequestLimit());
         }
