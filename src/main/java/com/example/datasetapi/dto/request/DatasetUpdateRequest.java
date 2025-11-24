@@ -17,17 +17,6 @@ public class DatasetUpdateRequest {
     private String datasetName;
     private String title;
     private String description;
-
-    private String fileKey;
     private DatasetStatus status;
-    private DatasetPack datasetPack;
-    private DatasetSourceType datasetSourceType;
-
-    private Long datasetChildGroupId;
-    private String communeId;
-
-    private Long timeGroupId;
-
-    private List<DatasetPricingUpdateRequest> pricingList;
 }
 

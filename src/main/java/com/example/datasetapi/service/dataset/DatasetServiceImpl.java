@@ -41,7 +41,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -220,22 +219,7 @@ public class DatasetServiceImpl implements DatasetService {
                 dataset.setDatasetStatus(DatasetStatus.APPROVE);
             }
 
-            // Persist dataset first to ensure dataset.id available for preview FK
             dataset = datasetRepository.saveAndFlush(dataset);
-
-            // === TẠO PREVIEW (header + tối đa DEFAULT_PREVIEW_ROWS) ===
-            // Gọi method bạn đã triển khai. Bọc try/catch để không phá luồng upload nếu preview thất bại.
-            try {
-                Optional<DatasetPreview> maybePreview = createAndSavePreviewFromMultipart(fileFromRequest, dataset, DEFAULT_PREVIEW_ROWS);
-                if (maybePreview.isPresent()) {
-                    logger.info("Preview created for dataset id={} previewId={}", dataset.getId(), maybePreview.get().getId());
-                } else {
-                    logger.warn("Preview creation returned empty for dataset id={}", dataset.getId());
-                }
-            } catch (Exception ex) {
-                // Không ném, chỉ log — preview không bắt buộc
-                logger.warn("Failed to create preview for dataset id={} (ignored): {}", dataset.getId(), ex.getMessage(), ex);
-            }
 
             if (!datasetSourceType.equals(DatasetSourceType.DATASET_PROVIDER)) {
                 priceService.createPricingForDataset(dataset, request);
@@ -278,6 +262,7 @@ public class DatasetServiceImpl implements DatasetService {
             dataset.setTimeGroup(timeGroup);
             dataset.setDatasetTime(datasetDate);
 
+//            File sourceFile = new File(dataset.getFileUrl());
             Dataset datasetWithFileInfo;
 
             if (datasetSourceType.equals(DatasetSourceType.DATASET_PROVIDER)) {
@@ -302,8 +287,18 @@ public class DatasetServiceImpl implements DatasetService {
             logger.error("Error while processing dataset creation: {}", e.getMessage(), e);
             throw new RuntimeException("Error while creating dataset and groups", e);
         }
+//        finally {
+//            try {
+//
+//                System.out.println("-----------------------------------------\n" +
+//                        "Deleted dataset\n" +
+//                        "-----------------------------------------");
+//                Files.deleteIfExists(Paths.get(UPLOAD_BASE+"TEMP"+dataset.getName()));
+//            } catch (IOException e) {
+//                System.err.println("Can not delete current file: " + e.getMessage());
+//            }
+//        }
     }
-
     private DatasetGroup createParentDatasetGroup(Commune commune, DatasetType datasetType, DatasetSourceType datasetSourceType) {
         DatasetGroup parent = new DatasetGroup();
         parent.setDatasetGroupType(DatasetGroupType.PARENT);
@@ -644,8 +639,10 @@ public class DatasetServiceImpl implements DatasetService {
 
         paymentService.updateWallet(TransferType.PAYOUT, pricing.getPrice(), consumer.getId(), BuyType.BUY_ONE_TIME_DATASET);
 
+        Wallet wallet = walletService.findWalletByUserId(consumer.getId())
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.WALLET_NOT_FOUND));
 
-
+        transactionService.createTransaction(TransferType.PAYOUT, pricing.getPrice(), consumer.getId(), wallet, BuyType.BUY_ONE_TIME_DATASET);
 
         OrderRequest item = new OrderRequest();
         item.setDatasetId(dataset.getId());
@@ -1085,17 +1082,40 @@ public class DatasetServiceImpl implements DatasetService {
         return true;
     }
 
+
     @Override
-    public DatasetUpdateResponse updateDataset(Long id, DatasetUpdateRequest request) {
+    public DatasetUpdateResponse updateDataset(Long id, DatasetUpdateRequest datasetUpdateRequest) {
+        String token = tokenService.resolveToken(request);
+        if(token == null) {
+            throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.INVALID_TOKEN);
+        }
+        Long userId = jwtUtil.getUserIdFromToken(token);
+        if(userId == null) {
+            throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.USER_NOT_FOUND);
+        }
+        User moderator = userService.findUserById(userId);
+        if(!moderator.getRole().getName().equalsIgnoreCase("MODERATOR")){
+            throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED);
+        }
+
+        if(datasetUpdateRequest.getDatasetName() == null || datasetUpdateRequest.getDatasetName().isEmpty()) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
+        }
+
+        if(datasetUpdateRequest.getTitle() == null || datasetUpdateRequest.getTitle().isEmpty()) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
+        }
+
+        if(datasetUpdateRequest.getDescription() == null || datasetUpdateRequest.getDescription().isEmpty()) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
+        }
+
+        if(datasetUpdateRequest.getStatus() == null) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
+        }
 
         Dataset dataset = datasetRepository.findById(id)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_NOT_FOUND));
-
-        updateBasicFields(dataset, request);
-        updateFileVersion(dataset, request);
-        updateGroupRelations(dataset, request);
-        updateTimeGroup(dataset, request);
-        updatePricing(id, request);
 
         Dataset saved = datasetRepository.save(dataset);
 
@@ -1115,22 +1135,59 @@ public class DatasetServiceImpl implements DatasetService {
                 saved.getName(),
                 saved.getTitle(),
                 saved.getDescription(),
-
-                saved.getDatasetChildGroup() != null &&
-                        saved.getDatasetChildGroup().getCommune() != null
-                        ? saved.getDatasetChildGroup().getCommune().getName()
-                        : null,
-
-                saved.getDatasetChildGroup() != null &&
-                        saved.getDatasetChildGroup().getCommune() != null &&
-                        saved.getDatasetChildGroup().getCommune().getProvince() != null
-                        ? saved.getDatasetChildGroup().getCommune().getProvince().getName()
-                        : null,
-
-                updatedPrice,
-                updatedPricePerRequest,
-                saved.getFileKey()
+                saved.getDatasetStatus().name()
         );
+    }
+
+    @Override
+    public List<ListUpdateDatasetResponse> getAll() {
+        String token = tokenService.resolveToken(request);
+        if(token == null) {
+            throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.INVALID_TOKEN);
+        }
+        Long userId = jwtUtil.getUserIdFromToken(token);
+        if(userId == null) {
+            throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.USER_NOT_FOUND);
+        }
+        User moderator = userService.findUserById(userId);
+        if(!moderator.getRole().getName().equalsIgnoreCase("MODERATOR")){
+            throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED);
+        }
+        List<Dataset> dataset = datasetRepository.findAll();
+        List<ListUpdateDatasetResponse> datasetResponseList = dataset.stream()
+                .map(l ->
+                        new ListUpdateDatasetResponse(
+                                l.getId(),
+                                l.getName(),
+                                l.getDatasetStatus()
+                        )).toList();
+        return datasetResponseList;
+    }
+
+    @Override
+    public DatasetUpdateResponse getDetailDataset(Long id) {
+        String token = tokenService.resolveToken(request);
+        if(token == null) {
+            throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.INVALID_TOKEN);
+        }
+        Long userId = jwtUtil.getUserIdFromToken(token);
+        if(userId == null) {
+            throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.USER_NOT_FOUND);
+        }
+        User moderator = userService.findUserById(userId);
+        if(!moderator.getRole().getName().equalsIgnoreCase("MODERATOR")){
+            throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED);
+        }
+        Dataset dataset = datasetRepository.findById(id)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_NOT_FOUND));
+
+
+        return new DatasetUpdateResponse(
+                dataset.getId(),
+                dataset.getName(),
+                dataset.getTitle(),
+                dataset.getDescription(),
+                dataset.getDatasetStatus().name());
     }
 
     @Override
