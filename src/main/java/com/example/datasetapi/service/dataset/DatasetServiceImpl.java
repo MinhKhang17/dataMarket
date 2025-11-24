@@ -41,6 +41,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -1119,16 +1120,6 @@ public class DatasetServiceImpl implements DatasetService {
 
         Dataset saved = datasetRepository.save(dataset);
 
-        Double updatedPrice = null;
-        Double updatedPricePerRequest = null;
-
-        if (request.getPricingList() != null && !request.getPricingList().isEmpty()) {
-            DatasetPricingUpdateRequest last = request.getPricingList()
-                    .get(request.getPricingList().size() - 1);
-
-            updatedPrice = last.getPrice();
-            updatedPricePerRequest = last.getPricePerRequest();
-        }
 
         return new DatasetUpdateResponse(
                 saved.getId(),
@@ -1300,60 +1291,12 @@ public class DatasetServiceImpl implements DatasetService {
         if (request.getTitle() != null) dataset.setTitle(request.getTitle());
         if (request.getDescription() != null) dataset.setDescription(request.getDescription());
         if (request.getStatus() != null) dataset.setDatasetStatus(request.getStatus());
-        if (request.getDatasetPack() != null) dataset.setDatasetPack(request.getDatasetPack());
-        if (request.getDatasetSourceType() != null) dataset.setDatasetSourceType(request.getDatasetSourceType());
     }
 
-    private void updateFileVersion(Dataset dataset, DatasetUpdateRequest request) {
-        if (request.getFileKey() != null && !request.getFileKey().equals(dataset.getFileKey())) {
-            dataset.setFileKey(request.getFileKey());
-        }
-    }
 
-    private void updateGroupRelations(Dataset dataset, DatasetUpdateRequest request) {
 
-        if (request.getDatasetChildGroupId() == null) return;
 
-        DatasetGroup group = datasetGroupRepository.findById(request.getDatasetChildGroupId())
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_GROUP_NOT_FOUND));
 
-        if (request.getCommuneId() != null) {
-
-            Commune commune = communeRepository.findById(request.getCommuneId())
-                    .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.COMMUNE_NOT_FOUND));
-
-            group.setCommune(commune);
-            group.setProvince(commune.getProvince());
-        }
-
-        datasetGroupRepository.save(group);
-        dataset.setDatasetChildGroup(group);
-    }
-
-    private void updateTimeGroup(Dataset dataset, DatasetUpdateRequest request) {
-        if (request.getTimeGroupId() == null) return;
-
-        TimeGroup time = timeGroupRepository.findById(request.getTimeGroupId())
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.TIME_GROUP_NOT_FOUND));
-        dataset.setTimeGroup(time);
-    }
-
-    private void updatePricing(Long datasetId, DatasetUpdateRequest request) {
-        if (request.getPricingList() == null) return;
-
-        for (DatasetPricingUpdateRequest p : request.getPricingList()) {
-
-            DatasetPricing pricing = datasetPricingRepository.findById(p.getPricingId())
-                    .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_PRICING_NOT_FOUND));
-
-            if (!pricing.getDatasetPlan().getDataset().getId().equals(datasetId)) {
-                throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.DATASET_PRICING_NOT_BELONG_TO_DATASET);
-            }
-
-            pricing.setPrice(p.getPrice());
-            pricing.setPricePerRequest(p.getPricePerRequest());
-        }
-    }
     @Transactional
     public Optional<DatasetPreview> createAndSavePreviewFromMultipart(MultipartFile multipartFile,
                                                                       com.example.datasetapi.model.dataset.Dataset dataset) {
