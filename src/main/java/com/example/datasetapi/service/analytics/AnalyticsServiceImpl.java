@@ -1,7 +1,7 @@
 package com.example.datasetapi.service.analytics;
 
 import com.example.datasetapi.dto.response.RevenueResponse;
-import com.example.datasetapi.model.order.Order;
+import com.example.datasetapi.model.order.Orders;
 import com.example.datasetapi.model.paySystem.Transaction;
 import com.example.datasetapi.service.dataset.DatasetService;
 import com.example.datasetapi.service.order.OrderService;
@@ -22,7 +22,7 @@ public class AnalyticsServiceImpl implements  AnalyticsService {
 
     public Double getOneTimeRevenue() {
         return orderService.findByPricingMethod("ONE_TIME").stream()
-                .mapToDouble(Order::getTotalAmount).sum();
+                .mapToDouble(Orders::getTotalAmount).sum();
     }
 
     public Double getSubscriptionRevenue() {

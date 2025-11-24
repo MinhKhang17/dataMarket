@@ -18,5 +18,6 @@ public class DatasetUpdateRequest {
     private String title;
     private String description;
     private DatasetStatus status;
+    private Double price;
 }
 

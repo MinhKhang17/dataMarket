@@ -96,6 +96,8 @@ public class DatasetServiceImpl implements DatasetService {
     private ProvinceRepository provinceRepository;
     @Autowired
     private FileService fileService;
+    @Autowired
+    private DatasetPlanRepo datasetPlanRepo;
 
     @Value("${app.upload.base}")
     private String UPLOAD_BASE;
@@ -1109,6 +1111,18 @@ public class DatasetServiceImpl implements DatasetService {
         Dataset dataset = datasetRepository.findById(id)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_NOT_FOUND));
 
+        DatasetPlan plan = datasetPlanRepo.findByDatasetAndPricingMethod(dataset, PricingMethod.ONE_TIME);
+
+        DatasetPricing price = datasetPricingRepository.findDatasetPricingByDatasetPlanAndPricingMethod(plan,PricingMethod.ONE_TIME);
+
+        price.setPrice(datasetUpdateRequest.getPrice());
+        datasetPricingRepository.save(price);
+
+        dataset.setName(datasetUpdateRequest.getDatasetName());
+        dataset.setDescription(datasetUpdateRequest.getDescription());
+        dataset.setTitle(datasetUpdateRequest.getTitle());
+        dataset.setDatasetStatus(datasetUpdateRequest.getStatus());
+
         Dataset saved = datasetRepository.save(dataset);
 
         return new DatasetUpdateResponse(
@@ -1116,7 +1130,8 @@ public class DatasetServiceImpl implements DatasetService {
                 saved.getName(),
                 saved.getTitle(),
                 saved.getDescription(),
-                saved.getDatasetStatus().name()
+                saved.getDatasetStatus().name(),
+                price.getPrice()
         );
     }
 
@@ -1162,13 +1177,20 @@ public class DatasetServiceImpl implements DatasetService {
         Dataset dataset = datasetRepository.findById(id)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_NOT_FOUND));
 
+        DatasetPlan plan = datasetPlanRepo.findByDatasetAndPricingMethod(dataset, PricingMethod.ONE_TIME);
+
+        DatasetPricing pricing = datasetPricingRepository.findDatasetPricingByDatasetPlanAndPricingMethod(plan,PricingMethod.ONE_TIME);
+
+        Double price = pricing.getPrice();
 
         return new DatasetUpdateResponse(
                 dataset.getId(),
                 dataset.getName(),
                 dataset.getTitle(),
                 dataset.getDescription(),
-                dataset.getDatasetStatus().name());
+                dataset.getDatasetStatus().name(),
+                price
+        );
     }
 
     @Override

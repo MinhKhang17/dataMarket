@@ -19,4 +19,5 @@ public class DatasetUpdateResponse {
     private String title;
     private String description;
     private String Status;
+    private Double price;
 }
