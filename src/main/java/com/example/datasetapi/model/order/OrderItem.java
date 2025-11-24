@@ -1,5 +1,6 @@
 package com.example.datasetapi.model.order;
 
+import com.example.datasetapi.enums.Datasets.SubType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -19,10 +20,13 @@ public class OrderItem {
     private Long datasetId;
 
     @Column
-    private String datasetName;
+    private String itemName;
 
     @Column
     private double priceAtPurchase;
+
+    @Column
+    private SubType subType;
 
     @ManyToOne
     @JoinColumn(name = "order_id")

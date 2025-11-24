@@ -32,9 +32,6 @@ public class User {
 
     private Boolean isEmailValid = false;
 
-    @OneToOne(mappedBy = "user", orphanRemoval = true, cascade = CascadeType.ALL, fetch =  FetchType.LAZY, optional = true)
-    private Consumer consumer;
-
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id")
     private Role role;

@@ -17,7 +17,7 @@ public class Consumer {
     @Column
     private long id;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne
     @MapsId
     @JoinColumn(name = "id")
     private User user;

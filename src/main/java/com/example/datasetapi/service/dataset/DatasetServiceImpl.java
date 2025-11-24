@@ -528,7 +528,27 @@ public class DatasetServiceImpl implements DatasetService {
         consumerSubscription.setActive(true);
         consumerSubscription.setUsing(true);
 
-        return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.SUBSCRIPTION, consumerSubRepo.save(consumerSubscription));
+        String name = null;
+        if(pricingRule.getSubType().name().equalsIgnoreCase("MEDIUM")){
+            name = "Basic Monthly";
+        }
+        if(pricingRule.getSubType().name().equalsIgnoreCase("LARGE")){
+            name = "Premium";
+        }
+
+        OrderRequest item = new OrderRequest();
+        item.setDatasetId(0L);
+        item.setItemName(name);
+        item.setPrice(pricingRule.getBasePricePoint());
+        item.setSubType(pricingRule.getSubType());
+        item.setPricingMethod(PricingMethod.SUBSCRIPTION);
+
+        ConsumerOrderResponse order = orderService.createOrder(consumer.getId(), List.of(item));
+
+        ConsumerBuyResponseDTO dto = datasetMapper.toConsumerBuyResponseDTO(PricingMethod.SUBSCRIPTION, consumerSubRepo.save(consumerSubscription));
+        dto.setOrderId(order.getId());
+
+        return dto;
     }
 
     @Override
@@ -609,14 +629,17 @@ public class DatasetServiceImpl implements DatasetService {
 
         OrderRequest orderReq = new OrderRequest();
         orderReq.setDatasetId(dataset.getId());
-        orderReq.setDatasetName(dataset.getName());
+        orderReq.setItemName(dataset.getName());
         orderReq.setPrice(datasetRow);
         orderReq.setPricingMethod(PricingMethod.SUBSCRIPTION);
+        orderReq.setSubType(null);
 
         ConsumerOrderResponse order = orderService.createOrder(consumer.getId(), List.of(orderReq));
 
         ConsumerBuyResponseDTO dto = datasetMapper.toConsumerBuyResponseDTO(PricingMethod.SUBSCRIPTION, consumerSubscription);
+
         dto.getBuySubInfoDTO().setDownloadToken(downloadToken.getId().toString());
+
         dto.setOrderId(order.getId());
 
         return dto;
@@ -633,16 +656,12 @@ public class DatasetServiceImpl implements DatasetService {
 
         paymentService.updateWallet(TransferType.PAYOUT, pricing.getPrice(), consumer.getId(), BuyType.BUY_ONE_TIME_DATASET);
 
-        Wallet wallet = walletService.findWalletByUserId(consumer.getId())
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.WALLET_NOT_FOUND));
-
-        transactionService.createTransaction(TransferType.PAYOUT, pricing.getPrice(), consumer.getId(), wallet, BuyType.BUY_ONE_TIME_DATASET);
-
         OrderRequest item = new OrderRequest();
         item.setDatasetId(dataset.getId());
-        item.setDatasetName(dataset.getName());
+        item.setItemName(dataset.getName());
         item.setPrice(pricing.getPrice());
         item.setPricingMethod(PricingMethod.ONE_TIME);
+        item.setSubType(null);
 
         ConsumerOrderResponse order = orderService.createOrder(consumer.getId(), List.of(item));
 
@@ -1218,9 +1237,10 @@ public class DatasetServiceImpl implements DatasetService {
         List<OrderRequest> orderRequests = new ArrayList<>();
         OrderRequest orderRequest = new OrderRequest();
         orderRequest.setDatasetId(dataset.getId());
-        orderRequest.setDatasetName(dataset.getName());
+        orderRequest.setItemName(dataset.getName());
         orderRequest.setPrice(price);
         orderRequest.setPricingMethod(PricingMethod.API);
+        orderRequest.setSubType(null);
         orderRequests.add(orderRequest);
 
         orderService.createOrder(tokenService.getUserIdFromRequest(request),orderRequests);

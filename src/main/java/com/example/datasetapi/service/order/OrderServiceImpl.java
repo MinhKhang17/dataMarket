@@ -105,8 +105,9 @@ public class OrderServiceImpl implements OrderService {
                 .map(req -> {
                     OrderItem item = new OrderItem();
                     item.setDatasetId(req.getDatasetId());
-                    item.setDatasetName(req.getDatasetName());
+                    item.setItemName(req.getItemName());
                     item.setPriceAtPurchase(req.getPrice());
+                    item.setSubType(req.getSubType());
                     item.setOrder(datasetOrder);
                     return item;
                 }).toList();
@@ -132,8 +133,9 @@ public class OrderServiceImpl implements OrderService {
                 .map(i -> {
                     return new OrderItemDetailResponse(
                             i.getDatasetId(),
-                            i.getDatasetName(),
-                            i.getPriceAtPurchase()
+                            i.getItemName(),
+                            i.getPriceAtPurchase(),
+                            i.getSubType()
                     );
                 }).toList();
 
@@ -171,9 +173,10 @@ public class OrderServiceImpl implements OrderService {
             List<OrderItemDetailResponse> itemsDetail = order.getItems().stream()
                     .map(i ->
                          new OrderItemDetailResponse(
-                                i.getDatasetId(),
-                                i.getDatasetName(),
-                                i.getPriceAtPurchase()
+                                 i.getDatasetId(),
+                                 i.getItemName(),
+                                 i.getPriceAtPurchase(),
+                                 i.getSubType()
                         )).toList();
 
             if(user.getRole().getName().equalsIgnoreCase("CONSUMER")) {
