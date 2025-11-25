@@ -415,6 +415,7 @@ private DatasetChildGroupDTO toDatasetChildGroupDTO(DatasetGroup datasetGroup){
 //            datasetDTO.setProvider(toProviderDto(dataset.getProvider()));
             datasetDTO.setDatasetPLanWithPricingDTO(dataset.getDatasetPlans().stream().map(this::toDatasetPlanWithPricingDTO).collect(Collectors.toList()));
             datasetDTO.setRow_amount(dataset.getRowCount());
+            datasetDTO.setFileSize(dataset.getFileSize());
         DatasetPreview preview = datasetPreviewRepository.findByDataset(dataset).orElse(null);
         if (preview != null) {
             try {
