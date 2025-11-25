@@ -41,6 +41,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.time.LocalDate;
@@ -206,7 +207,7 @@ public class DatasetServiceImpl implements DatasetService {
             dataset.setDescription(request.getDescription());
             dataset.setRowCount(dataset.getRowCount());
             dataset.setCommune(commune);
-
+            dataset.setFileSize(new BigInteger(String.valueOf(fileFromRequest.getSize())));
             setDatasetPack(dataset);
 
             if (datasetSourceType.equals(DatasetSourceType.DATASET_PROVIDER)) {
@@ -472,8 +473,8 @@ public class DatasetServiceImpl implements DatasetService {
                     .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.CONSUMER_SUB_NOT_FOUND));
 
             checkoutResponseDTO.setDataset(datasetMapper.toDatasetForCheckoutDTO(dataset));
-            checkoutResponseDTO.setRow_amount_consumer_sub(consumerSubscription.getRow_amount());
-            checkoutResponseDTO.setRow_dataset(dataset.getRowCount());
+            checkoutResponseDTO.setRow_amount_consumer_sub(consumerSubscription.getFileSize());
+            checkoutResponseDTO.setRow_dataset(dataset.getFileSize());
         } else {
             DatasetDTO datasetDTO = datasetMapper.toDatasetForCheckoutDTO(dataset);
             DatasetPricing datasetPricing = datasetPricingRepository.findById(checkoutRequestDTO.getDatasetPricingId())
@@ -531,9 +532,10 @@ public class DatasetServiceImpl implements DatasetService {
         consumerSubscription.setConsumer(consumer);
         consumerSubscription.setExpiresAt(LocalDateTime.now().plusDays(pricingRule.getTimeLimitDay()));
         consumerSubscription.setSubType(pricingRule.getSubType());
-        consumerSubscription.setRow_amount(pricingRule.getRowLimit());
+        consumerSubscription.setFileSize(pricingRule.getFileSize());
         consumerSubscription.setActive(true);
         consumerSubscription.setUsing(true);
+        consumerSubscription.setFileSize(pricingRule.getFileSize());
 
         return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.SUBSCRIPTION, consumerSubRepo.save(consumerSubscription));
     }
@@ -598,17 +600,15 @@ public class DatasetServiceImpl implements DatasetService {
         ConsumerSubscription consumerSubscription = consumerSubRepo.findByConsumerAndIsUsing(consumer, true)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.SUB_NOT_FOUND));
 
-        long datasetRow = dataset.getRowCount();
+        BigInteger fileSize = dataset.getFileSize();
 
-        if(consumerSubscription.getRow_amount() < datasetRow){
-            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.SUB_ROW_NOT_ENOUGH);
-        }
+
 
         if (consumerSubscription.getExpiresAt().isBefore(LocalDateTime.now())) {
             throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.SUB_EXPIRED);
         }
 
-        buyWithSubProcess(consumerSubscription, datasetRow);
+        buyWithSubProcess(consumerSubscription, fileSize);
 
         DownloadToken downloadToken = jwtUtil.generateDowloadToken(consumer, dataset, 30, 10, null);
         consumer.getDownloadTokens().add(downloadToken);
@@ -617,7 +617,7 @@ public class DatasetServiceImpl implements DatasetService {
         OrderRequest orderReq = new OrderRequest();
         orderReq.setDatasetId(dataset.getId());
         orderReq.setDatasetName(dataset.getName());
-        orderReq.setPrice(datasetRow);
+        orderReq.setPrice(dataset.getFileSize().longValue());
         orderReq.setPricingMethod(PricingMethod.SUBSCRIPTION);
 
         ConsumerOrderResponse order = orderService.createOrder(consumer.getId(), List.of(orderReq));
@@ -818,24 +818,24 @@ public class DatasetServiceImpl implements DatasetService {
         return ResponseEntity.ok().body(new ApiResponse(true, "load dataset success", datasetReposonseDtoList));
     }
 
-    @Override
-    public ConsumerBuyResponseDTO buyTimeGroupWithSub(long timeGroupId, HttpServletRequest request) {
-        TimeGroup timeGroup = timeGroupRepository.findById(timeGroupId)
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.TIME_GROUP_NOT_FOUND));
-
-        User consumer = userService.findUserById(tokenService.getUserIdFromRequest(request));
-
-        ConsumerSubscription consumerSubscription = consumerSubRepo.findByConsumerAndIsUsing(consumer, true)
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.SUB_NOT_FOUND));
-
-        long timeGroupRowCount = timeGroup.getRow_Count();
-
-        buyWithSubProcess(consumerSubscription, timeGroupRowCount);
-
-        DownloadToken downloadToken = jwtUtil.generateDowloadToken(consumer, null, 30, 10, timeGroup);
-
-        return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.BUY_WITH_TIME_GROUP, downloadToken);
-    }
+//    @Override
+//    public ConsumerBuyResponseDTO buyTimeGroupWithSub(long timeGroupId, HttpServletRequest request) {
+//        TimeGroup timeGroup = timeGroupRepository.findById(timeGroupId)
+//                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.TIME_GROUP_NOT_FOUND));
+//
+//        User consumer = userService.findUserById(tokenService.getUserIdFromRequest(request));
+//
+//        ConsumerSubscription consumerSubscription = consumerSubRepo.findByConsumerAndIsUsing(consumer, true)
+//                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.SUB_NOT_FOUND));
+//
+//        long timeGroupRowCount = timeGroup.getRow_Count();
+//
+//        buyWithSubProcess(consumerSubscription, timeGroupRowCount);
+//
+//        DownloadToken downloadToken = jwtUtil.generateDowloadToken(consumer, null, 30, 10, timeGroup);
+//
+//        return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.BUY_WITH_TIME_GROUP, downloadToken);
+//    }
 
     @Override
     public ConsumerBuyResponseDTO buyGroupByAPI(long timeGroupId, HttpServletRequest request) {
@@ -855,13 +855,13 @@ public class DatasetServiceImpl implements DatasetService {
         return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.API, downloadToken);
     }
 
-    public void buyWithSubProcess(ConsumerSubscription consumerSubscription, long rowCount){
-        long rowCountConsumer = consumerSubscription.getRow_amount();
+    public void buyWithSubProcess(ConsumerSubscription consumerSubscription, BigInteger rowCount){
+        BigInteger fileSize = consumerSubscription.getFileSize();
 
-        if(rowCountConsumer < rowCount){
+        if(fileSize.compareTo(rowCount) <= 0){
             throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.SUB_ROW_NOT_ENOUGH);
         }
-        consumerSubscription.setRow_amount(rowCountConsumer - rowCount);
+        consumerSubscription.setFileSize(fileSize.subtract(rowCount));
         consumerSubRepo.save(consumerSubscription);
     }
 
@@ -1183,7 +1183,7 @@ public class DatasetServiceImpl implements DatasetService {
 
     @Override
     public ConsumerBuyResponseDTO buyAPIPack(ConsumerBuyRequestDTO buyRequestDTO, HttpServletRequest request) {
-        PricingRule datasetPricing = pricingRuleRepo.findById(buyRequestDTO.getDatasetPricingId()).orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.API_PACK_NOT_FOUND));
+        PricingRule datasetPricing = pricingRuleRepo.findById(buyRequestDTO.getPricingRuleId()).orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.API_PACK_NOT_FOUND));
         Dataset dataset = datasetRepository.findById(buyRequestDTO.getDatasetId()).orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
         double price = 0.0;
         String apiToken="";

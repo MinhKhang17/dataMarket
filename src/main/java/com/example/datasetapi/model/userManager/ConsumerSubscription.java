@@ -5,6 +5,7 @@ import com.example.datasetapi.model.dataset.PricingRule;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.math.BigInteger;
 import java.time.LocalDateTime;
 
 @Data
@@ -19,7 +20,7 @@ public class ConsumerSubscription {
     @Column
     private SubType subType;
     @Column
-    long row_amount;
+    private BigInteger fileSize;
     @Column
     private LocalDateTime createdAt = LocalDateTime.now();
     @Column

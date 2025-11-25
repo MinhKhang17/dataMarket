@@ -112,12 +112,12 @@ public class ConsumerController {
         ConsumerBuyResponseDTO consumerBuyResponseDTO = datasetService.buyWithTimeGroup(timeGroupId,request);
         return ResponseEntity.ok().body(new ApiResponse(true,"Download token ",consumerBuyResponseDTO));
     }
-    @PreAuthorize("hasRole('CONSUMER')")
-    @PostMapping("group/sub/buy")
-    public ResponseEntity<ApiResponse> BuySubGroup(@RequestParam long timeGroupId, HttpServletRequest request){
-        ConsumerBuyResponseDTO consumerBuyResponseDTO = datasetService.buyTimeGroupWithSub(timeGroupId,request);
-        return ResponseEntity.ok().body(new ApiResponse(true,"Sub buy ",consumerBuyResponseDTO));
-    }
+//    @PreAuthorize("hasRole('CONSUMER')")
+//    @PostMapping("group/sub/buy")
+//    public ResponseEntity<ApiResponse> BuySubGroup(@RequestParam long timeGroupId, HttpServletRequest request){
+//        ConsumerBuyResponseDTO consumerBuyResponseDTO = datasetService.buyTimeGroupWithSub(timeGroupId,request);
+//        return ResponseEntity.ok().body(new ApiResponse(true,"Sub buy ",consumerBuyResponseDTO));
+//    }
 
     @PreAuthorize("hasRole('CONSUMER')")
     @PostMapping("apipack/buy")

@@ -176,7 +176,7 @@ datasetDTO.setRow_amount(dataset.getRowCount());
             consumerSubResponseDTO.setSubType(consumerSubscription.getSubType());
             consumerSubResponseDTO.setUsing(consumerSubscription.isUsing());
             consumerSubResponseDTO.setExpirationDate(consumerSubscription.getExpiresAt());
-            consumerSubResponseDTO.setRow_amount(consumerSubscription.getRow_amount());
+            consumerSubResponseDTO.setFileSize(consumerSubscription.getFileSize());
             consumerSubResponseDTO.setPricingRuleDTO(toPricingRuleDTO(consumerSubscription.getPricingRule()));
         return consumerSubResponseDTO;
     }
@@ -187,6 +187,7 @@ datasetDTO.setRow_amount(dataset.getRowCount());
             pricingRuleDTO.setPricingMethod(pricingRule.getMethod());
             pricingRuleDTO.setPlanName(pricingRule.getPlanName());
             pricingRuleDTO.setBase_price(pricingRule.getBasePricePoint());
+            pricingRuleDTO.setFileSize(pricingRule.getFileSize());
             if(pricingRule.getRowLimit()!=null){
                 pricingRuleDTO.setRow_limit_of_this_pack(pricingRule.getRowLimit());
             }
@@ -237,7 +238,7 @@ datasetDTO.setRow_amount(dataset.getRowCount());
     private BuySubInfoDTO toBuySubInfoDTO(ConsumerSubscription infor) {
         BuySubInfoDTO buySubInfoDTO = new BuySubInfoDTO();
         buySubInfoDTO.setSubType(infor.getSubType());
-    buySubInfoDTO.setRowLimit(infor.getRow_amount());
+    buySubInfoDTO.setFileSize(infor.getFileSize());
     buySubInfoDTO.setExpiredDay(infor.getExpiresAt());
 
     return buySubInfoDTO;

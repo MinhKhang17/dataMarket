@@ -25,6 +25,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Instant;
@@ -157,7 +159,7 @@ public class DataInitializer implements CommandLineRunner {
         // SUBSCRIPTION - Free tier
         PricingRule r4 = new PricingRule();
         r4.setMethod(PricingMethod.SUBSCRIPTION);
-        r4.setPlanName("Free tier");
+        r4.setPlanName("Small pack");
         r4.setBasePricePoint(0.0);
         r4.setRowLimit(50000L);
         r4.setTimeLimitDay(30);
@@ -165,8 +167,10 @@ public class DataInitializer implements CommandLineRunner {
         r4.setAllowOverage(true);
         r4.setProviderShare(40);
         r4.setPlatformShare(60);
+        r4.setFileSize(new BigInteger("104857600"));
+
         r4.setSubType(SubType.SMALL);
-        r4.setNote("Gói cơ bản");
+        r4.setNote("Gói nhỏ cơ bản ");
         rules.add(r4);
 
         // SUBSCRIPTION - Basic Monthly
@@ -180,6 +184,7 @@ public class DataInitializer implements CommandLineRunner {
         r5.setAllowOverage(true);
         r5.setProviderShare(40);
         r5.setPlatformShare(60);
+        r5.setFileSize(new BigInteger("524288000"));
         r5.setSubType(SubType.MEDIUM);
         r5.setNote("Gói thuê bao 1 tháng \n Thoải mái download dataset không giới hạn");
         rules.add(r5);
@@ -197,6 +202,7 @@ public class DataInitializer implements CommandLineRunner {
         r6.setProviderShare(35);
         r6.setPlatformShare(65);
         r6.setSubType(SubType.LARGE);
+        r6.setFileSize(new BigInteger("2147483648"));
         r6.setNote("Gói thuê bao 3 tháng \nThoải mái tải dataset\n Có dashboard thể hiện thông tin được tổng hợp bằng AI ");
         rules.add(r6);
 

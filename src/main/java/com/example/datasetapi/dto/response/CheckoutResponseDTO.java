@@ -2,6 +2,8 @@ package com.example.datasetapi.dto.response;
 
 import lombok.Data;
 
+import java.math.BigInteger;
+
 @Data
 public class CheckoutResponseDTO {
     DatasetDTO dataset;
@@ -10,6 +12,6 @@ public class CheckoutResponseDTO {
     boolean isEnough = false;
     double remaining_amount = 0.0;
     //for buy with sub
-    long row_amount_consumer_sub;
-    long row_dataset;
+    BigInteger row_amount_consumer_sub;
+    BigInteger row_dataset;
 }
