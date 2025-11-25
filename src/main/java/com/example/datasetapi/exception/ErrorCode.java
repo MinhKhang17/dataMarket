@@ -99,7 +99,8 @@ public enum ErrorCode {
     CAN_NOT_CANCEL_DATASET("CAN_NOT_CANCEL_DATASET","không thể cancel dataset" ),
     SUB_NOT_AVAILABLE("SUB_NOT_AVAILABLE","gói sub không hợp lệ" ),
     FILE_NOT_FOUND("FILE_NOT_FOUND","Không tìm thấy file" ),
-    API_PACK_NOT_FOUND("API_PACK_NOT_FOUND","không tìm thấy gói API" );
+    API_PACK_NOT_FOUND("API_PACK_NOT_FOUND","không tìm thấy gói API" ),
+    FILE_SIZE_NOT_ENOUGH("FILE_SIZE_NOT_ENOUGH","gói sub không đủ dung lượng" );
 
     private final String code;
     private final String message;

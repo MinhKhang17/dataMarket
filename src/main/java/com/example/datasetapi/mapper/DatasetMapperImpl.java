@@ -68,6 +68,7 @@ public class DatasetMapperImpl implements DatasetMapper {
         datasetDTO.setDatasetTime(TimeGroup.toDate(dataset.getTimeGroup()));
         datasetDTO.setCategory(dataset.getDatasetChildGroup().getParent().getDatasetType().getCategories());
 datasetDTO.setRow_amount(dataset.getRowCount());
+datasetDTO.setFileSize(dataset.getFileSize());
         DatasetPreview preview = datasetPreviewRepository.findByDataset(dataset).orElse(null);
             if (preview==null){
                 System.out.println("null roi");}
