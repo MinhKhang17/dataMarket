@@ -101,7 +101,7 @@ public class AdminController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("pricing-rule/{id}")
+    @PutMapping("pricing-rule")
     public ResponseEntity<?> updatePricingRule(@RequestBody PricingRule pricingRule) {
         return ResponseEntity.ok().body(adminService.updatePricingRule(pricingRule));
     }
