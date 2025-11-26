@@ -1147,9 +1147,6 @@ public class DatasetServiceImpl implements DatasetService {
             throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED);
         }
 
-        if(datasetUpdateRequest.getDatasetName() == null || datasetUpdateRequest.getDatasetName().isEmpty()) {
-            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
-        }
 
         if(datasetUpdateRequest.getTitle() == null || datasetUpdateRequest.getTitle().isEmpty()) {
             throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
@@ -1166,7 +1163,22 @@ public class DatasetServiceImpl implements DatasetService {
         Dataset dataset = datasetRepository.findById(id)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_NOT_FOUND));
 
+        dataset.setDescription(datasetUpdateRequest.getDescription());
+        dataset.setTitle(datasetUpdateRequest.getTitle());
+        dataset.setDatasetStatus(datasetUpdateRequest.getStatus());
+        if(datasetUpdateRequest.getPrice()!=0.0){
+        for(DatasetPlan datasetPlan :dataset.getDatasetPlans()){
+            if(datasetPlan.getPricingMethod().equals(PricingMethod.ONE_TIME)){
+                for(DatasetPricing datasetPricing : datasetPlan.getDatasetPricingList()){
+                    if(datasetPricing.getPricingMethod()==PricingMethod.ONE_TIME){
+                        datasetPricing.setPrice(datasetPricing.getPrice());
+                    }
+                }
+            }
+        }}
+
         Dataset saved = datasetRepository.save(dataset);
+
 
 
         return new DatasetUpdateResponse(
@@ -1328,7 +1340,6 @@ public class DatasetServiceImpl implements DatasetService {
     }
 
     private void updateBasicFields(Dataset dataset, DatasetUpdateRequest request) {
-        if (request.getDatasetName() != null) dataset.setName(request.getDatasetName());
         if (request.getTitle() != null) dataset.setTitle(request.getTitle());
         if (request.getDescription() != null) dataset.setDescription(request.getDescription());
         if (request.getStatus() != null) dataset.setDatasetStatus(request.getStatus());

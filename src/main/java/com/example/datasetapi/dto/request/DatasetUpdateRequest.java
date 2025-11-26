@@ -15,10 +15,9 @@ import java.util.List;
 @NoArgsConstructor
 public class DatasetUpdateRequest {
 
-    private String datasetName;
     private String title;
     private String description;
     private DatasetStatus status;
-
+    private double price;
 }
 
