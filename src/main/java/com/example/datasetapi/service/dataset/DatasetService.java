@@ -97,7 +97,7 @@ public interface DatasetService {
 
     ConsumerBuyResponseDTO buyDatasetWithSub(long datasetId, HttpServletRequest request);
 
-    void moderatorCreateNewDatasetGroup(ModeratorCreateNewDatasetGroupRequest moderatorCreateNewDatasetGroupRequest);
+    DatasetGroupResponse moderatorCreateNewDatasetGroup(String commune_id,long datasetTypeId);
 
     List<DatasetParentReposonseDto> findAllSystamDatasetGroup();
 

@@ -49,9 +49,9 @@ public class ModeratorController {
 
     @PreAuthorize("hasRole('MODERATOR')")
     @PostMapping("dataset-group")
-    public ResponseEntity<?> CreateDatasetGroup(@RequestParam ModeratorCreateNewDatasetGroupRequest moderatorCreateNewDatasetGroupRequest, HttpServletRequest request) {
-        datasetService.moderatorCreateNewDatasetGroup(moderatorCreateNewDatasetGroupRequest);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> CreateDatasetGroup(@RequestParam String commune_id,@RequestParam long dataset_type_id, HttpServletRequest request) {
+        System.out.println("vao dung api roi");
+        return ResponseEntity.ok().body(datasetService.moderatorCreateNewDatasetGroup(commune_id,dataset_type_id));
     }
 
     @PreAuthorize("hasRole('MODERATOR')")

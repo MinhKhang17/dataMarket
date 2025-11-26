@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class ModeratorCreateNewDatasetGroupRequest {
-    public long commune_id;
+    public String commune_id;
     public long dataset_type_id;
 }

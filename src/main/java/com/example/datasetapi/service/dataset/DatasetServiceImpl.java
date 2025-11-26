@@ -10,6 +10,7 @@ import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
 import com.example.datasetapi.mapper.DatasetMapper;
 import com.example.datasetapi.model.dataset.*;
+import com.example.datasetapi.model.location.Province;
 import com.example.datasetapi.model.paySystem.Wallet;
 import com.example.datasetapi.model.userManager.Provider;
 import com.example.datasetapi.model.userManager.User;
@@ -1031,18 +1032,47 @@ public class DatasetServiceImpl implements DatasetService {
     }
 
     @Override
-    public void moderatorCreateNewDatasetGroup(ModeratorCreateNewDatasetGroupRequest moderatorCreateNewDatasetGroupRequest) {
-        DatasetGroup parentDatasetGroup = new DatasetGroup();
-        parentDatasetGroup.setDatasetType(datasetTypeRepository.findById(moderatorCreateNewDatasetGroupRequest.getDataset_type_id())
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.INVALID_TYPE_ID)));
+    public DatasetGroupResponse moderatorCreateNewDatasetGroup(String commune_id,long dataset_type_id) {
+        System.out.println("da vao duoc ham");
+        // --- Validate DatasetType ---
+        DatasetType datasetType = datasetTypeRepository.findById(dataset_type_id)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.INVALID_TYPE_ID));
 
-        DatasetGroup childDatasetGroup = new DatasetGroup();
-        childDatasetGroup.setParent(parentDatasetGroup);
-        parentDatasetGroup.setDatasetSourceType(DatasetSourceType.SYSTEM_DATASET);
-        childDatasetGroup.setDatasetSourceType(DatasetSourceType.SYSTEM_DATASET);
 
-        datasetGroupRepository.save(childDatasetGroup);
-        datasetGroupRepository.save(parentDatasetGroup);
+        // --- Validate Commune ---
+        Commune commune = communeRepository.findById(commune_id)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.COMMUNE_NOT_FOUND));
+
+        // --- Create Parent Group ---
+        DatasetGroup parent = new DatasetGroup();
+        parent.setDatasetGroupType(DatasetGroupType.PARENT);
+        parent.setDatasetType(datasetType);
+        parent.setProvince(commune.getProvince());
+        parent.setDatasetSourceType(DatasetSourceType.SYSTEM_DATASET);
+        parent.setUpdateAt(LocalDateTime.now());
+
+        parent = datasetGroupRepository.save(parent);
+
+        // --- Create Child Group ---
+        DatasetGroup child = new DatasetGroup();
+        child.setDatasetGroupType(DatasetGroupType.CHILD);
+        child.setDatasetType(datasetType);
+        child.setProvince(commune.getProvince());
+        child.setCommune(commune);
+        child.setParent(parent);
+        child.setDatasetSourceType(DatasetSourceType.SYSTEM_DATASET);
+        child.setUpdateAt(LocalDateTime.now());
+
+        child = datasetGroupRepository.save(child);
+
+        // --- Return DTO ---
+        return DatasetGroupResponse.builder()
+                .parentGroupId(parent.getId())
+                .childGroupId(child.getId())
+                .datasetType(datasetType.getName())
+                .province(commune.getProvince().getName())
+                .commune(commune.getName())
+                .build();
     }
 
     @Override
