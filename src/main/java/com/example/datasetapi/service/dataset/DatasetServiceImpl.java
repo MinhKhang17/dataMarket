@@ -494,12 +494,11 @@ public class DatasetServiceImpl implements DatasetService {
 
             checkoutResponseDTO.setDatasetPricing(datasetPricingDTO);
             checkoutResponseDTO.setDataset(datasetDTO);
-
-            double remaingAmount = paymentService.calRemainingAmount(datasetPricingDTO.getPrice(), consumer);
-            if (remaingAmount >= 0) {
-                checkoutResponseDTO.setEnough(true);
-            }
-            checkoutResponseDTO.setRemaining_amount(remaingAmount);
+//            double remaingAmount = paymentService.calRemainingAmount(datasetPricingDTO.getPrice(), consumer);
+//            if (remaingAmount >= 0) {
+//                checkoutResponseDTO.setEnough(true);
+//            }
+//            checkoutResponseDTO.setRemaining_amount(remaingAmount);
         }
 
         return checkoutResponseDTO;
