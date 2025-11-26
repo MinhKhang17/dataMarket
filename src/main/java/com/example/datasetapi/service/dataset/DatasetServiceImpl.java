@@ -483,8 +483,8 @@ public class DatasetServiceImpl implements DatasetService {
                 throw new CustomException(HttpStatus.PAYMENT_REQUIRED,ErrorCode.FILE_SIZE_NOT_ENOUGH);
             }
             checkoutResponseDTO.setDataset(datasetMapper.toDatasetDTO(dataset));
-            checkoutResponseDTO.setRow_amount_consumer_sub(consumerSubscription.getFileSize());
-            checkoutResponseDTO.setRow_dataset(dataset.getFileSize());
+            checkoutResponseDTO.setFileSizeOfConsumer(consumerSubscription.getFileSize());
+            checkoutResponseDTO.setFileSizeofDataset(dataset.getFileSize());
 
         } else {
             DatasetDTO datasetDTO = datasetMapper.toDatasetDTO(dataset);
@@ -1018,8 +1018,7 @@ public class DatasetServiceImpl implements DatasetService {
     public List<DatasetDTO> findAllConsumerDataset(HttpServletRequest request) {
         User user = userService.findUserById(tokenService.getUserIdFromRequest(request));
         return downloadTokenRepository.findByConsumerAndIsActive(user, true).stream()
-                .map(DownloadToken::getDataset)
-                .map(datasetMapper::toDatasetDTO)
+                .map(datasetMapper::toDatasetDownloadDTO)
                 .collect(Collectors.toList());
     }
 
