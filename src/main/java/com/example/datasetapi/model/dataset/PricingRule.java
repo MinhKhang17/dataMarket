@@ -8,6 +8,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigInteger;
+
 @Entity
 @Table(name = "Pricing_Rule")
 @Data
@@ -71,4 +73,6 @@ public class PricingRule {
     @ManyToOne(fetch = FetchType.LAZY)
     DatasetType datasetType;
 
+    @Column
+    private BigInteger fileSize;
 }

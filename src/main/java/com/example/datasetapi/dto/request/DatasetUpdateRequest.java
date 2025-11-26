@@ -3,6 +3,7 @@ package com.example.datasetapi.dto.request;
 import com.example.datasetapi.enums.Datasets.DatasetPack;
 import com.example.datasetapi.enums.Datasets.DatasetSourceType;
 import com.example.datasetapi.enums.Datasets.DatasetStatus;
+import com.example.datasetapi.model.dataset.DatasetPricing;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

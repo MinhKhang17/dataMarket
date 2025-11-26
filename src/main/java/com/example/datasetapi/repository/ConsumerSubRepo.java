@@ -1,6 +1,7 @@
 package com.example.datasetapi.repository;
 
 import com.example.datasetapi.model.dataset.PricingRule;
+import com.example.datasetapi.model.userManager.Consumer;
 import com.example.datasetapi.model.userManager.ConsumerSubscription;
 import com.example.datasetapi.model.userManager.User;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -24,4 +25,9 @@ public interface ConsumerSubRepo extends JpaRepository<ConsumerSubscription,Long
     boolean existsByConsumerAndIsActiveAndIsUsing(User consumer, boolean isActive, boolean isUsing);
 
     ConsumerSubscription findByConsumerAndIsActiveAndIsUsing(User consumer, boolean isActive, boolean isUsing);
+
+    boolean existsByConsumerAndIsActiveAndIsUsingAndPricingRule(User consumer, boolean isActive, boolean isUsing, PricingRule pricingRule);
+
+
+    Optional<ConsumerSubscription> findByConsumerAndIsActiveAndIsUsingAndPricingRule(User consumer, boolean isActive, boolean isUsing, PricingRule pricingRule);
 }

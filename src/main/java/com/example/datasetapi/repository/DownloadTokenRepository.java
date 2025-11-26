@@ -23,4 +23,6 @@ public interface DownloadTokenRepository extends JpaRepository<DownloadToken, UU
     Optional<DownloadToken> findByConsumerAndDatasetAndIsActive(User consumer, Dataset dataset, boolean b);
 
     List<DownloadToken>findByConsumerAndIsActive(User user, boolean b);
+
+    boolean existsByConsumerAndDatasetAndIsActive(User consumer, Dataset dataset, boolean b);
 }

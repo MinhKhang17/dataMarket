@@ -139,12 +139,12 @@ public class VnPayService {
                     Wallet w = new Wallet();
                     User u = userService.findUserById(uid);
                     w.setUser(u);
-                    w.setBalance(0L);
+                    w.setAmount(0L);
                     return walletRepository.save(w);
                 });
 
                 // 4. Update wallet
-                wallet.setBalance(wallet.getBalance() + points);
+                wallet.setAmount(wallet.getAmount() + points);
                 walletRepository.save(wallet);
 
                 // 5. Save transaction kèm createdAt

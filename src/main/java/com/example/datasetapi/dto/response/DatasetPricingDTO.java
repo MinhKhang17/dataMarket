@@ -10,4 +10,5 @@ public class DatasetPricingDTO {
     private PricingMethod pricingMethod;
     private double price;
     private SubType  subType;
+    private long requestLimit;
 }

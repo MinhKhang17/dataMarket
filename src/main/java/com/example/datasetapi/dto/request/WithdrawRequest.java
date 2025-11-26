@@ -6,5 +6,4 @@ import lombok.Data;
 public class WithdrawRequest {
     private Long amount;
     private Long BankAccountId;
-    private String otp;
 }

@@ -50,4 +50,5 @@ public class GuestController {
         List<PricingRuleDTO> pricingRuleDTO = priceService.getAllAPIPricingRule();
         return ResponseEntity.ok().body(new ApiResponse(true,"load success",pricingRuleDTO));
     }
+
 }

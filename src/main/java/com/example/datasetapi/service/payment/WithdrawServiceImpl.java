@@ -1,6 +1,5 @@
 package com.example.datasetapi.service.payment;
 
-import com.example.datasetapi.dto.request.BankRequest;
 import com.example.datasetapi.dto.request.ProcessWithdrawRequest;
 import com.example.datasetapi.dto.request.WithdrawRequest;
 import com.example.datasetapi.dto.response.ApiResponse;
@@ -13,9 +12,9 @@ import com.example.datasetapi.exception.ErrorCode;
 import com.example.datasetapi.model.paySystem.BankAccount;
 import com.example.datasetapi.model.paySystem.Wallet;
 import com.example.datasetapi.model.paySystem.Withdraw;
-import com.example.datasetapi.model.paySystem.WithdrawOtp;
+import com.example.datasetapi.model.paySystem.WithdrawVerifyToken;
 import com.example.datasetapi.model.userManager.User;
-import com.example.datasetapi.repository.WithdrawOtpRepository;
+import com.example.datasetapi.repository.WithdrawVerifyTokenRepository;
 import com.example.datasetapi.repository.WithdrawRepository;
 import com.example.datasetapi.service.feature.EmailService;
 import com.example.datasetapi.service.feature.ImageService;
@@ -32,7 +31,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -46,96 +47,101 @@ public class WithdrawServiceImpl implements WithdrawService {
     private final PaymentService paymentService;
     private final ImageService imageService;
     private final BankAccountService bankAccountService;
-    private final WithdrawOtpRepository otpRepository;
+    private final WithdrawVerifyTokenRepository verifyTokenRepository;
     private final EmailService emailService;
 
     @Override
-    public void sendRequestMail() {
+    public void withdrawRequest(WithdrawRequest withdrawRequest) {
         String token = tokenService.resolveToken(request);
-        if(token == null) {
-            throw new CustomException(HttpStatus.UNAUTHORIZED,ErrorCode.INVALID_TOKEN);
-        }
-        Long userId = jwtUtil.getUserIdFromToken(token);
-        if (userId == null) {
-            throw new CustomException(HttpStatus.UNAUTHORIZED,ErrorCode.UNAUTHORIZED);
-        }
+        if (token == null) throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.INVALID_TOKEN);
 
-        User user = userService.findUserById(userId);
-        emailService.sendWithdrawOtp(userId, user.getEmail());
+        Long userId = jwtUtil.getUserIdFromToken(token);
+        if (userId == null) throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED);
+
+        Wallet wallet = walletService.findWalletByUserId(userId)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.WALLET_NOT_FOUND));
+
+        Long amount = withdrawRequest.getAmount();
+        if (amount == null || amount <= 0) throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.INVALID_WITHDRAW_AMOUNT);
+        if (wallet.getAmount() < amount) throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.INSUFFICIENT_FUNDS);
+
+        BankAccount bankAccount = bankAccountService.getBankAccount(withdrawRequest.getBankAccountId());
+        if (bankAccount == null) throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.BANK_ACCOUNT_NOT_FOUND);
+        if (!bankAccount.getUser().getId().equals(userId))
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.NOT_OWNER_BANK_ACCOUNT);
+
+        String verifyToken = UUID.randomUUID().toString();
+
+        WithdrawVerifyToken tokenEntity = new WithdrawVerifyToken();
+        tokenEntity.setUserId(userId);
+        tokenEntity.setToken(verifyToken);
+        tokenEntity.setExpireAt(Instant.now().plus(10, ChronoUnit.MINUTES));
+        tokenEntity.setAmount(amount);
+        tokenEntity.setBankAccountId(bankAccount.getId());
+        tokenEntity.setUsed(false);
+
+        verifyTokenRepository.save(tokenEntity);
+        User user = wallet.getUser();
+        emailService.sendWithdrawVerifyLink(
+                userId,
+                user.getEmail(),
+                verifyToken,
+                amount,
+                bankAccount.getBankName(),
+                bankAccount.getAccountNumber(),
+                bankAccount.getAccountHolderName()
+        );
     }
 
     @Override
     @Transactional
-    public ResponseEntity<ApiResponse> withdrawRequest(WithdrawRequest withdrawRequest) {
-            String token = tokenService.resolveToken(request);
-            if(token == null) {
-                throw new CustomException(HttpStatus.UNAUTHORIZED,ErrorCode.INVALID_TOKEN);
-            }
-            Long userId = jwtUtil.getUserIdFromToken(token);
-            if (userId == null) {
-                throw new CustomException(HttpStatus.UNAUTHORIZED,ErrorCode.UNAUTHORIZED);
-            }
+    public ResponseEntity<ApiResponse> verifyRequest(String tokenValue) {
+        WithdrawVerifyToken token = verifyTokenRepository.findByToken(tokenValue)
+                .orElseThrow(() -> new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.INVALID_OTP));
 
-            WithdrawOtp otp = otpRepository.findByUserIdOrderByExpireAtDesc(userId)
-                    .orElseThrow(() -> new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.WITHDRAW_OTP_NOT_FOUND));
+        if (token.getUsed()) throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.OTP_ALREADY_USED);
+        if (Instant.now().isAfter(token.getExpireAt()))
+            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.OTP_EXPIRED);
 
-            if(!otp.getOtp().equals(withdrawRequest.getOtp())) {
-                throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.INVALID_OTP);
-            }
-            if (Instant.now().isAfter(otp.getExpireAt())) {
-                throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.OTP_EXPIRED);
-            }
+        Long userId = token.getUserId();
+        Wallet wallet = walletService.findWalletByUserId(userId)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.WALLET_NOT_FOUND));
 
-            otpRepository.delete(otp);
+        BankAccount bankAccount = bankAccountService.getBankAccount(token.getBankAccountId());
+        if (bankAccount == null) throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.BANK_ACCOUNT_NOT_FOUND);
 
-            Wallet wallet = walletService.findWalletByUserId(userId)
-                    .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND,ErrorCode.WALLET_NOT_FOUND));
+        Long amount = token.getAmount();
+        if (wallet.getAmount() < amount) throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.INSUFFICIENT_FUNDS);
 
-            if (!wallet.getUser().getId().equals(userId)) {
-                throw new CustomException(HttpStatus.FORBIDDEN, ErrorCode.FORBIDDEN);
-            }
-            Long amount = withdrawRequest.getAmount();
-            if (amount == null || amount <= 0) {
-                throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.INVALID_WITHDRAW_AMOUNT);
-            }
-            if (wallet.getBalance() < amount) {
-                throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.INSUFFICIENT_FUNDS);
-            }
+        paymentService.updateWallet(TransferType.WITHDRAW_HOLD, amount, userId, BuyType.WITHDRAW);
 
-            BankAccount bankAccount = null;
-            if(withdrawRequest.getBankAccountId() != null) {
-                bankAccount = bankAccountService.getBankAccount(withdrawRequest.getBankAccountId());
-                if(bankAccount == null) {
-                    throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.BANK_ACCOUNT_NOT_FOUND);
-                }
-                if (!bankAccount.getUser().getId().equals(userId))
-                    throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.NOT_OWNER_BANK_ACCOUNT);
-            }
+        Withdraw withdraw = new Withdraw();
+        withdraw.setUser(wallet.getUser());
+        withdraw.setWallet(wallet);
+        withdraw.setAmount(amount);
+        withdraw.setBankAccount(bankAccount);
+        withdraw.setStatus(Withdraw.Status.PENDING);
+        withdrawRepository.save(withdraw);
 
-            paymentService.updateWallet(TransferType.WITHDRAW_HOLD, amount, userId, BuyType.WITHDRAW);
+        token.setUsed(true);
+        verifyTokenRepository.save(token);
 
-
-            Withdraw withdraw = new Withdraw();
-            withdraw.setUser(wallet.getUser());
-            withdraw.setWallet(wallet);
-            withdraw.setAmount(withdrawRequest.getAmount());
-            withdraw.setBankAccount(bankAccount);
-            withdraw.setStatus(Withdraw.Status.PENDING);
-            withdrawRepository.saveAndFlush(withdraw);
-
-            return ResponseEntity.ok(new ApiResponse(true, "Success",
-                    new WithdrawResponse(
-                            withdraw.getId(),
-                            withdraw.getStatus().name(),
-                            withdraw.getAmount(),
-                            withdraw.getCreatedAt(),
-                            withdraw.getUpdatedAt(), wallet.getId(),
-                            null,
-                            null,
-                            withdraw.getBankAccount().getBankName() ,
-                            withdraw.getBankAccount().getAccountNumber(),
-                            wallet.getBalance(),
-                            wallet.getHoldBalance())));
+        return ResponseEntity.ok(new ApiResponse(true, "Withdraw created successfully",
+                new WithdrawResponse(
+                        withdraw.getId(),
+                        withdraw.getStatus().name(),
+                        withdraw.getAmount(),
+                        withdraw.getCreatedAt(),
+                        withdraw.getUpdatedAt(),
+                        wallet.getId(),
+                        withdraw.getReason(),
+                        withdraw.getProofImageUrl(),
+                        bankAccount.getBankName(),
+                        bankAccount.getAccountNumber(),
+                        wallet.getAmount(),
+                        wallet.getHoldBalance()
+                )
+        ));
     }
 
 
@@ -171,7 +177,7 @@ public class WithdrawServiceImpl implements WithdrawService {
                 withdraw.getProofImageUrl(),
                 withdraw.getBankAccount().getBankName(),
                 withdraw.getBankAccount().getAccountNumber(),
-                wallet.getBalance(),
+                wallet.getAmount(),
                 wallet.getHoldBalance()
         )));
 
@@ -205,7 +211,7 @@ public class WithdrawServiceImpl implements WithdrawService {
                 withdraw.getProofImageUrl(),
                 withdraw.getBankAccount().getBankName(),
                 withdraw.getBankAccount().getAccountNumber(),
-                wallet.getBalance(),
+                wallet.getAmount(),
                 wallet.getHoldBalance()
         )));
     }
@@ -290,7 +296,7 @@ public class WithdrawServiceImpl implements WithdrawService {
                         withdraw.getProofImageUrl(),
                         withdraw.getBankAccount().getBankName(),
                         withdraw.getBankAccount().getAccountNumber(),
-                        withdraw.getWallet().getBalance(),
+                        withdraw.getWallet().getAmount(),
                         withdraw.getWallet().getHoldBalance()
                 )
         ));

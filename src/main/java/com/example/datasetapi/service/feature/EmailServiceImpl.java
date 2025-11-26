@@ -1,7 +1,6 @@
 package com.example.datasetapi.service.feature;
 
-import com.example.datasetapi.model.paySystem.WithdrawOtp;
-import com.example.datasetapi.repository.WithdrawOtpRepository;
+import com.example.datasetapi.repository.WithdrawVerifyTokenRepository;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,15 +10,13 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Random;
 
 @Service
 public class EmailServiceImpl implements  EmailService {
     @Autowired
     private JavaMailSender mailSender;
     @Autowired
-    private WithdrawOtpRepository withdrawOtpRepository;
+    private WithdrawVerifyTokenRepository withdrawOtpRepository;
     @Value("${app.backend-url}")
     private String backendUrl;
     @Override
@@ -136,76 +133,89 @@ public class EmailServiceImpl implements  EmailService {
     }
 
     @Override
-    public void sendWithdrawOtp(Long userId, String email) {
+    public void sendWithdrawVerifyLink(Long userId, String email, String token,
+                                       Long amount, String bankName, String accountNumber,
+                                       String bankHolderName) {
         try {
-            // Tạo OTP
-            String otp = String.valueOf(100000 + new Random().nextInt(900000));
-
-            WithdrawOtp withdrawOtp = new WithdrawOtp();
-            withdrawOtp.setUserId(userId);
-            withdrawOtp.setOtp(otp);
-            withdrawOtp.setExpireAt(Instant.now().plus(5, ChronoUnit.MINUTES));
-            withdrawOtpRepository.save(withdrawOtp);
-
-            // Tạo email
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
             helper.setTo(email);
-            helper.setSubject("Mã xác thực rút tiền (OTP) – Có hiệu lực 5 phút");
+            helper.setSubject("Confirm Your Withdrawal Request");
 
-            String htmlContent = """
+            String verifyLink = backendUrl + "/api/payment/withdraw/verify?token=" + token;
+
+            String html = """
             <div style="font-family: Arial, sans-serif; background: #f5f6fa; padding: 25px;">
-                <div style="max-width: 600px; margin: auto; background: white; padding: 25px;
-                            border-radius: 12px; box-shadow: 0 3px 12px rgba(0,0,0,0.12);">
+                <div style="max-width: 650px; margin: auto; background: white; padding: 25px;
+                            border-radius: 12px; box-shadow: 0 3px 12px rgba(0,0,0,0.1);">
 
-                    <h2 style="color:#333; text-align:center; margin-bottom: 15px;">
-                        Xác minh yêu cầu rút tiền
+                    <h2 style="text-align:center; color:#333; margin-bottom: 20px;">
+                        Confirm Your Withdrawal Request
                     </h2>
 
-                    <p style="font-size: 15px; color:#444;">
-                        Chúng tôi đã nhận được yêu cầu rút tiền từ tài khoản có email:
-                        <strong>""" + email + """
-                    </strong>
+                    <p style="font-size: 15px; color:#444; line-height: 1.5;">
+                        A withdrawal request has been submitted from your account.  
+                        Please review the transaction details below:
                     </p>
 
-                    <p style="font-size: 15px; color:#444; margin-top: 10px;">
-                        Vui lòng nhập mã OTP bên dưới để xác nhận giao dịch:
-                    </p>
-
-                    <div style="text-align:center; margin: 25px 0;">
-                        <div style="display: inline-block; padding: 15px 25px; 
-                                    background: #007bff; color: white; 
-                                    font-size: 28px; letter-spacing: 4px;
-                                    border-radius: 8px; font-weight: bold;">
-                            """ + otp + """
-                        </div>
+                    <div style="background:#f0f3f8; padding: 18px; border-radius: 10px; margin: 20px 0;">
+                        <p style="margin: 6px 0; font-size:15px;">
+                            <strong>Amount:</strong> """ + String.format("%,d", amount) + """ 
+                        VND
+                        </p>
+                        <p style="margin: 6px 0; font-size:15px;">
+                            <strong>Bank:</strong> """ + bankName + """
+                        </p>
+                        <p style="margin: 6px 0; font-size:15px;">
+                            <strong>Account Number:</strong> """ + accountNumber + """
+                        </p>
+                        <p style="margin: 6px 0; font-size:15px;">
+                            <strong>Account Holder:</strong> """ + bankHolderName + """
+                        </p>
+                        <p style="margin: 6px 0; font-size:15px;">
+                            <strong>Requested At:</strong> """ + Instant.now().toString() + """
+                        </p>
                     </div>
 
-                    <p style="font-size: 14px; color:#555; text-align:center;">
-                        Mã OTP này có hiệu lực trong <strong>5 phút</strong>.
+                    <p style="font-size: 15px; color:#444; line-height:1.5;">
+                        If this information is correct, click the button below to confirm and complete your withdrawal.
                     </p>
 
-                    <p style="font-size: 13px; color:#777; text-align:center; margin-top: 20px;">
-                        Nếu bạn không thực hiện yêu cầu này, vui lòng bảo mật tài khoản và liên hệ hỗ trợ ngay.
+                    <div style="text-align:center; margin: 30px 0;">
+                        <a href='""" + verifyLink + """
+                           '
+                           style="background:#007bff; color:white; padding:14px 28px;
+                                  text-decoration:none; border-radius:8px;
+                                  font-size:16px; font-weight:bold; display:inline-block;">
+                            ✔ Confirm Withdrawal
+                        </a>
+                    </div>
+
+                    <p style="font-size: 13px; color:#666;">
+                        If the button doesn't work, use this link:
+                    </p>
+
+                    <p style="font-size: 13px; word-break:break-all; color:#1a73e8;">
+                        """ + verifyLink + """
                     </p>
 
                     <hr style="margin-top:25px;">
                     <p style="font-size: 12px; color:#999; text-align:center;">
-                        Đây là email tự động, vui lòng không phản hồi.
+                        If you didn't make this request, please contact support immediately.<br>
+                        This is an automated email — do not reply.
                     </p>
                 </div>
             </div>
-            """;
+        """;
 
-            helper.setText(htmlContent, true);
+            helper.setText(html, true);
             helper.setFrom("itsportfpt@gmail.com");
-
             mailSender.send(message);
-            System.out.println("OTP đã được gửi tới: " + email);
 
-        } catch (Exception e) {
-            throw new RuntimeException("Không thể gửi OTP: " + e.getMessage());
+        } catch (Exception e){
+            throw new RuntimeException("Failed to send verification email: " + e.getMessage());
         }
     }
+
 }

@@ -98,7 +98,7 @@ public class SecurityConfig {
                                 "/api/moderation/**",
                                 "/api/location/**",
                                 "/api/auth/**" ,
-                                "api/**"// <-- thêm slash
+                                "api/dataset/api/data"// <-- thêm slash
                         ).permitAll()
                         // NOTE: không permitAll() cho admin endpoints!
                         // .requestMatchers("/api/admin/**").hasRole("ADMIN")

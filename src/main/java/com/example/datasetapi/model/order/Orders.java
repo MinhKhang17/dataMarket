@@ -10,12 +10,11 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Entity
-@Table
+@Table(name = "orders")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-
+@Entity
 public class Orders {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -6,8 +6,10 @@ import com.example.datasetapi.model.dataset.Category;
 import com.example.datasetapi.model.dataset.DatasetType;
 import lombok.Data;
 
+import java.math.BigInteger;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @Data
 public class DatasetDTO {
@@ -24,4 +26,7 @@ public class DatasetDTO {
     private LocalDate date;
     private long row_amount;
     private DatasetSourceType datasetType;
+    private BigInteger fileSize;
+    private List<String> previewHeaders;
+    private List<Map<String, String>> previewRows;
 }

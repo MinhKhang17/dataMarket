@@ -229,7 +229,7 @@ public class UserServiceImpl implements UserService {
         // lưu user
         try {
             userRepository.save(user);
-//            emailService.sendVerfiMail  (tokenService.generateVerifyEmailToken(user),user.getEmail());
+//            emailService.sendVerfiMail(tokenService.generateVerifyEmailToken(user),user.getEmail());
             walletService.createWallet(user);
 
         } catch (Exception e) {
@@ -352,7 +352,7 @@ public class UserServiceImpl implements UserService {
                     .orElseThrow(() -> new RuntimeException("Wallet not found for userId: " + userId));
 
             return ResponseEntity.ok(
-                    new ApiResponse(true, "Wallet Amount Available", wallet.getBalance())
+                    new ApiResponse(true, "Wallet Amount Available", wallet.getAmount())
             );
 
         } catch (Exception e) {

@@ -22,15 +22,15 @@ public class WithdrawController {
     private final WithdrawService withdrawService;
     private final EmailService emailService;
 
-    @PostMapping("verify-code")
-    public ResponseEntity<?> sendRequestOtp(){
-        withdrawService.sendRequestMail();
-        return ResponseEntity.ok().body(new ApiResponse(true, "Send mail success", null));
+    @PostMapping("/verify")
+    public ResponseEntity<ApiResponse> verifyRequest(@RequestParam("token") String tokenValue) {
+        return withdrawService.verifyRequest(tokenValue);
     }
 
     @PostMapping("/request")
     public ResponseEntity<ApiResponse> withdrawRequest(@RequestBody WithdrawRequest withdrawRequest) {
-        return withdrawService.withdrawRequest(withdrawRequest);
+        withdrawService.withdrawRequest(withdrawRequest);
+        return ResponseEntity.ok().body(new ApiResponse(true, "Verification email sent", null));
     }
 
 

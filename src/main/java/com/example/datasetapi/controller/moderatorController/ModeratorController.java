@@ -52,7 +52,7 @@ public class ModeratorController {
 
     @PreAuthorize("hasRole('MODERATOR')")
     @PostMapping("dataset-group")
-    public ResponseEntity<?> CreateDatasetGroup(@RequestParam ModeratorCreateNewDatasetGroupRequest moderatorCreateNewDatasetGroupRequest, HttpServletRequest request) {
+    public ResponseEntity<?> CreateDatasetGroup(@RequestBody ModeratorCreateNewDatasetGroupRequest moderatorCreateNewDatasetGroupRequest, HttpServletRequest request) {
         datasetService.moderatorCreateNewDatasetGroup(moderatorCreateNewDatasetGroupRequest);
         return ResponseEntity.ok().build();
     }

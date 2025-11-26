@@ -15,6 +15,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -121,6 +122,8 @@ public class Dataset {
     @JoinColumn(name = "time_group_id")
     @JsonIgnore
     private TimeGroup timeGroup;
+    @Column
+    private BigInteger fileSize;
 
     @OneToMany(mappedBy = "dataset", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore

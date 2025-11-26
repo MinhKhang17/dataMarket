@@ -25,6 +25,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Instant;
@@ -136,32 +138,34 @@ public class DataInitializer implements CommandLineRunner {
         r3.setNote("Gói lớn cho nhu cầu cao");
         rules.add(r3);
 
-        // SUBSCRIPTION - Free tier
+        // SUBSCRIPTION - Small pack
         PricingRule r4 = new PricingRule();
         r4.setMethod(PricingMethod.SUBSCRIPTION);
-        r4.setPlanName("Free tier");
-        r4.setBasePricePoint(0.0);
+        r4.setPlanName("Small pack");
+        r4.setBasePricePoint(200000.0);
         r4.setRowLimit(50000L);
         r4.setTimeLimitDay(30);
         r4.setExtraCostPer1rowpoint(4.0);
         r4.setAllowOverage(true);
         r4.setProviderShare(40);
         r4.setPlatformShare(60);
+        r4.setFileSize(new BigInteger("500000000"));
         r4.setSubType(SubType.SMALL);
-        r4.setNote("Gói cơ bản");
+        r4.setNote("Gói nhỏ cơ bản - trong 1 tháng ");
         rules.add(r4);
 
         // SUBSCRIPTION - Basic Monthly
         PricingRule r5 = new PricingRule();
         r5.setMethod(PricingMethod.SUBSCRIPTION);
         r5.setPlanName("Basic Monthly");
-        r5.setBasePricePoint(1500000.0);
+        r5.setBasePricePoint(500000.0);
         r5.setRowLimit(50000L);
-        r5.setTimeLimitDay(30);
+        r5.setTimeLimitDay(90);
         r5.setExtraCostPer1rowpoint(4.0);
         r5.setAllowOverage(true);
         r5.setProviderShare(40);
         r5.setPlatformShare(60);
+        r5.setFileSize(new BigInteger("2000000000"));
         r5.setSubType(SubType.MEDIUM);
         r5.setNote("Gói thuê bao 1 tháng \n Thoải mái download dataset không giới hạn");
         rules.add(r5);
@@ -172,13 +176,14 @@ public class DataInitializer implements CommandLineRunner {
         r6.setPlanName("Premium");
         r6.setBasePricePoint(2500000.0);
         r6.setRowLimit(200000L);
-        r6.setTimeLimitDay(60);
+        r6.setTimeLimitDay(360);
         r6.setExtraCostPer1rowpoint(3.0);
         r6.setDiscountPercent(5);
         r6.setAllowOverage(true);
         r6.setProviderShare(35);
         r6.setPlatformShare(65);
         r6.setSubType(SubType.LARGE);
+        r6.setFileSize(new BigInteger("5000000000"));
         r6.setNote("Gói thuê bao 3 tháng \nThoải mái tải dataset\n Có dashboard thể hiện thông tin được tổng hợp bằng AI ");
         rules.add(r6);
 
@@ -553,7 +558,7 @@ public class DataInitializer implements CommandLineRunner {
 
         Wallet wallet = new Wallet();
         wallet.setUser(user);
-        wallet.setBalance(1000000000);
+        wallet.setAmount(1000000000);
         wallet.setHoldBalance(0.0);
 
         BankAccount bankAccount = new BankAccount();

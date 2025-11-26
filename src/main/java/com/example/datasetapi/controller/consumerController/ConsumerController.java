@@ -16,6 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("api/consumer/")
@@ -51,18 +52,13 @@ public class ConsumerController {
     @PostMapping("/dataset/api/buying")
     public ResponseEntity<ApiResponse> buyAPiDataset(
             @ModelAttribute ConsumerBuyRequestDTO buyRequestDTO,
-            @RequestParam(value = "isHaveSub", required = false, defaultValue = "false") boolean isHaveSub,
-            @RequestParam(value = "subType", required = false) String subType,
             HttpServletRequest request) {
 
         try {
             // set các thông tin từ query/params vào DTO nếu cần
-            buyRequestDTO.setIsHaveSub(isHaveSub);
-            buyRequestDTO.setSubType(subType);
-            if (subType != null && !subType.isBlank()) {
-                buyRequestDTO.setSubType(subType);
-            }
 
+            buyRequestDTO.setIsHaveSub(false);
+            buyRequestDTO.setSubType(null);
             ConsumerBuyResponseDTO consumerBuyResponseDTO = datasetService.buyAPIPack(buyRequestDTO, request);
 
             if (consumerBuyResponseDTO == null) {
@@ -117,12 +113,12 @@ public class ConsumerController {
         ConsumerBuyResponseDTO consumerBuyResponseDTO = datasetService.buyWithTimeGroup(timeGroupId,request);
         return ResponseEntity.ok().body(new ApiResponse(true,"Download token ",consumerBuyResponseDTO));
     }
-    @PreAuthorize("hasRole('CONSUMER')")
-    @PostMapping("group/sub/buy")
-    public ResponseEntity<ApiResponse> BuySubGroup(@RequestParam long timeGroupId, HttpServletRequest request){
-        ConsumerBuyResponseDTO consumerBuyResponseDTO = datasetService.buyTimeGroupWithSub(timeGroupId,request);
-        return ResponseEntity.ok().body(new ApiResponse(true,"Sub buy ",consumerBuyResponseDTO));
-    }
+//    @PreAuthorize("hasRole('CONSUMER')")
+//    @PostMapping("group/sub/buy")
+//    public ResponseEntity<ApiResponse> BuySubGroup(@RequestParam long timeGroupId, HttpServletRequest request){
+//        ConsumerBuyResponseDTO consumerBuyResponseDTO = datasetService.buyTimeGroupWithSub(timeGroupId,request);
+//        return ResponseEntity.ok().body(new ApiResponse(true,"Sub buy ",consumerBuyResponseDTO));
+//    }
 
     @PreAuthorize("hasRole('CONSUMER')")
     @PostMapping("apipack/buy")
@@ -154,6 +150,11 @@ public class ConsumerController {
     @GetMapping("api/token")
     public ResponseEntity<?> viewApiToken(){
         return  ResponseEntity.ok().body(datasetService.findAllTokenForConsumer());
+    }
+    @PreAuthorize("hasRole('CONSUMER')")
+    @GetMapping("api/token/detail")
+    public ResponseEntity<?> viewApiTokenDetail(@RequestParam UUID token_id){
+        return ResponseEntity.ok().body(datasetService.findTokenById(token_id));
     }
 //    @PostMapping("dataset/sub/buy")
 //    public ResponseEntity<ApiResponse> buyDatasetWithSub(@RequestBody long datasetId,HttpServletRequest request){

@@ -28,6 +28,7 @@ import com.example.datasetapi.util.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +41,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -98,10 +101,17 @@ public class DatasetServiceImpl implements DatasetService {
     private FileService fileService;
     @Autowired
     private DatasetPlanRepo datasetPlanRepo;
+    @Autowired private PricingRuleRepo pricingRuleRepo;
+    @Autowired private  DatasetPreviewRepository datasetPreviewRepository;
+    @Autowired  private  ObjectMapper objectMapper;
 
+    // Số dòng preview mặc định (không tính header)
+    private static final int DEFAULT_PREVIEW_ROWS = 10;
     @Value("${app.upload.base}")
     private String UPLOAD_BASE;
     private static final Logger logger = LoggerFactory.getLogger(DatasetServiceImpl.class);
+    @Autowired
+    private ApiAccessTokenRepository apiAccessTokenRepository;
 
     @PostConstruct
     public void initUploadDirs() {
@@ -199,7 +209,7 @@ public class DatasetServiceImpl implements DatasetService {
             dataset.setDescription(request.getDescription());
             dataset.setRowCount(dataset.getRowCount());
             dataset.setCommune(commune);
-
+            dataset.setFileSize(new BigInteger(String.valueOf(fileFromRequest.getSize())));
             setDatasetPack(dataset);
 
             if (datasetSourceType.equals(DatasetSourceType.DATASET_PROVIDER)) {
@@ -213,6 +223,7 @@ public class DatasetServiceImpl implements DatasetService {
                 dataset.setDatasetStatus(DatasetStatus.APPROVE);
             }
 
+            // save early so dataset has an id for preview FK
             dataset = datasetRepository.saveAndFlush(dataset);
 
             if (!datasetSourceType.equals(DatasetSourceType.DATASET_PROVIDER)) {
@@ -256,7 +267,6 @@ public class DatasetServiceImpl implements DatasetService {
             dataset.setTimeGroup(timeGroup);
             dataset.setDatasetTime(datasetDate);
 
-//            File sourceFile = new File(dataset.getFileUrl());
             Dataset datasetWithFileInfo;
 
             if (datasetSourceType.equals(DatasetSourceType.DATASET_PROVIDER)) {
@@ -267,6 +277,20 @@ public class DatasetServiceImpl implements DatasetService {
 
             dataset.setFileKey(datasetWithFileInfo.getFileKey());
             dataset.setFileUrl(datasetWithFileInfo.getFileUrl());
+
+            // --- TẠO PREVIEW NGAY SAU KHI FILE ĐƯỢC LƯU ---
+            try {
+                Optional<DatasetPreview> previewOpt = createAndSavePreviewFromMultipart(fileFromRequest, dataset);
+                if (previewOpt.isPresent()) {
+                    logger.info("Preview created for dataset id={}", dataset.getId());
+                } else {
+                    logger.warn("Preview creation returned empty for dataset id={}", dataset.getId());
+                }
+            } catch (Exception ex) {
+                logger.warn("Failed to create preview for dataset id={} : {}", dataset.getId(), ex.getMessage());
+                // không ném tiếp để không block flow chính — preview là optional
+            }
+            // ---------------------------------------------
 
             logger.info("Dataset [{}] uploaded successfully (source: {})", dataset.getTitle(), datasetSourceType);
 
@@ -281,18 +305,8 @@ public class DatasetServiceImpl implements DatasetService {
             logger.error("Error while processing dataset creation: {}", e.getMessage(), e);
             throw new RuntimeException("Error while creating dataset and groups", e);
         }
-//        finally {
-//            try {
-//
-//                System.out.println("-----------------------------------------\n" +
-//                        "Deleted dataset\n" +
-//                        "-----------------------------------------");
-//                Files.deleteIfExists(Paths.get(UPLOAD_BASE+"TEMP"+dataset.getName()));
-//            } catch (IOException e) {
-//                System.err.println("Can not delete current file: " + e.getMessage());
-//            }
-//        }
     }
+
     private DatasetGroup createParentDatasetGroup(Commune commune, DatasetType datasetType, DatasetSourceType datasetSourceType) {
         DatasetGroup parent = new DatasetGroup();
         parent.setDatasetGroupType(DatasetGroupType.PARENT);
@@ -449,7 +463,11 @@ public class DatasetServiceImpl implements DatasetService {
         Dataset temp = datasetRepository.findById(datasetId)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_NOT_FOUND));
         DatasetGroup datasetGroupOfDataset = temp.getDatasetChildGroup().getParent();
-        return datasetMapper.toDatasetParentReposonseDto(datasetGroupOfDataset);
+        DatasetDTO datasetDTO = datasetMapper.toDatasetDTO(temp);
+        DatasetParentReposonseDto datasetParentReposonseDto = datasetMapper.toDatasetParentReposonseDto(datasetGroupOfDataset);
+        datasetParentReposonseDto.getDatasetChildGroups().get(0).getDatasetDtoList().remove(0);
+        datasetParentReposonseDto.getDatasetChildGroups().get(0).getDatasetDtoList().add(datasetDTO);
+        return datasetParentReposonseDto;
     }
 
     @Override
@@ -463,12 +481,15 @@ public class DatasetServiceImpl implements DatasetService {
         if(checkoutRequestDTO.getIsHaveSub()){
             ConsumerSubscription consumerSubscription = consumerSubRepo.findByConsumerAndIsUsing(consumer, true)
                     .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.CONSUMER_SUB_NOT_FOUND));
+            if(consumerSubscription.getFileSize().compareTo(dataset.getFileSize()) < 0){
+                throw new CustomException(HttpStatus.PAYMENT_REQUIRED,ErrorCode.FILE_SIZE_NOT_ENOUGH);
+            }
+            checkoutResponseDTO.setDataset(datasetMapper.toDatasetDTO(dataset));
+            checkoutResponseDTO.setRow_amount_consumer_sub(consumerSubscription.getFileSize());
+            checkoutResponseDTO.setRow_dataset(dataset.getFileSize());
 
-            checkoutResponseDTO.setDataset(datasetMapper.toDatasetForCheckoutDTO(dataset));
-            checkoutResponseDTO.setRow_amount_consumer_sub(consumerSubscription.getRow_amount());
-            checkoutResponseDTO.setRow_dataset(dataset.getRowCount());
         } else {
-            DatasetDTO datasetDTO = datasetMapper.toDatasetForCheckoutDTO(dataset);
+            DatasetDTO datasetDTO = datasetMapper.toDatasetDTO(dataset);
             DatasetPricing datasetPricing = datasetPricingRepository.findById(checkoutRequestDTO.getDatasetPricingId())
                     .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_NOT_FOUND));
             DatasetPricingDTO datasetPricingDTO = datasetMapper.toDatasetPricingDTO(datasetPricing);
@@ -506,9 +527,13 @@ public class DatasetServiceImpl implements DatasetService {
     public ConsumerBuyResponseDTO subRegister(long pricingSubRuleId, HttpServletRequest request) {
         User consumer = userService.findUserById(tokenService.getUserIdFromRequest(request));
         PricingRule pricingRule = priceService.findSubPricingRuleById(pricingSubRuleId);
+        Optional<ConsumerSubscription> oldConsumerSub = consumerSubRepo.findByConsumerAndIsActiveAndIsUsingAndPricingRule(consumer,true,true,pricingRule);
+        BigInteger oldFileSize = new BigInteger("0");
 
-        if(consumerSubRepo.existsByPricingRuleAndConsumerAndIsActive(pricingRule, consumer, true)){
-            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.EXISTS_SUB);
+        if(oldConsumerSub.isPresent()){
+                 oldFileSize = oldConsumerSub.get().getFileSize();
+                oldConsumerSub.get().setActive(false);
+                consumerSubRepo.save(oldConsumerSub.get());
         }
 
         paymentService.updateWallet(TransferType.PAYOUT, Double.parseDouble(String.valueOf(pricingRule.getBasePricePoint())), tokenService.getUserIdFromRequest(request), BuyType.BUY_SUB);
@@ -524,21 +549,14 @@ public class DatasetServiceImpl implements DatasetService {
         consumerSubscription.setConsumer(consumer);
         consumerSubscription.setExpiresAt(LocalDateTime.now().plusDays(pricingRule.getTimeLimitDay()));
         consumerSubscription.setSubType(pricingRule.getSubType());
-        consumerSubscription.setRow_amount(pricingRule.getRowLimit());
+        consumerSubscription.setFileSize(pricingRule.getFileSize());
         consumerSubscription.setActive(true);
         consumerSubscription.setUsing(true);
-
-        String name = null;
-        if(pricingRule.getSubType().name().equalsIgnoreCase("MEDIUM")){
-            name = "Basic Monthly";
-        }
-        if(pricingRule.getSubType().name().equalsIgnoreCase("LARGE")){
-            name = "Premium";
-        }
+        consumerSubscription.setFileSize(pricingRule.getFileSize().add(oldFileSize));
 
         OrderRequest item = new OrderRequest();
         item.setDatasetId(0L);
-        item.setItemName(name);
+        item.setItemName(pricingRule.getPlanName());
         item.setPrice(pricingRule.getBasePricePoint());
         item.setSubType(pricingRule.getSubType());
         item.setPricingMethod(PricingMethod.SUBSCRIPTION);
@@ -611,17 +629,20 @@ public class DatasetServiceImpl implements DatasetService {
         ConsumerSubscription consumerSubscription = consumerSubRepo.findByConsumerAndIsUsing(consumer, true)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.SUB_NOT_FOUND));
 
-        long datasetRow = dataset.getRowCount();
+        BigInteger fileSize = dataset.getFileSize();
 
-        if(consumerSubscription.getRow_amount() < datasetRow){
-            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.SUB_ROW_NOT_ENOUGH);
+        if(downloadTokenRepository.existsByConsumerAndDatasetAndIsActive(consumer,dataset,true)){
+            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.DATASET_BOUGHT);
         }
 
+        if(consumerSubscription.getFileSize().compareTo(fileSize) <= 0){
+            throw  new CustomException(HttpStatus.PAYMENT_REQUIRED,ErrorCode.FILE_SIZE_NOT_ENOUGH);
+        }
         if (consumerSubscription.getExpiresAt().isBefore(LocalDateTime.now())) {
             throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.SUB_EXPIRED);
         }
 
-        buyWithSubProcess(consumerSubscription, datasetRow);
+        buyWithSubProcess(consumerSubscription, fileSize);
 
         DownloadToken downloadToken = jwtUtil.generateDowloadToken(consumer, dataset, 30, 10, null);
         consumer.getDownloadTokens().add(downloadToken);
@@ -630,7 +651,7 @@ public class DatasetServiceImpl implements DatasetService {
         OrderRequest orderReq = new OrderRequest();
         orderReq.setDatasetId(dataset.getId());
         orderReq.setItemName(dataset.getName());
-        orderReq.setPrice(datasetRow);
+        orderReq.setPrice(dataset.getFileSize().longValue());
         orderReq.setPricingMethod(PricingMethod.SUBSCRIPTION);
         orderReq.setSubType(null);
 
@@ -646,7 +667,7 @@ public class DatasetServiceImpl implements DatasetService {
     }
 
     private ConsumerBuyResponseDTO createOneTimePayment(Dataset dataset, DatasetPricing pricing, User consumer) {
-        if (downloadTokenRepository.findByConsumerAndDatasetAndIsActive(consumer, dataset, true).isPresent()) {
+        if (downloadTokenRepository.existsByConsumerAndDatasetAndIsActive(consumer, dataset, true)) {
             throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.DATASET_BOUGHT);
         }
 
@@ -831,30 +852,6 @@ public class DatasetServiceImpl implements DatasetService {
     }
 
     @Override
-    public ConsumerBuyResponseDTO buyTimeGroupWithSub(long timeGroupId, HttpServletRequest request) {
-        TimeGroup timeGroup = timeGroupRepository.findById(timeGroupId)
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.TIME_GROUP_NOT_FOUND));
-
-        User consumer = userService.findUserById(tokenService.getUserIdFromRequest(request));
-
-        ConsumerSubscription consumerSubscription = consumerSubRepo.findByConsumerAndIsUsing(consumer, true)
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.SUB_NOT_FOUND));
-
-        long timeGroupRowCount = timeGroup.getRow_Count();
-
-        buyWithSubProcess(consumerSubscription, timeGroupRowCount);
-
-        DownloadToken downloadToken = jwtUtil.generateDowloadToken(consumer, null, 30, 10, timeGroup);
-
-        return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.BUY_WITH_TIME_GROUP, downloadToken);
-    }
-
-    @Override
-    public ConsumerBuyResponseDTO buyGroupByAPI(long timeGroupId, HttpServletRequest request) {
-        return null;
-    }
-
-    @Override
     public ConsumerBuyResponseDTO buyApiPack(long apiPackId, HttpServletRequest request) {
         PricingRule pricingRule = priceService.findApiPricingRuleById(apiPackId);
         User user = userService.findUserById(tokenService.getUserIdFromRequest(request));
@@ -867,13 +864,13 @@ public class DatasetServiceImpl implements DatasetService {
         return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.API, downloadToken);
     }
 
-    public void buyWithSubProcess(ConsumerSubscription consumerSubscription, long rowCount){
-        long rowCountConsumer = consumerSubscription.getRow_amount();
+    public void buyWithSubProcess(ConsumerSubscription consumerSubscription, BigInteger rowCount){
+        BigInteger fileSize = consumerSubscription.getFileSize();
 
-        if(rowCountConsumer < rowCount){
+        if(fileSize.compareTo(rowCount) <= 0){
             throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.SUB_ROW_NOT_ENOUGH);
         }
-        consumerSubscription.setRow_amount(rowCountConsumer - rowCount);
+        consumerSubscription.setFileSize(fileSize.subtract(rowCount));
         consumerSubRepo.save(consumerSubscription);
     }
 
@@ -1016,15 +1013,6 @@ public class DatasetServiceImpl implements DatasetService {
     }
 
     @Override
-    public ConsumerBuyResponseDTO buyDatasetWithSub(long datasetId, HttpServletRequest request) {
-        User user = userService.findUserById(tokenService.getUserIdFromRequest(request));
-
-        ConsumerSubscription consumerSubscription = consumerSubRepo.findByConsumerAndIsUsing(user, true)
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.SUB_NOT_FOUND));
-        return null;
-    }
-
-    @Override
     public void moderatorCreateNewDatasetGroup(ModeratorCreateNewDatasetGroupRequest moderatorCreateNewDatasetGroupRequest) {
         DatasetGroup parentDatasetGroup = new DatasetGroup();
         parentDatasetGroup.setDatasetType(datasetTypeRepository.findById(moderatorCreateNewDatasetGroupRequest.getDataset_type_id())
@@ -1144,6 +1132,7 @@ public class DatasetServiceImpl implements DatasetService {
 
         Dataset saved = datasetRepository.save(dataset);
 
+
         return new DatasetUpdateResponse(
                 saved.getId(),
                 saved.getName(),
@@ -1214,26 +1203,23 @@ public class DatasetServiceImpl implements DatasetService {
 
     @Override
     public ConsumerBuyResponseDTO buyAPIPack(ConsumerBuyRequestDTO buyRequestDTO, HttpServletRequest request) {
-        DatasetPricing datasetPricing = datasetPricingRepository.findById(buyRequestDTO.getDatasetPricingId()).orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.API_PACK_NOT_FOUND));
-        Dataset dataset = datasetRepository.findById(buyRequestDTO.getDatasetId()).orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
+        PricingRule datasetPricing = pricingRuleRepo.findById(buyRequestDTO.getPricingRuleId())
+                .orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.API_PACK_NOT_FOUND));
+
+        Dataset dataset = datasetRepository.findById(buyRequestDTO.getDatasetId())
+                .orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
+
         double price = 0.0;
         String apiToken="";
-        if(buyRequestDTO.getSubType()==null) {
+
             System.out.println(buyRequestDTO.getDatasetPricingId());
-            price = datasetPricing.getPrice();
+            price = datasetPricing.getBasePricePoint();
 
             paymentService.updateWallet(TransferType.PAYOUT, price, tokenService.getUserIdFromRequest(request), BuyType.BUY_API);
 
-            apiToken = jwtUtil.generateApiSaleToken(userService.findUserById(tokenService.getUserIdFromRequest(request)), dataset, 31L, datasetPricing.getPricingRule().getRequestLimit());
-        }
-        else {
-            if (buyRequestDTO.getSubType().equalsIgnoreCase("LARGE")) {
-                if (!consumerSubRepo.existsByConsumerAndIsActiveAndIsUsing(userService.findUserById(tokenService.getUserIdFromRequest(request)), true, true)) {
-                    throw new CustomException(HttpStatus.NOT_FOUND, ErrorCode.CONSUMER_SUB_NOT_FOUND);
-                }
-                 apiToken = jwtUtil.generateApiSaleToken(userService.findUserById(tokenService.getUserIdFromRequest(request)), dataset, 31L, datasetPricing.getPricingRule().getRequestLimit());
-            }
-        }
+            apiToken = jwtUtil.generateApiSaleToken(userService.findUserById(tokenService.getUserIdFromRequest(request)), dataset, 31L, datasetPricing.getRequestLimit());
+
+
         List<OrderRequest> orderRequests = new ArrayList<>();
         OrderRequest orderRequest = new OrderRequest();
         orderRequest.setDatasetId(dataset.getId());
@@ -1306,9 +1292,128 @@ public class DatasetServiceImpl implements DatasetService {
         return tokenService.findAllDownloadTokenForConsumer(userService.findUserById(tokenService.getUserIdFromRequest(request))).stream().map(datasetMapper::toApiTokenResponse).collect(Collectors.toList());
     }
 
+    @Override
+    public String findTokenById(UUID tokenId) {
+        return tokenService.findAccessTokenById(tokenId);
+
+    }
+
 
     @Override
     public List<Dataset> findAllByStatus(DatasetStatus datasetStatus) {
         return datasetRepository.findAllByDatasetStatus(datasetStatus);
+    }
+
+    @Transactional
+    public Optional<DatasetPreview> createAndSavePreviewFromMultipart(MultipartFile multipartFile,
+                                                                      com.example.datasetapi.model.dataset.Dataset dataset) {
+        return createAndSavePreviewFromMultipart(multipartFile, dataset, DEFAULT_PREVIEW_ROWS);
+    }
+
+    @Transactional
+    public Optional<DatasetPreview> createAndSavePreviewFromMultipart(MultipartFile multipartFile,
+                                                                      com.example.datasetapi.model.dataset.Dataset dataset,
+                                                                      int maxRows) {
+        File tmpFile = null;
+        try {
+            // 1. Tạo temp file và copy nội dung MultipartFile vào đó bằng stream (KHÔNG dùng multipartFile.transferTo)
+            tmpFile = File.createTempFile("dataset-upload-", ".csv");
+            try (InputStream in = multipartFile.getInputStream()) {
+                // copy stream to tmpFile
+                Files.copy(in, tmpFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            // 2. Đọc header + maxRows từ tmpFile
+            try (BufferedReader br = Files.newBufferedReader(tmpFile.toPath(), StandardCharsets.UTF_8)) {
+                String headerLine = br.readLine();
+                if (headerLine == null) {
+                    logger.warn("Preview: file empty for dataset id={}", dataset.getId());
+                    DatasetPreview previewEmpty = new DatasetPreview();
+                    previewEmpty.setDataset(dataset);
+                    previewEmpty.setHeadersJson(objectMapper.writeValueAsString(Collections.emptyList()));
+                    previewEmpty.setRowsJson(objectMapper.writeValueAsString(Collections.emptyList()));
+                    previewEmpty.setCreatedAt(LocalDateTime.now());
+                    previewEmpty.setUpdatedAt(LocalDateTime.now());
+                    datasetPreviewRepository.save(previewEmpty);
+                    return Optional.of(previewEmpty);
+                }
+
+                List<String> headers = Arrays.stream(splitCSVLine(headerLine))
+                        .map(this::unquote)
+                        .collect(Collectors.toList());
+
+                List<Map<String, String>> rows = new ArrayList<>();
+                String line;
+                int count = 0;
+                while ((line = br.readLine()) != null && count < maxRows) {
+                    String[] parts = splitCSVLine(line);
+                    Map<String, String> rowMap = new LinkedHashMap<>();
+                    for (int i = 0; i < headers.size(); i++) {
+                        String key = headers.get(i);
+                        String val = i < parts.length ? unquote(parts[i]) : "";
+                        rowMap.put(key, val);
+                    }
+                    rows.add(rowMap);
+                    count++;
+                }
+
+                // 3. Serialize JSON strings
+                String headersJson = objectMapper.writeValueAsString(headers);
+                String rowsJson = objectMapper.writeValueAsString(rows);
+
+                // 4. Build and save DatasetPreview
+                DatasetPreview preview = new DatasetPreview();
+                preview.setDataset(dataset);
+                preview.setHeadersJson(headersJson);
+                preview.setRowsJson(rowsJson);
+                preview.setCreatedAt(LocalDateTime.now());
+                preview.setUpdatedAt(LocalDateTime.now());
+
+                DatasetPreview saved = datasetPreviewRepository.saveAndFlush(preview);
+                logger.info("Created dataset preview id={} for dataset id={}", saved.getId(), dataset.getId());
+                return Optional.of(saved);
+            }
+
+        } catch (Exception ex) {
+            logger.warn("Failed to create preview for dataset id={} : {}",
+                    dataset != null ? dataset.getId() : "null", ex.getMessage(), ex);
+            return Optional.empty();
+        } finally {
+            // cleanup temp file
+            if (tmpFile != null && tmpFile.exists()) {
+                try {
+                    Files.deleteIfExists(tmpFile.toPath());
+                } catch (IOException ignore) {
+                    tmpFile.deleteOnExit();
+                }
+            }
+        }
+    }
+
+    /**
+     * Naive CSV split — regex hỗ trợ bỏ qua dấu phẩy trong dấu nháy kép.
+     * Không xử lý mọi edge-case cực kỳ phức tạp nhưng đủ tốt cho hầu hết CSV chuẩn.
+     */
+    private String[] splitCSVLine(String line) {
+        if (line == null) return new String[0];
+        // regex: split on commas not inside quotes
+        return line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+    }
+
+    /**
+     * Loại bỏ dấu nháy bao bọc và thay thế double-quote escaped.
+     */
+    private String unquote(String s) {
+        if (s == null) return null;
+        String out = s;
+        // trim whitespace
+        out = out.trim();
+        // remove surrounding quotes nếu có
+        if (out.length() >= 2 && out.startsWith("\"") && out.endsWith("\"")) {
+            out = out.substring(1, out.length() - 1);
+            // replace double double-quotes with single double-quote
+            out = out.replace("\"\"", "\"");
+        }
+        return out;
     }
 }

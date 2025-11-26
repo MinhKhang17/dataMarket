@@ -45,7 +45,7 @@ public class WalletServiceImpl implements WalletService {
         // Tạo mới wallet
         Wallet wallet = new Wallet();
         wallet.setUser(user);
-        wallet.setBalance(0.0);
+        wallet.setAmount(0.0);
         wallet.setHoldBalance(0.0);
 
         walletRepository.save(wallet);

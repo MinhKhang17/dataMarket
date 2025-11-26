@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public interface DatasetService {
@@ -73,10 +74,6 @@ public interface DatasetService {
 
     void saveTimeGroup(TimeGroup timeGroup);
 
-    ConsumerBuyResponseDTO buyTimeGroupWithSub(long timeGroupId, HttpServletRequest request);
-
-    ConsumerBuyResponseDTO buyGroupByAPI(long timeGroupId, HttpServletRequest request);
-
     ConsumerBuyResponseDTO buyApiPack(long apiPackId, HttpServletRequest request);
 
     ResponseEntity<ApiResponse> searchDatasetByName(String datasetName);
@@ -93,8 +90,6 @@ public interface DatasetService {
     ResponseEntity<?> downloadDatasetNoValidToken(Long datasetId);
 
     List<DatasetDTO> findAllConsumerDataset(HttpServletRequest request);
-
-    ConsumerBuyResponseDTO buyDatasetWithSub(long datasetId, HttpServletRequest request);
 
     void moderatorCreateNewDatasetGroup(ModeratorCreateNewDatasetGroupRequest moderatorCreateNewDatasetGroupRequest);
 
@@ -123,4 +118,6 @@ public interface DatasetService {
     ResponseEntity<?> getDataForApiBuying(String token);
 
     List<ApiTokenResponse> findAllTokenForConsumer();
+
+    String findTokenById(UUID tokenId);
 }

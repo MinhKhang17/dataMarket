@@ -10,8 +10,8 @@ import java.io.IOException;
 
 public interface WithdrawService {
 
-    void sendRequestMail();
-    ResponseEntity<ApiResponse> withdrawRequest(WithdrawRequest withdrawRequest);
+    void withdrawRequest(WithdrawRequest  withdrawRequest);
+    ResponseEntity<ApiResponse> verifyRequest(String tokenValue);
     ResponseEntity<ApiResponse> processWithdrawApprove(ProcessWithdrawRequest withdrawRequest, MultipartFile file) throws IOException;
     ResponseEntity<ApiResponse> processWithdrawReject(ProcessWithdrawRequest withdrawRequest);
     ResponseEntity<ApiResponse> listWithdraws(String status);
