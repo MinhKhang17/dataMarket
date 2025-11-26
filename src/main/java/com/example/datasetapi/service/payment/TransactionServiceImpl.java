@@ -71,10 +71,9 @@ public class TransactionServiceImpl implements TransactionService {
         List<TransactionResponse> response = transactions.stream()
                 .map(t -> new TransactionResponse(
                         t.getId(),
-                        t.getTxnRef(),
                         t.getType().name(),
                         t.getAmount(),
-                        t.getBuyType() != null ? t.getBuyType() : null,
+                        t.getBuyType().name(),
                         t.getCreatedAt().toString()
                 )).toList();
 

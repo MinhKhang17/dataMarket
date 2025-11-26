@@ -10,9 +10,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class TransactionResponse {
     private Long id;
-    private String txnRef;
     private String transferType;
     private double amount;
-    private BuyType buyType;
+    private String buyType;
     private String createdAt;
 }
