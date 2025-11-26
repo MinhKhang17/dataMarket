@@ -15,4 +15,5 @@ public class PricingRuleDTO {
     private double base_price;
     private String pricing_Rule_name;
     private BigInteger fileSize;
+    private long dayLimit;
 }

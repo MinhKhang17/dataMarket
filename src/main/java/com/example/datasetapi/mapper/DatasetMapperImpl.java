@@ -189,6 +189,7 @@ datasetDTO.setFileSize(dataset.getFileSize());
             pricingRuleDTO.setPlanName(pricingRule.getPlanName());
             pricingRuleDTO.setBase_price(pricingRule.getBasePricePoint());
             pricingRuleDTO.setFileSize(pricingRule.getFileSize());
+            pricingRuleDTO.setDayLimit(pricingRule.getTimeLimitDay());
             if(pricingRule.getRowLimit()!=null){
                 pricingRuleDTO.setRow_limit_of_this_pack(pricingRule.getRowLimit());
             }
