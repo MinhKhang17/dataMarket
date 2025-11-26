@@ -37,4 +37,17 @@ public class LocationServiceImp implements LocationService {
                 .toList();
     }
 
+    @Override
+    public List<CommuneDTO> getAllCommunes() {
+        List<Commune> communes = communeRepository.findAll();
+        return communes.stream()
+                .map(c -> new CommuneDTO(
+                        c.getIdCommune(),
+                        c.getName(),
+                        c.getProvince().getIdProvince(),
+                        c.getProvince().getName()
+                ))
+                .toList();
+    }
+
 }

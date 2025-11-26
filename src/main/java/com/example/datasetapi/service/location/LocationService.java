@@ -8,4 +8,5 @@ import java.util.List;
 public interface LocationService {
     List<Province> getAllProvinces();
     List<CommuneDTO> getCommunesByProvinceId(String provinceId);
+    List<CommuneDTO>  getAllCommunes();
 }

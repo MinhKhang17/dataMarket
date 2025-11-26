@@ -12,6 +12,7 @@ import com.example.datasetapi.enums.FolderType;
 import com.example.datasetapi.model.dataset.DatasetGroup;
 import com.example.datasetapi.service.dataset.DatasetService;
 import com.example.datasetapi.service.dataset.DatasetValidateService;
+import com.example.datasetapi.service.location.LocationService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +31,8 @@ public class ModeratorController {
     private DatasetValidateService datasetValidateService;
     @Autowired
     private DatasetService datasetService;
+    @Autowired
+    private LocationService locationService;
 
     @PreAuthorize("hasRole('MODERATOR')")
     @GetMapping("/get-dataset-validation")
@@ -88,20 +91,28 @@ public class ModeratorController {
         return datasetService.downloadDatasetNoValidToken(id);
     }
 
-
+    @PreAuthorize("hasRole('MODERATOR')")
     @PostMapping("/{id}")
     public ResponseEntity<?> updateDataSet(@PathVariable Long id,
                                            @RequestBody DatasetUpdateRequest dataset) {
         return ResponseEntity.ok().body(new ApiResponse(true, "Update dataset success", datasetService.updateDataset(id, dataset)));
     }
 
+    @PreAuthorize("hasRole('MODERATOR')")
     @GetMapping("")
     public ResponseEntity<?> getAllDataset() {
         return ResponseEntity.ok().body(new ApiResponse(true, "List dataset", datasetService.getAll()));
     }
 
+    @PreAuthorize("hasRole('MODERATOR')")
     @GetMapping("/{id}")
     public ResponseEntity<?> getDetailDataset(@PathVariable Long id) {
         return ResponseEntity.ok().body(new ApiResponse(true, "Detail datatset", datasetService.getDetailDataset(id)));
+    }
+
+    @PreAuthorize("hasRole('MODERATOR')")
+    @GetMapping("/commune/get")
+    public ResponseEntity<?> getCommunes() {
+        return ResponseEntity.ok().body(new ApiResponse(true,"List communes", locationService.getAllCommunes()));
     }
 }
