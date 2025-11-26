@@ -19,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -68,7 +69,11 @@ public class TransactionServiceImpl implements TransactionService {
         Wallet wallet = walletService.findWalletByUserId(userId).orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.WALLET_NOT_FOUND));
 
         List<Transaction> transactions = transactionRepository.findByWalletOrderByCreatedAtDesc(wallet.getId());
-        List<TransactionResponse> response = transactions.stream()
+        if (transactions.isEmpty()) {
+            return ResponseEntity.ok(new ApiResponse(true, "Transactions retrieved successfully", new ArrayList<>()));
+        }
+        List<TransactionResponse> response = new ArrayList<>();
+         response = transactions.stream()
                 .map(t -> new TransactionResponse(
                         t.getId(),
                         t.getType().name(),

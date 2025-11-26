@@ -2,6 +2,7 @@ package com.example.datasetapi.service.payment;
 
 import com.example.datasetapi.config.VnpayProperties;
 import com.example.datasetapi.dto.request.CreateVnpayPaymentRequest;
+import com.example.datasetapi.enums.Datasets.BuyType;
 import com.example.datasetapi.enums.TransferType;
 import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
@@ -153,6 +154,7 @@ public class VnPayService {
                 t.setType(TransferType.TOPUP);
                 t.setWallet(wallet);
                 t.setTxnRef(txnRef);
+                t.setBuyType(BuyType.TOP_UP);
                 // createdAt sẽ tự set nhờ @PrePersist
                 transactionRepository.save(t);
 

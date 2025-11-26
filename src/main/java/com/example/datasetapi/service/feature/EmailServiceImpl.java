@@ -143,7 +143,7 @@ public class EmailServiceImpl implements  EmailService {
             helper.setTo(email);
             helper.setSubject("Confirm Your Withdrawal Request");
 
-            String verifyLink = backendUrl + "/api/payment/withdraw/verify?token=" + token;
+            String verifyLink = backendUrl + "/api/withdraw/verify?token=" + token;
 
             String html = """
             <div style="font-family: Arial, sans-serif; background: #f5f6fa; padding: 25px;">

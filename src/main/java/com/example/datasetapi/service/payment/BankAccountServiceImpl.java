@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -97,7 +98,8 @@ public class BankAccountServiceImpl implements  BankAccountService {
         if (bankAccounts.isEmpty()) {
             throw new CustomException(HttpStatus.NOT_FOUND, ErrorCode.BANK_ACCOUNT_NOT_FOUND);
         }
-        List<BankResponse> responses = bankAccounts.stream()
+        List<BankResponse> responses = new ArrayList<>();
+         responses = bankAccounts.stream()
                 .map(bank -> new BankResponse(
                         bank.getId(),
                         bank.getBankName(),
