@@ -482,12 +482,12 @@ public class DatasetServiceImpl implements DatasetService {
             if(consumerSubscription.getFileSize().compareTo(dataset.getFileSize()) < 0){
                 throw new CustomException(HttpStatus.PAYMENT_REQUIRED,ErrorCode.FILE_SIZE_NOT_ENOUGH);
             }
-            checkoutResponseDTO.setDataset(datasetMapper.toDatasetForCheckoutDTO(dataset));
+            checkoutResponseDTO.setDataset(datasetMapper.toDatasetDTO(dataset));
             checkoutResponseDTO.setRow_amount_consumer_sub(consumerSubscription.getFileSize());
             checkoutResponseDTO.setRow_dataset(dataset.getFileSize());
 
         } else {
-            DatasetDTO datasetDTO = datasetMapper.toDatasetForCheckoutDTO(dataset);
+            DatasetDTO datasetDTO = datasetMapper.toDatasetDTO(dataset);
             DatasetPricing datasetPricing = datasetPricingRepository.findById(checkoutRequestDTO.getDatasetPricingId())
                     .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.DATASET_NOT_FOUND));
             DatasetPricingDTO datasetPricingDTO = datasetMapper.toDatasetPricingDTO(datasetPricing);
@@ -525,8 +525,14 @@ public class DatasetServiceImpl implements DatasetService {
     public ConsumerBuyResponseDTO subRegister(long pricingSubRuleId, HttpServletRequest request) {
         User consumer = userService.findUserById(tokenService.getUserIdFromRequest(request));
         PricingRule pricingRule = priceService.findSubPricingRuleById(pricingSubRuleId);
+        Optional<ConsumerSubscription> oldConsumerSub = consumerSubRepo.findByConsumerAndIsActiveAndIsUsingAndPricingRule(consumer,true,true,pricingRule);
+        BigInteger oldFileSize = new BigInteger("0");
 
-
+        if(oldConsumerSub.isPresent()){
+                 oldFileSize = oldConsumerSub.get().getFileSize();
+                oldConsumerSub.get().setActive(false);
+                consumerSubRepo.save(oldConsumerSub.get());
+        }
 
         paymentService.updateWallet(TransferType.PAYOUT, Double.parseDouble(String.valueOf(pricingRule.getBasePricePoint())), tokenService.getUserIdFromRequest(request), BuyType.BUY_SUB);
 
@@ -544,7 +550,7 @@ public class DatasetServiceImpl implements DatasetService {
         consumerSubscription.setFileSize(pricingRule.getFileSize());
         consumerSubscription.setActive(true);
         consumerSubscription.setUsing(true);
-        consumerSubscription.setFileSize(pricingRule.getFileSize());
+        consumerSubscription.setFileSize(pricingRule.getFileSize().add(oldFileSize));
 
         return datasetMapper.toConsumerBuyResponseDTO(PricingMethod.SUBSCRIPTION, consumerSubRepo.save(consumerSubscription));
     }
@@ -611,6 +617,9 @@ public class DatasetServiceImpl implements DatasetService {
 
         BigInteger fileSize = dataset.getFileSize();
 
+        if(downloadTokenRepository.existsByConsumerAndDatasetAndIsActive(consumer,dataset,true)){
+            throw new CustomException(HttpStatus.BAD_REQUEST,ErrorCode.DATASET_BOUGHT);
+        }
 
         if(consumerSubscription.getFileSize().compareTo(fileSize) <= 0){
             throw  new CustomException(HttpStatus.PAYMENT_REQUIRED,ErrorCode.FILE_SIZE_NOT_ENOUGH);
@@ -641,7 +650,7 @@ public class DatasetServiceImpl implements DatasetService {
     }
 
     private ConsumerBuyResponseDTO createOneTimePayment(Dataset dataset, DatasetPricing pricing, User consumer) {
-        if (downloadTokenRepository.findByConsumerAndDatasetAndIsActive(consumer, dataset, true).isPresent()) {
+        if (downloadTokenRepository.existsByConsumerAndDatasetAndIsActive(consumer, dataset, true)) {
             throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.DATASET_BOUGHT);
         }
 
@@ -1198,22 +1207,15 @@ public class DatasetServiceImpl implements DatasetService {
         Dataset dataset = datasetRepository.findById(buyRequestDTO.getDatasetId()).orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
         double price = 0.0;
         String apiToken="";
-        if(buyRequestDTO.getSubType()==null) {
+
             System.out.println(buyRequestDTO.getDatasetPricingId());
             price = datasetPricing.getBasePricePoint();
 
             paymentService.updateWallet(TransferType.PAYOUT, price, tokenService.getUserIdFromRequest(request), BuyType.BUY_API);
 
             apiToken = jwtUtil.generateApiSaleToken(userService.findUserById(tokenService.getUserIdFromRequest(request)), dataset, 31L, datasetPricing.getRequestLimit());
-        }
-        else {
-            if (buyRequestDTO.getSubType().equalsIgnoreCase("LARGE")) {
-                if (!consumerSubRepo.existsByConsumerAndIsActiveAndIsUsing(userService.findUserById(tokenService.getUserIdFromRequest(request)), true, true)) {
-                    throw new CustomException(HttpStatus.NOT_FOUND, ErrorCode.CONSUMER_SUB_NOT_FOUND);
-                }
-                 apiToken = jwtUtil.generateApiSaleToken(userService.findUserById(tokenService.getUserIdFromRequest(request)), dataset, 31L, datasetPricing.getRequestLimit());
-            }
-        }
+
+
         List<OrderRequest> orderRequests = new ArrayList<>();
         OrderRequest orderRequest = new OrderRequest();
         orderRequest.setDatasetId(dataset.getId());

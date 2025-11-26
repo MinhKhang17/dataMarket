@@ -57,7 +57,8 @@ public class ConsumerController {
         try {
             // set các thông tin từ query/params vào DTO nếu cần
 
-
+            buyRequestDTO.setIsHaveSub(false);
+            buyRequestDTO.setSubType(null);
             ConsumerBuyResponseDTO consumerBuyResponseDTO = datasetService.buyAPIPack(buyRequestDTO, request);
 
             if (consumerBuyResponseDTO == null) {
