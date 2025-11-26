@@ -30,4 +30,6 @@ public interface ConsumerSubRepo extends JpaRepository<ConsumerSubscription,Long
 
 
     Optional<ConsumerSubscription> findByConsumerAndIsActiveAndIsUsingAndPricingRule(User consumer, boolean isActive, boolean isUsing, PricingRule pricingRule);
+
+    List<ConsumerSubscription> findByConsumerAndIsActive(User consumer, boolean isActive);
 }

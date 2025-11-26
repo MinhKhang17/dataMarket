@@ -50,7 +50,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
+                //kiểm tra thời hạn, kiểm tra username
                 if (jwtUtil.validateToken(token, userDetails.getUsername())) {
+                    //tạo object đây là object đại diện cho user trong security Context
                     UsernamePasswordAuthenticationToken authToken =
                             new UsernamePasswordAuthenticationToken(
                                     userDetails,

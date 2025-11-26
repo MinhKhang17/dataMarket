@@ -543,7 +543,7 @@ public class DatasetServiceImpl implements DatasetService {
 
     @Override
     public List<ConsumerSubscription> findConsumerSub(User consumer) {
-        return consumerSubRepo.findByConsumer(consumer);
+        return consumerSubRepo.findByConsumerAndIsActive(consumer,true);
     }
 
     @Override
