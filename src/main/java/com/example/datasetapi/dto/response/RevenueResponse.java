@@ -11,4 +11,5 @@ public class RevenueResponse {
     private Double total;
     private Double oneTime;
     private Double subscription;
+    private Double api;
 }

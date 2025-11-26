@@ -17,7 +17,7 @@ public class AnalyticsServiceImpl implements  AnalyticsService {
     private final OrderService orderService;
 
     public Double getTotalRevenue() {
-        return getSubscriptionRevenue() + getOneTimeRevenue();
+        return getSubscriptionRevenue() + getOneTimeRevenue() + getApiRevenue();
     }
 
     public Double getOneTimeRevenue() {
@@ -26,8 +26,13 @@ public class AnalyticsServiceImpl implements  AnalyticsService {
     }
 
     public Double getSubscriptionRevenue() {
-        return transactionService.findByBuyType("BUY_SUB").stream()
-                .mapToDouble(Transaction::getAmount).sum();
+        return orderService.findByPricingMethod("SUBSCRIPTION").stream()
+                .mapToDouble(Orders::getTotalAmount).sum();
+    }
+
+    public Double getApiRevenue() {
+        return orderService.findByPricingMethod("API").stream()
+                .mapToDouble(Orders::getTotalAmount).sum();
     }
 
     @Override
@@ -35,7 +40,8 @@ public class AnalyticsServiceImpl implements  AnalyticsService {
         return new RevenueResponse(
                 getTotalRevenue(),
                 getOneTimeRevenue(),
-                getSubscriptionRevenue()
+                getSubscriptionRevenue(),
+                getApiRevenue()
         );
     }
 }
