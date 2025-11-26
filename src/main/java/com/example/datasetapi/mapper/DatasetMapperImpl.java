@@ -236,6 +236,31 @@ datasetDTO.setFileSize(dataset.getFileSize());
         return apiTokenResponse;
     }
 
+    @Override
+    public DatasetDTO toDatasetDownloadDTO(DownloadToken o) {
+Dataset dataset = o.getDataset();
+        DatasetDTO datasetDTO = new DatasetDTO();
+        datasetDTO.setDatasetId(dataset.getId());
+        datasetDTO.setTitle(dataset.getTitle());
+        datasetDTO.setDescription(dataset.getDescription());
+        datasetDTO.setDatasetTime(TimeGroup.toDate(dataset.getTimeGroup()));
+//            datasetDTO.setProvider(toProviderDto(dataset.getProvider()));
+        datasetDTO.setDatasetPLanWithPricingDTO(dataset.getDatasetPlans().stream().map(this::toDatasetPlanWithPricingDTO).collect(Collectors.toList()));
+        datasetDTO.setRow_amount(dataset.getRowCount());
+        datasetDTO.setFileSize(dataset.getFileSize());
+        DatasetPreview preview = datasetPreviewRepository.findByDataset(dataset).orElse(null);
+            datasetDTO.setPurchasedAt(o.getCreatedAt());
+        if (preview != null) {
+            try {
+                datasetDTO.setPreviewHeaders(objectMapper.readValue(preview.getHeadersJson(), List.class));
+                datasetDTO.setPreviewRows(objectMapper.readValue(preview.getRowsJson(), List.class));
+            } catch (Exception e) {
+            }
+        }
+        return datasetDTO;
+
+    }
+
     private BuySubInfoDTO toBuySubInfoDTO(ConsumerSubscription infor) {
         BuySubInfoDTO buySubInfoDTO = new BuySubInfoDTO();
         buySubInfoDTO.setSubType(infor.getSubType());

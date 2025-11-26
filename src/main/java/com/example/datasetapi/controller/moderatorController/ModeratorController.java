@@ -52,9 +52,9 @@ public class ModeratorController {
 
     @PreAuthorize("hasRole('MODERATOR')")
     @PostMapping("dataset-group")
-    public ResponseEntity<?> CreateDatasetGroup(@RequestBody ModeratorCreateNewDatasetGroupRequest moderatorCreateNewDatasetGroupRequest, HttpServletRequest request) {
-        datasetService.moderatorCreateNewDatasetGroup(moderatorCreateNewDatasetGroupRequest);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> CreateDatasetGroup(@RequestParam String commune_id,@RequestParam long dataset_type_id, HttpServletRequest request) {
+        System.out.println("vao dung api roi");
+        return ResponseEntity.ok().body(datasetService.moderatorCreateNewDatasetGroup(commune_id,dataset_type_id));
     }
 
     @PreAuthorize("hasRole('MODERATOR')")
@@ -108,11 +108,5 @@ public class ModeratorController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getDetailDataset(@PathVariable Long id) {
         return ResponseEntity.ok().body(new ApiResponse(true, "Detail datatset", datasetService.getDetailDataset(id)));
-    }
-
-    @PreAuthorize("hasRole('MODERATOR')")
-    @GetMapping("/commune/get")
-    public ResponseEntity<?> getCommunes() {
-        return ResponseEntity.ok().body(new ApiResponse(true,"List communes", locationService.getAllCommunes()));
     }
 }

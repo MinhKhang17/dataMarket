@@ -10,6 +10,7 @@ import com.example.datasetapi.exception.CustomException;
 import com.example.datasetapi.exception.ErrorCode;
 import com.example.datasetapi.mapper.DatasetMapper;
 import com.example.datasetapi.model.dataset.*;
+import com.example.datasetapi.model.location.Province;
 import com.example.datasetapi.model.paySystem.Wallet;
 import com.example.datasetapi.model.userManager.Provider;
 import com.example.datasetapi.model.userManager.User;
@@ -55,52 +56,29 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 @Service
 public class DatasetServiceImpl implements DatasetService {
-    @Autowired
-    private HttpServletRequest request;
-    @Autowired
-    private JwtUtil jwtUtil;
-    @Autowired
-    private DatasetRepository datasetRepository;
-    @Autowired
-    private CategoryRepository categoryRepository;
-    @Autowired
-    private DatasetTypeRepository datasetTypeRepository;
-    @Autowired
-    private TokenService tokenService;
-    @Autowired
-    private UserService userService;
-    @Autowired
-    private DatasetGroupRepository datasetGroupRepository;
-    @Autowired
-    private ReviewHistoryRepository reviewHistoryRepository;
-    @Autowired
-    private DatasetMapper datasetMapper;
-    @Autowired
-    private PriceService priceService;
-    @Autowired
-    private CommuneRepository communeRepository;
-    @Autowired
-    private TimeGroupRepository timeGroupRepository;
-    @Autowired
-    private PaymentService paymentService;
-    @Autowired
-    private DatasetPricingRepository datasetPricingRepository;
-    @Autowired
-    private ConsumerSubRepo consumerSubRepo;
-    @Autowired
-    private DownloadTokenRepository downloadTokenRepository;
-    @Autowired
-    private WalletService walletService;
-    @Autowired
-    private OrderService orderService;
-    @Autowired
-    private TransactionService transactionService;
-    @Autowired
-    private ProvinceRepository provinceRepository;
-    @Autowired
-    private FileService fileService;
-    @Autowired
-    private DatasetPlanRepo datasetPlanRepo;
+    @Autowired private HttpServletRequest request;
+    @Autowired private JwtUtil jwtUtil;
+    @Autowired private DatasetRepository datasetRepository;
+    @Autowired private CategoryRepository categoryRepository;
+    @Autowired private DatasetTypeRepository datasetTypeRepository;
+    @Autowired private TokenService tokenService;
+    @Autowired private UserService userService;
+    @Autowired private DatasetGroupRepository datasetGroupRepository;
+    @Autowired private ReviewHistoryRepository reviewHistoryRepository;
+    @Autowired private DatasetMapper datasetMapper;
+    @Autowired private PriceService priceService;
+    @Autowired private CommuneRepository communeRepository;
+    @Autowired private TimeGroupRepository timeGroupRepository;
+    @Autowired private PaymentService paymentService;
+    @Autowired private DatasetPricingRepository datasetPricingRepository;
+    @Autowired private ConsumerSubRepo consumerSubRepo;
+    @Autowired private DownloadTokenRepository downloadTokenRepository;
+    @Autowired private WalletService walletService;
+    @Autowired private OrderService orderService;
+    @Autowired private TransactionService transactionService;
+    @Autowired private ProvinceRepository provinceRepository;
+    @Autowired private FileService fileService;
+    @Autowired private DatasetPlanRepo datasetPlanRepo;
     @Autowired private PricingRuleRepo pricingRuleRepo;
     @Autowired private  DatasetPreviewRepository datasetPreviewRepository;
     @Autowired  private  ObjectMapper objectMapper;
@@ -485,8 +463,8 @@ public class DatasetServiceImpl implements DatasetService {
                 throw new CustomException(HttpStatus.PAYMENT_REQUIRED,ErrorCode.FILE_SIZE_NOT_ENOUGH);
             }
             checkoutResponseDTO.setDataset(datasetMapper.toDatasetDTO(dataset));
-            checkoutResponseDTO.setRow_amount_consumer_sub(consumerSubscription.getFileSize());
-            checkoutResponseDTO.setRow_dataset(dataset.getFileSize());
+            checkoutResponseDTO.setFileSizeOfConsumer(consumerSubscription.getFileSize());
+            checkoutResponseDTO.setFileSizeofDataset(dataset.getFileSize());
 
         } else {
             DatasetDTO datasetDTO = datasetMapper.toDatasetDTO(dataset);
@@ -496,12 +474,6 @@ public class DatasetServiceImpl implements DatasetService {
 
             checkoutResponseDTO.setDatasetPricing(datasetPricingDTO);
             checkoutResponseDTO.setDataset(datasetDTO);
-
-            double remaingAmount = paymentService.calRemainingAmount(datasetPricingDTO.getPrice(), consumer);
-            if (remaingAmount >= 0) {
-                checkoutResponseDTO.setEnough(true);
-            }
-            checkoutResponseDTO.setRemaining_amount(remaingAmount);
         }
 
         return checkoutResponseDTO;
@@ -1007,24 +979,60 @@ public class DatasetServiceImpl implements DatasetService {
     public List<DatasetDTO> findAllConsumerDataset(HttpServletRequest request) {
         User user = userService.findUserById(tokenService.getUserIdFromRequest(request));
         return downloadTokenRepository.findByConsumerAndIsActive(user, true).stream()
-                .map(DownloadToken::getDataset)
-                .map(datasetMapper::toDatasetDTO)
+                .map(datasetMapper::toDatasetDownloadDTO)
                 .collect(Collectors.toList());
     }
 
+    public ConsumerBuyResponseDTO buyDatasetWithSub(long datasetId, HttpServletRequest request) {
+        User user = userService.findUserById(tokenService.getUserIdFromRequest(request));
+
+        ConsumerSubscription consumerSubscription = consumerSubRepo.findByConsumerAndIsUsing(user, true)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.SUB_NOT_FOUND));
+        return null;
+    }
+
     @Override
-    public void moderatorCreateNewDatasetGroup(ModeratorCreateNewDatasetGroupRequest moderatorCreateNewDatasetGroupRequest) {
-        DatasetGroup parentDatasetGroup = new DatasetGroup();
-        parentDatasetGroup.setDatasetType(datasetTypeRepository.findById(moderatorCreateNewDatasetGroupRequest.getDataset_type_id())
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.INVALID_TYPE_ID)));
+    public DatasetGroupResponse moderatorCreateNewDatasetGroup(String commune_id,long dataset_type_id) {
+        System.out.println("da vao duoc ham");
+        // --- Validate DatasetType ---
+        DatasetType datasetType = datasetTypeRepository.findById(dataset_type_id)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.INVALID_TYPE_ID));
 
-        DatasetGroup childDatasetGroup = new DatasetGroup();
-        childDatasetGroup.setParent(parentDatasetGroup);
-        parentDatasetGroup.setDatasetSourceType(DatasetSourceType.SYSTEM_DATASET);
-        childDatasetGroup.setDatasetSourceType(DatasetSourceType.SYSTEM_DATASET);
 
-        datasetGroupRepository.save(childDatasetGroup);
-        datasetGroupRepository.save(parentDatasetGroup);
+        // --- Validate Commune ---
+        Commune commune = communeRepository.findById(commune_id)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, ErrorCode.COMMUNE_NOT_FOUND));
+
+        // --- Create Parent Group ---
+        DatasetGroup parent = new DatasetGroup();
+        parent.setDatasetGroupType(DatasetGroupType.PARENT);
+        parent.setDatasetType(datasetType);
+        parent.setProvince(commune.getProvince());
+        parent.setDatasetSourceType(DatasetSourceType.SYSTEM_DATASET);
+        parent.setUpdateAt(LocalDateTime.now());
+
+        parent = datasetGroupRepository.save(parent);
+
+        // --- Create Child Group ---
+        DatasetGroup child = new DatasetGroup();
+        child.setDatasetGroupType(DatasetGroupType.CHILD);
+        child.setDatasetType(datasetType);
+        child.setProvince(commune.getProvince());
+        child.setCommune(commune);
+        child.setParent(parent);
+        child.setDatasetSourceType(DatasetSourceType.SYSTEM_DATASET);
+        child.setUpdateAt(LocalDateTime.now());
+
+        child = datasetGroupRepository.save(child);
+
+        // --- Return DTO ---
+        return DatasetGroupResponse.builder()
+                .parentGroupId(parent.getId())
+                .childGroupId(child.getId())
+                .datasetType(datasetType.getName())
+                .province(commune.getProvince().getName())
+                .commune(commune.getName())
+                .build();
     }
 
     @Override
@@ -1099,9 +1107,6 @@ public class DatasetServiceImpl implements DatasetService {
             throw new CustomException(HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED);
         }
 
-        if(datasetUpdateRequest.getDatasetName() == null || datasetUpdateRequest.getDatasetName().isEmpty()) {
-            throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
-        }
 
         if(datasetUpdateRequest.getTitle() == null || datasetUpdateRequest.getTitle().isEmpty()) {
             throw new CustomException(HttpStatus.BAD_REQUEST, ErrorCode.MISSING_REQUIRED_FIELD);
@@ -1125,13 +1130,11 @@ public class DatasetServiceImpl implements DatasetService {
         price.setPrice(datasetUpdateRequest.getPrice());
         datasetPricingRepository.save(price);
 
-        dataset.setName(datasetUpdateRequest.getDatasetName());
         dataset.setDescription(datasetUpdateRequest.getDescription());
         dataset.setTitle(datasetUpdateRequest.getTitle());
         dataset.setDatasetStatus(datasetUpdateRequest.getStatus());
 
         Dataset saved = datasetRepository.save(dataset);
-
 
         return new DatasetUpdateResponse(
                 saved.getId(),
@@ -1203,12 +1206,8 @@ public class DatasetServiceImpl implements DatasetService {
 
     @Override
     public ConsumerBuyResponseDTO buyAPIPack(ConsumerBuyRequestDTO buyRequestDTO, HttpServletRequest request) {
-        PricingRule datasetPricing = pricingRuleRepo.findById(buyRequestDTO.getPricingRuleId())
-                .orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.API_PACK_NOT_FOUND));
-
-        Dataset dataset = datasetRepository.findById(buyRequestDTO.getDatasetId())
-                .orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
-
+        PricingRule datasetPricing = pricingRuleRepo.findById(buyRequestDTO.getPricingRuleId()).orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.API_PACK_NOT_FOUND));
+        Dataset dataset = datasetRepository.findById(buyRequestDTO.getDatasetId()).orElseThrow(()->new CustomException(HttpStatus.NOT_FOUND,ErrorCode.DATASET_NOT_FOUND));
         double price = 0.0;
         String apiToken="";
 

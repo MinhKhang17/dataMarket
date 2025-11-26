@@ -26,9 +26,6 @@ import java.util.UUID;
 @Service
 public interface DatasetService {
 
-
-
-
     ResponseEntity<ApiResponse> getAllCategories();
 
     ResponseEntity<ApiResponse> getAllDatasetType();
@@ -91,7 +88,10 @@ public interface DatasetService {
 
     List<DatasetDTO> findAllConsumerDataset(HttpServletRequest request);
 
-    void moderatorCreateNewDatasetGroup(ModeratorCreateNewDatasetGroupRequest moderatorCreateNewDatasetGroupRequest);
+
+    ConsumerBuyResponseDTO buyDatasetWithSub(long datasetId, HttpServletRequest request);
+
+    DatasetGroupResponse moderatorCreateNewDatasetGroup(String commune_id,long datasetTypeId);
 
     List<DatasetParentReposonseDto> findAllSystamDatasetGroup();
 

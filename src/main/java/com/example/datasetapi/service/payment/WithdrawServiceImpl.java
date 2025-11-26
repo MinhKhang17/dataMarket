@@ -115,6 +115,7 @@ public class WithdrawServiceImpl implements WithdrawService {
 
         paymentService.updateWallet(TransferType.WITHDRAW_HOLD, amount, userId, BuyType.WITHDRAW);
 
+
         Withdraw withdraw = new Withdraw();
         withdraw.setUser(wallet.getUser());
         withdraw.setWallet(wallet);

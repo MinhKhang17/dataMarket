@@ -8,6 +8,7 @@ import lombok.Data;
 
 import java.math.BigInteger;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -29,4 +30,5 @@ public class DatasetDTO {
     private BigInteger fileSize;
     private List<String> previewHeaders;
     private List<Map<String, String>> previewRows;
+    private LocalDateTime purchasedAt;
 }

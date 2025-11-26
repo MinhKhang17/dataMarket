@@ -43,4 +43,6 @@ public interface DatasetMapper {
     ProviderRevenueDTO toProviderRevenueDTO(ProviderRevenue providerRevenue);
 
     ApiTokenResponse toApiTokenResponse(ApiAccessToken apiAccessToken);
+
+    DatasetDTO toDatasetDownloadDTO(DownloadToken o);
 }
